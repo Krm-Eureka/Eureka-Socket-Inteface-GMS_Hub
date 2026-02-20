@@ -1,0 +1,17 @@
+[Unit]
+Description=GMS BFF Console Service
+After=network.target
+
+[Service]
+User=your_user
+Group=your_group
+WorkingDirectory=/path/to/project
+Environment="PATH=/path/to/project/venv/bin"
+EnvironmentFile=/path/to/project/.env
+ExecStart=/path/to/project/venv/bin/gunicorn -k uvicorn.workers.UvicornWorker --threads 4 --worker-connections 1000 --bind 0.0.0.0:1244 bff_main:socket_app
+
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

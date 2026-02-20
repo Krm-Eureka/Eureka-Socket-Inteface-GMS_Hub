@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+
+# Logs
+logs/
+*.log
+service_*.log
+server_*.log
+
+# Project specific
+static/images/esig_hub.png
+!static/images/esig_hub.png
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+
+# OS
+Thumbs.db
+.DS_Store
