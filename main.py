@@ -94,8 +94,8 @@ app = FastAPI(
 
 # Static & Middleware
 from fastapi.middleware.cors import CORSMiddleware
-
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.responses import FileResponse
 
 app.add_middleware(
     CORSMiddleware,
@@ -110,11 +110,25 @@ app.add_middleware(
     allowed_hosts=["*"],  # In production, this should be specific IPs/Domains
 )
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
+# Use absolute paths for static and templates to be robust in IIS
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+app.mount(
+    "/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static"
+)
+templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
 # Mount API Modules
 app.include_router(gms_router)
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return FileResponse(os.path.join(BASE_DIR, "static", "images", "esig_hub.png"))
+
+
+@app.get("/.well-known/{path:path}", include_in_schema=False)
+async def well_known(path: str):
+    return {"message": "Discovery not implemented"}
 
 
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
