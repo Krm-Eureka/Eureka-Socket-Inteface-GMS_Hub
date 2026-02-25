@@ -24,11 +24,66 @@ class GMSClient:
         self.gms_ip = settings.GMS_IP
         self.gms_port = settings.GMS_PORT
         self.stats = {"rx": 0, "tx": 0}
+        self.gms_stats = {
+            "latency_ms": 0,
+            "total_errors": 0,
+            "rx_types": {},  # {msgType: count}
+            "tx_types": {},  # {msgType: count}
+            "last_activity": None,
+        }
         self.last_rx_time = time.time()
         self.pending_requests = set()  # Track in-flight request types
+        self._monitor = None  # Injected via set_monitor() after construction
+        self._start_midnight_reset()  # Schedule daily counter reset at 00:00
+
+    def _start_midnight_reset(self):
+        """Start a background thread to reset RX/TX counters at midnight every day."""
+
+        def _reset_loop():
+            while True:
+                now = datetime.datetime.now()
+                # Calculate seconds until next midnight
+                next_midnight = (now + datetime.timedelta(days=1)).replace(
+                    hour=0, minute=0, second=0, microsecond=0
+                )
+                sleep_secs = (next_midnight - now).total_seconds()
+                time.sleep(sleep_secs)
+
+                old_rx, old_tx = self.stats["rx"], self.stats["tx"]
+                self.stats = {"rx": 0, "tx": 0}
+
+                # Build daily summary from system monitor if available
+                summary = {}
+                if self._monitor:
+                    summary = self._monitor.get_daily_summary()
+                    self._monitor.reset_daily_stats()
+
+                log_msg = (
+                    f"[DAILY RESET — {now.strftime('%Y-%m-%d')}]\n"
+                    f"  GMS Counter  : RX={old_rx}  TX={old_tx}\n"
+                )
+                if summary:
+                    log_msg += (
+                        f"  CPU          : min={summary['cpu_min']}%  max={summary['cpu_max']}%  avg={summary['cpu_avg']}%\n"
+                        f"  RAM          : min={summary['ram_min']}%  max={summary['ram_max']}%  avg={summary['ram_avg']}%\n"
+                        f"  DB Latency   : min={summary['db_latency_min']}ms  max={summary['db_latency_max']}ms\n"
+                        f"  DB QPS (max) : {summary['qps_max']}\n"
+                        f"  DB Errors    : {summary['db_errors']}\n"
+                        f"  Samples      : {summary['samples']}"
+                    )
+
+                logger.info(log_msg)
+                self.emit_log("SYS", "DAILY_RESET", {"report": log_msg})
+
+        t = threading.Thread(target=_reset_loop, daemon=True, name="midnight-reset")
+        t.start()
 
     def set_loop(self, loop):
         self._loop = loop
+
+    def set_monitor(self, monitor):
+        """Wire in a SystemMonitor instance for daily summary at midnight."""
+        self._monitor = monitor
 
     def set_callbacks(self, on_message=None, on_status=None):
         self._on_message_callback = on_message
@@ -144,6 +199,28 @@ class GMSClient:
             # 2. Log Event (Generic)
             self.emit_log("RX", msg_type, data)
 
+            # Update Diagnostics
+            self.gms_stats["last_activity"] = datetime.datetime.now().strftime(
+                "%H:%M:%S"
+            )
+            self.gms_stats["rx_types"][msg_type] = (
+                self.gms_stats["rx_types"].get(msg_type, 0) + 1
+            )
+
+            # RTT Calculation
+            if isinstance(header, dict) and "responseId" in header:
+                try:
+                    res_id = header["responseId"]
+                    # req_123456789_MsgType
+                    parts = res_id.split("_")
+                    if len(parts) >= 2 and parts[0] == "req":
+                        sent_time = int(parts[1][:10])
+                        self.gms_stats["latency_ms"] = int(
+                            (time.time() - sent_time) * 1000
+                        )
+                except:
+                    pass
+
             # 3. Specific Data Event (For easier FE integration)
             event_name = f"gms:data:{msg_type}"
             logger.debug(f"📡 [EMIT] {event_name}")
@@ -170,9 +247,28 @@ class GMSClient:
         if "msgType" not in body:
             body["msgType"] = msg_type
 
+        # Safety Guard: Ensure startTime/endTime for WorkflowInstanceListMsg
+        if msg_type == "WorkflowInstanceListMsg":
+            if "startTime" not in body or "endTime" not in body:
+                today_dt = datetime.datetime.now().replace(
+                    hour=0, minute=0, second=0, microsecond=0
+                )
+                start_dt = today_dt - datetime.timedelta(days=7)
+                end_dt = today_dt + datetime.timedelta(days=1)
+
+                if "startTime" not in body:
+                    body["startTime"] = start_dt.strftime("%Y-%m-%d 00:00:00")
+                if "endTime" not in body:
+                    body["endTime"] = end_dt.strftime("%Y-%m-%d 23:59:59")
+
+                logger.debug(
+                    f"Injected missing dates for WorkflowInstanceListMsg: {body['startTime']} to {body['endTime']}"
+                )
+
         req_data = {
             "header": {
                 "requestId": req_id,
+                "msgType": msg_type,
                 "channelId": channel_id,
                 "clientCode": client_code,
                 "requestTime": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -184,6 +280,14 @@ class GMSClient:
             # Mark as pending
             self.pending_requests.add(msg_type)
             self._emit_pending()
+
+            # Update Diagnostics
+            self.gms_stats["tx_types"][msg_type] = (
+                self.gms_stats["tx_types"].get(msg_type, 0) + 1
+            )
+            self.gms_stats["last_activity"] = datetime.datetime.now().strftime(
+                "%H:%M:%S"
+            )
 
             logger.debug(f"📤 [SEND] {msg_type} -> ID: {req_id}")
             self.emit_log("TX", msg_type, req_data)
@@ -199,6 +303,7 @@ class GMSClient:
                     self.stats["tx"] += 1
                     return True
         except Exception as e:
+            self.gms_stats["total_errors"] += 1
             logger.error(f"Send Failed: {e}")
             self.emit_error(AppErrorCode.SOCKET_ERROR, str(e))
         return False
@@ -211,10 +316,11 @@ class GMSClient:
     def emit_log(self, direction: str, msg_type: str, payload: Dict):
         # Truncate large list payloads to avoid flooding Socket.IO
         body = payload.get("body", payload) if isinstance(payload, dict) else payload
-        if isinstance(body, list) and len(body) > 3:
+        # Increase visibility for moderately sized lists
+        if isinstance(body, list) and len(body) > 20:
             display_payload = {
                 **{k: v for k, v in payload.items() if k != "body"},
-                "body": f"[{len(body)} items — truncated for display]",
+                "body": f"[{len(body)} items — Use TASKS tab for details]",
             }
         else:
             display_payload = payload

@@ -2,7 +2,8 @@ import psutil
 import threading
 import time
 import asyncio
-import mysql.connector
+import pymysql
+import pymysql.cursors
 from loguru import logger
 from app.core.config import settings
 
@@ -10,8 +11,9 @@ from app.core.config import settings
 class SystemMonitor:
     """[BEHAVIOR] Monitors server (CPU, RAM) and MySQL performance/health"""
 
-    def __init__(self, sio):
+    def __init__(self, sio, gms_client=None):
         self._sio = sio
+        self._gms_client = gms_client
         self._loop = None
         self._running = False
         self._thread = None
@@ -20,6 +22,50 @@ class SystemMonitor:
         self._last_check_time = time.time()
         self._is_busy = False  # Guard against overlapping health checks
         self.clients = {}  # {sid: {ip: str, connected_at: str}}
+        self._daily = self._blank_daily()
+
+    @staticmethod
+    def _blank_daily():
+        """Return a fresh min/max/sum/count tracking dict."""
+        return {
+            "cpu_min": None,
+            "cpu_max": None,
+            "cpu_sum": 0,
+            "ram_min": None,
+            "ram_max": None,
+            "ram_sum": 0,
+            "db_latency_min": None,
+            "db_latency_max": None,
+            "qps_max": None,
+            "db_errors": 0,
+            "samples": 0,
+        }
+
+    def get_daily_summary(self) -> dict:
+        """Return a human-readable daily summary of min/max stats."""
+        d = self._daily
+        n = max(d["samples"], 1)
+        return {
+            "cpu_avg": round(d["cpu_sum"] / n, 1) if d["samples"] else 0,
+            "cpu_min": d["cpu_min"] if d["cpu_min"] is not None else 0,
+            "cpu_max": d["cpu_max"] if d["cpu_max"] is not None else 0,
+            "ram_avg": round(d["ram_sum"] / n, 1) if d["samples"] else 0,
+            "ram_min": d["ram_min"] if d["ram_min"] is not None else 0,
+            "ram_max": d["ram_max"] if d["ram_max"] is not None else 0,
+            "db_latency_min": (
+                d["db_latency_min"] if d["db_latency_min"] is not None else 0
+            ),
+            "db_latency_max": (
+                d["db_latency_max"] if d["db_latency_max"] is not None else 0
+            ),
+            "qps_max": d["qps_max"] if d["qps_max"] is not None else 0,
+            "db_errors": d["db_errors"],
+            "samples": d["samples"],
+        }
+
+    def reset_daily_stats(self):
+        """Reset daily tracking counters (called at midnight)."""
+        self._daily = self._blank_daily()
 
     def set_loop(self, loop):
         self._loop = loop
@@ -79,18 +125,19 @@ class SystemMonitor:
         conn = None
         try:
             start_time = time.time()
-            conn = mysql.connector.connect(
+            conn = pymysql.connect(
                 host=settings.DB_HOST,
                 port=settings.DB_PORT,
                 user=settings.DB_USER,
                 password=settings.DB_PASS,
                 database=settings.DB_NAME,
                 connect_timeout=2,
+                cursorclass=pymysql.cursors.DictCursor,
             )
             stats["latency_ms"] = round((time.time() - start_time) * 1000, 2)
             stats["status"] = "up"
 
-            cursor = conn.cursor(dictionary=True)
+            cursor = conn.cursor()
 
             # 1. Global Status
             cursor.execute("SHOW GLOBAL STATUS")
@@ -165,8 +212,12 @@ class SystemMonitor:
                 self._is_busy = True
                 try:
                     # 1. System Stats
+                    import socket as _socket
+                    import os as _os
+
                     cpu_usage = psutil.cpu_percent(interval=None)
                     ram = psutil.virtual_memory()
+                    disk = psutil.disk_usage("/")
 
                     sys_stats = {
                         "cpu": cpu_usage,
@@ -174,6 +225,10 @@ class SystemMonitor:
                         "ram_used_gb": round(ram.used / (1024**3), 2),
                         "ram_total_gb": round(ram.total / (1024**3), 2),
                         "ram_free_gb": round(ram.available / (1024**3), 2),
+                        "disk_percent": disk.percent,
+                        "disk_used_gb": round(disk.used / (1024**3), 2),
+                        "disk_total_gb": round(disk.total / (1024**3), 2),
+                        "hostname": _socket.gethostname(),
                         "client_count": len(self.clients),
                         "clients": [
                             {"sid": sid, **info} for sid, info in self.clients.items()
@@ -183,8 +238,60 @@ class SystemMonitor:
                     # 2. MySQL Stats
                     mysql_stats = self._get_mysql_stats()
 
+                    # --- Track daily min/max ---
+                    d = self._daily
+                    d["samples"] += 1
+                    # CPU
+                    d["cpu_sum"] += cpu_usage
+                    d["cpu_min"] = (
+                        cpu_usage
+                        if d["cpu_min"] is None
+                        else min(d["cpu_min"], cpu_usage)
+                    )
+                    d["cpu_max"] = (
+                        cpu_usage
+                        if d["cpu_max"] is None
+                        else max(d["cpu_max"], cpu_usage)
+                    )
+                    # RAM
+                    d["ram_sum"] += ram.percent
+                    d["ram_min"] = (
+                        ram.percent
+                        if d["ram_min"] is None
+                        else min(d["ram_min"], ram.percent)
+                    )
+                    d["ram_max"] = (
+                        ram.percent
+                        if d["ram_max"] is None
+                        else max(d["ram_max"], ram.percent)
+                    )
+                    # DB
+                    if mysql_stats["status"] == "up":
+                        lat = mysql_stats["latency_ms"]
+                        qps = mysql_stats["qps"]
+                        d["db_latency_min"] = (
+                            lat
+                            if d["db_latency_min"] is None
+                            else min(d["db_latency_min"], lat)
+                        )
+                        d["db_latency_max"] = (
+                            lat
+                            if d["db_latency_max"] is None
+                            else max(d["db_latency_max"], lat)
+                        )
+                        d["qps_max"] = (
+                            qps if d["qps_max"] is None else max(d["qps_max"], qps)
+                        )
+                    elif mysql_stats["status"] == "down":
+                        d["db_errors"] += 1
+                    # ----------------------------
+
                     # Emit Combined Health Data
-                    health_packet = {"system": sys_stats, "mysql": mysql_stats}
+                    health_packet = {
+                        "system": sys_stats,
+                        "mysql": mysql_stats,
+                        "gms": self._gms_client.gms_stats if self._gms_client else {},
+                    }
 
                     if self._loop:
                         asyncio.run_coroutine_threadsafe(

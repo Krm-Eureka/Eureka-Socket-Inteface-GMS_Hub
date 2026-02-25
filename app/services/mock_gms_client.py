@@ -89,11 +89,62 @@ class MockGMSClient(GMSClient):
 
             # Simulate receiving a message
             msg_type = random.choice(
-                ["RobotInfoMsg", "TaskStatusMsg", "SystemStatusMsg", "HeartbeatAck"]
+                [
+                    "RobotInfoMsg",
+                    "TaskStatusMsg",
+                    "SystemStatusMsg",
+                    "WorkflowInstanceListMsg",
+                ]
             )
 
             # Create a fake realistic payload with Header/Body
             res_id = f"res_{random.randint(1000,9999)}_{msg_type}"
+
+            if msg_type == "WorkflowInstanceListMsg":
+                # ... (existing tasks)
+                mock_tasks = []
+                for i in range(1, 101):
+                    mock_tasks.append(
+                        {
+                            "instanceId": f"INST-{1000+i}",
+                            "taskId": i,
+                            "workflowName": f"Mok-Work-{i%5}",
+                            "workflowCode": f"WFC-00{i%5}",
+                            "instanceStatus": random.choice(["10", "20", "30", "40"]),
+                            "startTime": datetime.datetime.now().strftime("%H:%M:%S"),
+                            "robot": f"RBT-{random.randint(1,5)}",
+                        }
+                    )
+                mock_body = mock_tasks
+            elif msg_type == "RobotInfoMsg":
+                # Generate realistic robot data
+                mock_robots = []
+                for i in range(1, 4):
+                    mock_robots.append(
+                        {
+                            "robot": f"RBT-0{i}",
+                            "robotProduct": "M200C-SNE",
+                            "status": random.choice(["10", "20", "30"]),
+                            "powerPercent": random.randint(20, 95),
+                            "location": {
+                                "x": 20.0 + random.uniform(-5, 5),
+                                "y": 20.0 + random.uniform(-5, 5),
+                                "z": 1,
+                            },
+                            "angle": random.uniform(0, 360),
+                        }
+                    )
+                mock_body = mock_robots
+            else:
+                mock_body = {
+                    "status": "SUCCESS",
+                    "data": {
+                        "id": random.randint(1, 100),
+                        "state": random.choice(["IDLE", "RUNNING", "ERROR"]),
+                        "details": f"Mock data for {msg_type}",
+                    },
+                }
+
             mock_data = {
                 "header": {
                     "responseId": res_id,
@@ -102,14 +153,7 @@ class MockGMSClient(GMSClient):
                         "%Y-%m-%d %H:%M:%S"
                     ),
                 },
-                "body": {
-                    "status": "SUCCESS",
-                    "data": {
-                        "id": random.randint(1, 100),
-                        "state": random.choice(["IDLE", "RUNNING", "ERROR"]),
-                        "details": f"Mock data for {msg_type}",
-                    },
-                },
+                "body": mock_body,
             }
 
             # Rx increment
@@ -124,6 +168,9 @@ class MockGMSClient(GMSClient):
 
             # Trigger specific data event for FE
             self.emit_socket(f"gms:data:{msg_type}", mock_data)
+
+            if self._on_message_callback:
+                self._on_message_callback(mock_data)
 
             # 5% chance to simulate a brief error or reconnect (optional, keeps it interesting)
             # if random.random() < 0.05:

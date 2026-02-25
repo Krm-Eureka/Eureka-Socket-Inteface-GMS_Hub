@@ -43,6 +43,17 @@ async def stop_gms_service(pm=Depends(get_polling_manager)):
     )
 
 
+@router.get("/config", response_model=ApiResponse)
+async def get_gms_config(pm=Depends(get_polling_manager)):
+    return ApiResponse(
+        success=True,
+        code=status.HTTP_200_OK,
+        status="CONFIG_LOADED",
+        message="Current operational settings retrieved.",
+        data={"config": pm.get_config()},
+    )
+
+
 @router.patch("/config", response_model=ApiResponse)
 async def update_gms_config(params: Dict, pm=Depends(get_polling_manager)):
     pm.update_behavior(params)
@@ -70,16 +81,24 @@ async def send_gms_command(
             details="Please start the GMS service before sending manual commands.",
         )
 
-    gmsClient.send_request(
+    if gmsClient.send_request(
         params.msgType,
         pollingManager.client_code,
         pollingManager.channel_id,
         params.body,
-    )
-    return ApiResponse(
-        success=True,
-        code=status.HTTP_202_ACCEPTED,
-        status="QUEUED",
-        message="Command accepted and queued for transmission.",
-        data={"msgType": params.msgType},
-    )
+    ):
+        return ApiResponse(
+            success=True,
+            code=status.HTTP_202_ACCEPTED,
+            status="QUEUED",
+            message="Command accepted and queued for transmission.",
+            data={"msgType": params.msgType},
+        )
+    else:
+        return ApiResponse(
+            success=False,
+            code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status="SEND_FAILED",
+            message="Command failed to send to GMS.",
+            details="The socket connection may have been closed or encountered an error.",
+        )

@@ -1,13 +1,13 @@
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(override=False)
 
 
 class Settings:
     # Server (SERVER)
     BFF_HOST: str = os.getenv("BFF_HOST", "0.0.0.0")
-    BFF_PORT: int = int(os.getenv("BFF_PORT", "1244"))
+    BFF_PORT: int = int(os.getenv("BFF_PORT", "9000"))
     BFF_RELOAD: bool = os.getenv("BFF_RELOAD", "false").lower() == "true"
     CORS_ORIGINS: list = os.getenv("CORS_ORIGINS", "*").split(",")
 
@@ -20,6 +20,16 @@ class Settings:
     # Mock Mode
     MOCK_MODE: bool = os.getenv("MOCK_MODE", "false").lower() == "true"
 
+    # Polling Layers
+    QUERY_INTERVAL_FAST: float = float(os.getenv("QUERY_INTERVAL_FAST", "1"))
+    QUERY_INTERVAL_SLOW: float = float(os.getenv("QUERY_INTERVAL_SLOW", "30.0"))
+
+    # Reconnection Backoff
+    GMS_RECONNECT_INITIAL_DELAY: int = int(
+        os.getenv("GMS_RECONNECT_INITIAL_DELAY", "5")
+    )
+    GMS_RECONNECT_MAX_DELAY: int = int(os.getenv("GMS_RECONNECT_MAX_DELAY", "60"))
+
     # Logging
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
 
@@ -29,6 +39,10 @@ class Settings:
     DB_USER: str = os.getenv("DB_USER", "root")
     DB_PASS: str = os.getenv("DB_PASS", "")
     DB_NAME: str = os.getenv("DB_NAME", "")
+
+    # Security (NEW)
+    GMS_SERVER_USER: str = os.getenv("GMS_SERVER_USER", "")
+    GMS_SERVER_PASSWORD: str = os.getenv("GMS_SERVER_PASSWORD", "")
 
 
 settings = Settings()

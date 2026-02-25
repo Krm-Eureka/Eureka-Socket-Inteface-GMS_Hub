@@ -26,3 +26,9 @@ static/images/esig_hub.png
 # OS
 Thumbs.db
 .DS_Store
+
+# Build and Distribution
+build/
+dist/
+*.spec
+packages_offline/

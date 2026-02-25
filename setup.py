@@ -22,8 +22,10 @@ def main():
     # 3. Ask for Database Config
     print("\n[Database Configuration]")
     db_host = input("MySQL Host [Default: 127.0.0.1]: ").strip() or "127.0.0.1"
+    db_port = input("MySQL Port [Default: 3306]: ").strip() or "3306"
     db_user = input("MySQL User [Default: root]: ").strip() or "root"
     db_pass = input("MySQL Password: ").strip()
+    db_name = input("MySQL Database Name [Default: esig_hub]: ").strip() or "esig_hub"
 
     # Generate .env content
     env_content = f"""# ESIG HUB Configuration
@@ -46,10 +48,10 @@ LOG_LEVEL=INFO
 
 # MySQL Database
 DB_HOST={db_host}
-DB_PORT=3306
+DB_PORT={db_port}
 DB_USER={db_user}
 DB_PASS={db_pass}
-DB_NAME=esig_hub
+DB_NAME={db_name}
 """
 
     with open(".env", "w", encoding="utf-8") as f:

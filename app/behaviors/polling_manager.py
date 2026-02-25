@@ -18,10 +18,12 @@ class PollingManager:
         self.client_code = settings.GMS_CLIENT_CODE
         self.channel_id = settings.GMS_CHANNEL_ID
         self.auto_query = True
+        self._task_cache = []  # Store latest WorkflowInstanceListMsg data
+        self._cache_lock = threading.Lock()
 
         # Polling Categories
-        self.query_interval = 1.0  # Fast Layer
-        self.slow_query_interval = 60.0  # Slow Layer
+        self.query_interval = settings.QUERY_INTERVAL_FAST
+        self.slow_query_interval = settings.QUERY_INTERVAL_SLOW
 
         self.startup_msg_types = [
             "StationListMsg",
@@ -31,6 +33,7 @@ class PollingManager:
         self.fast_msg_types = [
             "RobotInfoMsg",
             "ContainerListMsg",
+            "WorkflowInstanceListMsg",
         ]
         self.slow_msg_types = [
             "LocationListMsg",
@@ -85,6 +88,18 @@ class PollingManager:
             f"Behavior Updated: Auto={self.auto_query}, FastInt={self.query_interval}s, SlowInt={self.slow_query_interval}s"
         )
 
+    def get_config(self) -> Dict:
+        return {
+            "gms_ip": settings.GMS_IP,
+            "gms_port": settings.GMS_PORT,
+            "client_code": self.client_code,
+            "channel_id": self.channel_id,
+            "auto_query": self.auto_query,
+            "interval_ms": int(self.query_interval * 1000),
+            "fast_msg_types": ",".join(self.fast_msg_types),
+            "slow_msg_types": ",".join(self.slow_msg_types),
+        }
+
     def set_dynamic_tier(self, msg_type: str, tier: str):
         """Move a message type between layers (e.g. 'fast' or 'slow') - Thread Safe"""
         with self._tier_lock:
@@ -117,7 +132,7 @@ class PollingManager:
 
         self.set_dynamic_tier("LocationListMsg", "fast" if any_on_map else "slow")
         self.set_dynamic_tier(
-            "WorkflowInstanceListMsg", "fast" if any_on_task else "slow"
+            "WorkflowInstanceListMsg", "fast" if (any_on_task or any_on_map) else "slow"
         )
 
         logger.info(
@@ -131,14 +146,33 @@ class PollingManager:
 
     def _session_worker(self):
         """Higher level session management"""
+        backoff_seconds = settings.GMS_RECONNECT_INITIAL_DELAY
+        max_backoff = settings.GMS_RECONNECT_MAX_DELAY
+
         while self._running:
             sock = self._gms.connect()
             if sock:
+                backoff_seconds = (
+                    settings.GMS_RECONNECT_INITIAL_DELAY
+                )  # Reset on success
                 # 1. Connected: Perform Startup Query (Once per connect)
                 logger.info("Performing Startup Query (One-time)...")
                 for msg_type in self.startup_msg_types:
+                    body = {}
+                    if msg_type == "WorkflowInstanceListMsg":
+                        # Today at 00:00:00
+                        today_dt = datetime.datetime.now().replace(
+                            hour=0, minute=0, second=0, microsecond=0
+                        )
+                        start_dt = today_dt - datetime.timedelta(days=14)
+                        end_dt = today_dt + datetime.timedelta(days=1)
+                        body = {
+                            "msgType": "WorkflowInstanceListMsg",
+                            "startTime": start_dt.strftime("%Y-%m-%d 00:00:00"),
+                            "endTime": end_dt.strftime("%Y-%m-%d 00:00:00"),
+                        }
                     self._gms.send_request(
-                        msg_type, self.client_code, self.channel_id, {}
+                        msg_type, self.client_code, self.channel_id, body
                     )
 
                 # 2. Start sub-behavioral loops
@@ -161,11 +195,15 @@ class PollingManager:
                 self._gms.read_loop(lambda: self._running)
 
             if self._running:
-                logger.warning("GMS Session lost, retrying in 3s...")
+                logger.warning(
+                    f"GMS Session lost or failed. Retrying in {backoff_seconds}s..."
+                )
                 # Ensure it's disconnected properly
                 self._gms.disconnect()
-                if self._stop_event.wait(3):
+                if self._stop_event.wait(backoff_seconds):
                     break
+                # Exponential backoff
+                backoff_seconds = min(backoff_seconds * 2, max_backoff)
 
     def _heartbeat_loop(self, sock_ref):
         logger.info("Heartbeat Loop Started")
@@ -193,6 +231,108 @@ class PollingManager:
                     break
         logger.info("Heartbeat Loop Ended")
 
+    def handle_gms_message(self, data):
+        """Unified message handler to support caching for pagination"""
+        try:
+            header = data.get("header", {})
+            body = data.get("body", {})
+            msg_type = header.get("msgType") or body.get("msgType")
+
+            if msg_type == "WorkflowInstanceListMsg":
+                # GMS might send a direct list or wrap it in a dict field
+                new_tasks = (
+                    body
+                    if isinstance(body, list)
+                    else (
+                        body.get("workflowInstanceList", [])
+                        if isinstance(body, dict)
+                        else []
+                    )
+                )
+
+                if new_tasks:
+                    with self._cache_lock:
+                        # 1. Create a map of existing tasks by ID
+                        # Use either 'instanceId' or 'workflowInstanceId'
+                        task_map = {}
+                        for t in self._task_cache:
+                            tid = t.get("instanceId") or t.get("workflowInstanceId")
+                            if tid:
+                                task_map[tid] = t
+
+                        # 2. Merge new tasks (potentially update status)
+                        for t in new_tasks:
+                            tid = t.get("instanceId") or t.get("workflowInstanceId")
+                            if tid:
+                                task_map[tid] = t
+
+                        # 3. Define robust sorting key (Latest first)
+                        def get_sort_key(task):
+                            st = str(task.get("startTime") or "0000-00-00 00:00:00")
+                            # Secondary sort by taskId (numeric)
+                            tid_val = task.get("taskId")
+                            try:
+                                n_tid = int(tid_val) if tid_val is not None else 0
+                            except:
+                                n_tid = 0
+                            return (st, n_tid)
+
+                        # 4. Sort and apply limit
+                        all_tasks = list(task_map.values())
+                        sorted_tasks = sorted(all_tasks, key=get_sort_key, reverse=True)
+                        self._task_cache = sorted_tasks[:30000]
+
+                        logger.debug(
+                            f"Merged {len(new_tasks)} new tasks. Cache size: {len(self._task_cache)} (Limit: 30000)"
+                        )
+                else:
+                    logger.warning("WorkflowInstanceListMsg body is empty")
+
+        except Exception as e:
+            logger.error(f"Error updating task cache: {e}")
+
+    def get_paginated_tasks(
+        self, page=1, page_size=30, start_time: str = None, end_time: str = None
+    ):
+        """Returns a slice of the cached tasks with total count, optionally filtered by date"""
+        with self._cache_lock:
+            tasks = self._task_cache
+
+        if start_time and end_time:
+            # 🛡️ Pad dates to ensure full day coverage if they are YYYY-MM-DD
+            f_start = start_time if len(start_time) > 10 else f"{start_time} 00:00:00"
+            f_end = end_time if len(end_time) > 10 else f"{end_time} 23:59:59"
+
+            tasks = [
+                t
+                for t in tasks
+                if f_start <= str(t.get("startTime") or "0000-00-00 00:00:00") <= f_end
+            ]
+
+        # 🛡️ Critical: Logic below must be OUTSIDE the if-block to handle all requests
+        try:
+            n_page = int(page)
+            n_size = int(page_size)
+        except (ValueError, TypeError):
+            n_page, n_size = 1, 20
+
+        total_count = len(tasks)
+        start_idx = (n_page - 1) * n_size
+        end_idx = start_idx + n_size
+
+        # Ensure indices are within bounds
+        paged_data = tasks[start_idx:end_idx]
+
+        return {
+            "tasks": paged_data,
+            "totalCount": total_count,
+            "page": n_page,
+            "pageSize": n_size,
+            "totalPages": (
+                (total_count + n_size - 1) // n_size if total_count > 0 else 0
+            ),
+        }
+
     def _polling_loop(self, sock_ref):
         logger.info("Polling Loop Started")
         # Reset slow timer on start
@@ -204,13 +344,27 @@ class PollingManager:
                 try:
                     now = time.time()
 
+                    # Today at 00:00:00 for shared use
+                    today_dt = datetime.datetime.now().replace(
+                        hour=0, minute=0, second=0, microsecond=0
+                    )
+                    start_dt_7d = today_dt - datetime.timedelta(days=7)
+                    end_dt_1d = today_dt + datetime.timedelta(days=1)
+
                     # 1. Fast Layer (1s Interval)
                     for msg_type in self.fast_msg_types:
                         # Skip if a similar request is pending to avoid flooding
                         if msg_type in self._gms.pending_requests:
                             continue
+                        body = {}
+                        if msg_type == "WorkflowInstanceListMsg":
+                            body = {
+                                "msgType": "WorkflowInstanceListMsg",
+                                "startTime": start_dt_7d.strftime("%Y-%m-%d 00:00:00"),
+                                "endTime": end_dt_1d.strftime("%Y-%m-%d 23:59:59"),
+                            }
                         self._gms.send_request(
-                            msg_type, self.client_code, self.channel_id, {}
+                            msg_type, self.client_code, self.channel_id, body
                         )
 
                     # 2. Slow Layer (30s Interval)
@@ -219,8 +373,17 @@ class PollingManager:
                         for msg_type in self.slow_msg_types:
                             if msg_type in self._gms.pending_requests:
                                 continue
+                            body = {}
+                            if msg_type == "WorkflowInstanceListMsg":
+                                body = {
+                                    "msgType": "WorkflowInstanceListMsg",
+                                    "startTime": start_dt_30d.strftime(
+                                        "%Y-%m-%d 00:00:00"
+                                    ),
+                                    "endTime": end_dt_1d.strftime("%Y-%m-%d 00:00:00"),
+                                }
                             self._gms.send_request(
-                                msg_type, self.client_code, self.channel_id, {}
+                                msg_type, self.client_code, self.channel_id, body
                             )
 
                     # Dynamic wait to keep 1s interval even with processing time

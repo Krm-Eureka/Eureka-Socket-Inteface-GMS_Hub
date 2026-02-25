@@ -136,7 +136,7 @@
                     <img src="/static/images/esig_hub.png" alt="ESIG HUB" class="h-12 w-auto">
                     <div>
                         <h1 class="text-xs text-gray-500 uppercase tracking-widest font-bold">ESIG HUB</h1>
-                        <div class="text-[10px] text-gray-400">v1.2.0-PRO</div>
+                        <div class="text-[10px] text-gray-400">v1.2.1</div>
                     </div>
                 </div>
             </div>
@@ -156,13 +156,13 @@
                     </button>
                 </div>
 
-                <!-- Performance Stats -->
+                <!-- Performance Stats (Simplified Sidebar Version) -->
                 <div class="card-section">
-                    <span class="card-title">SERVER PERFORMANCE</span>
+                    <span class="card-title">CORE HEALTH</span>
                     <div class="space-y-4">
                         <div class="input-group">
                             <div class="flex justify-between text-[10px]">
-                                <span class="text-gray-400">CPU LOAD</span>
+                                <span class="text-gray-400">CPU</span>
                                 <span class="text-green-400 font-bold" x-text="sys.cpu + '%'">-</span>
                             </div>
                             <div class="progress-container">
@@ -171,42 +171,18 @@
                         </div>
                         <div class="input-group">
                             <div class="flex justify-between text-[10px]">
-                                <span class="text-gray-400">RAM USAGE</span>
+                                <span class="text-gray-400">RAM</span>
                                 <span class="text-blue-400 font-bold" x-text="sys.ram_p + '%'">-</span>
                             </div>
                             <div class="progress-container">
                                 <div class="progress-bar bg-blue-500" :style="'width: ' + sys.ram_p + '%'"></div>
                             </div>
-                            <div class="text-[9px] text-gray-500 mt-1"
-                                x-text="'Used: ' + sys.ram_used + 'GB / Free: ' + sys.ram_free + 'GB'"></div>
                         </div>
                     </div>
-                </div>
-
-                <!-- Configuration -->
-                <div class="card-section">
-                    <span class="card-title">CONFIGURATION</span>
-                    <div class="input-group">
-                        <label>Poll Interval (ms)</label>
-                        <input type="number" x-model="config.interval_ms" @change="saveConfig()">
+                    <div class="mt-4 pt-4 border-t border-gray-800">
+                        <button class="btn btn-outline w-full text-[10px]" @click="activeTab = 'health'">OPEN FULL
+                            DASHBOARD</button>
                     </div>
-                    <div class="flex gap-2 items-center">
-                        <input type="checkbox" x-model="config.auto_query" @change="saveConfig()" id="chk_auto"
-                            style="width: 16px; height: 16px">
-                        <label for="chk_auto" style="cursor: pointer; font-size: 0.8rem">Enable Polling</label>
-                    </div>
-                </div>
-
-                <!-- Manual Request -->
-                <div class="card-section">
-                    <span class="card-title">MANUAL REQUEST</span>
-                    <div class="input-group">
-                        <input type="text" x-model="manual.msg_type" placeholder="Message Type (e.g. RobotInfoMsg)">
-                    </div>
-                    <div class="input-group">
-                        <textarea x-model="manual.body" placeholder="Body JSON {}" rows="2"></textarea>
-                    </div>
-                    <button class="btn btn-outline" @click="sendManualRequest()">SEND COMMAND</button>
                 </div>
             </div>
         </aside>
@@ -266,7 +242,8 @@
                             <div class="log-time" x-text="log.time"></div>
                             <div :class="'log-tag ' + (log.direction.toLowerCase())"
                                 x-text="log.direction.toUpperCase()"></div>
-                            <div class="log-type" x-text="log.msgType"></div>
+                            <div class="log-type" x-text="log.msgType" @click="console.log(JSON.parse(log.payload))"
+                                style="cursor:pointer; text-decoration:underline; text-decoration-style:dotted;"></div>
                             <div class="log-body" x-text="log.payload"></div>
                         </div>
                     </template>
@@ -282,244 +259,293 @@
             <div x-show="activeTab === 'health'" x-transition
                 style="display:flex; flex-direction:column; flex:1; min-height:0; overflow-y:auto; padding:1.5rem 2rem 4rem 2rem; background: radial-gradient(ellipse at top left, rgba(63,185,80,0.04) 0%, transparent 60%), radial-gradient(ellipse at bottom right, rgba(88,166,255,0.04) 0%, transparent 60%);">
 
-                <div style="max-width:1280px; margin:0 auto; width: 100%; flex: 1;">
-                    <div style="padding-bottom: 5rem;"> <!-- Extra spacing at the bottom -->
+                <div style="max-width:1440px; margin:0 auto; width: 100%; flex: 1;">
+                    <div style="padding-bottom: 5rem;">
 
-                        <!-- ── HERO KPI Row ── -->
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; margin-bottom:1.25rem;">
+                        <div style="display:grid; grid-template-columns: 1.2fr 1fr; gap: 2rem;">
 
-                            <!-- CPU Card -->
-                            <div style="background:rgba(22,27,34,0.7); backdrop-filter:blur(16px); border:1px solid rgba(63,185,80,0.2); border-radius:16px; padding:1.5rem; position:relative; overflow:hidden; transition: box-shadow .3s;"
-                                onmouseenter="this.style.boxShadow='0 0 32px rgba(63,185,80,0.12)'"
-                                onmouseleave="this.style.boxShadow='none'">
-                                <!-- Glow accent -->
+                            <!-- ── LEFT COLUMN: BFF SERVER (LOCAL) ── -->
+                            <div style="display:flex; flex-direction:column; gap:1.25rem;">
                                 <div
-                                    style="position:absolute;top:-40px;left:-20px;width:140px;height:140px;background:radial-gradient(circle, rgba(63,185,80,0.15) 0%, transparent 70%);pointer-events:none;">
+                                    style="display:flex; align-items:center; gap:0.75rem; color:#3fb950; margin-bottom:0.5rem;">
+                                    <div
+                                        style="width:12px; height:12px; border-radius:3px; background:#3fb950; box-shadow: 0 0 10px rgba(63,185,80,0.5);">
+                                    </div>
+                                    <h2
+                                        style="font-size:14px; font-weight:800; letter-spacing:0.1rem; text-transform:uppercase;">
+                                        BFF Server (Middleware Host)</h2>
                                 </div>
-                                <div
-                                    style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:.75rem;">
-                                    <div>
+
+                                <!-- Hostname Strip -->
+                                <div style="display:grid; grid-template-columns:1fr; gap:1rem;">
+                                    <div
+                                        style="background:rgba(22,27,34,0.7); border:1px solid rgba(255,255,255,0.05); border-radius:12px; padding:1.25rem;">
                                         <div
-                                            style="font-size:10px; letter-spacing:.15em; color:#6e7681; font-weight:700; text-transform:uppercase; margin-bottom:.25rem;">
-                                            CPU Load</div>
-                                        <div style="font-size:3rem; font-weight:900; font-family:monospace; line-height:1; color:#3fb950;"
-                                            x-text="sys.cpu + '%'">0%</div>
-                                        <div style="font-size:10px; color:#6e7681; margin-top:.4rem;">Real-time
-                                            processor
-                                            utilization</div>
+                                            style="font-size:10px; color:#6e7681; text-transform:uppercase; font-weight:700; margin-bottom:0.5rem;">
+                                            Local Hostname</div>
+                                        <div style="font-size:1.25rem; font-weight:800; color:#c9d1d9; font-family:monospace;"
+                                            x-text="sys.hostname">BFF-NODE-01</div>
+                                    </div>
+                                </div>
+
+                                <!-- Primary KPI Row (CPU/RAM) -->
+                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.25rem;">
+                                    <!-- CPU Card -->
+                                    <div
+                                        style="background:rgba(22,27,34,0.7); border:1px solid rgba(63,185,80,0.2); border-radius:16px; padding:1.5rem; position:relative;">
+                                        <div
+                                            style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1rem;">
+                                            <div>
+                                                <div
+                                                    style="font-size:10px; color:#6e7681; font-weight:700; text-transform:uppercase;">
+                                                    CPU Load</div>
+                                                <div style="font-size:2.5rem; font-weight:900; font-family:monospace; color:#3fb950;"
+                                                    x-text="sys.cpu + '%'">0%</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style="height:50px;"><svg id="cpuChartSvg" width="100%" height="50"></svg>
+                                    </div>
+                                </div>
+
+                                <!-- RAM Card -->
+                                <div
+                                    style="background:rgba(22,27,34,0.7); border:1px solid rgba(88,166,255,0.2); border-radius:16px; padding:1.5rem;">
+                                    <div
+                                        style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1rem;">
+                                        <div>
+                                            <div
+                                                style="font-size:10px; color:#6e7681; font-weight:700; text-transform:uppercase;">
+                                                Memory</div>
+                                            <div style="font-size:2.5rem; font-weight:900; font-family:monospace; color:#58a6ff;"
+                                                x-text="sys.ram_p + '%'">0%</div>
+                                        </div>
+                                        <div style="text-align:right;">
+                                            <div
+                                                style="font-size:10px; color:#6e7681; font-weight:700; text-transform:uppercase;">
+                                                Free</div>
+                                            <div style="font-size:1.2rem; font-weight:800; color:#58a6ff;"
+                                                x-text="sys.ram_free + 'GB'">0GB</div>
+                                        </div>
+                                    </div>
+                                    <div style="height:50px;"><svg id="ramChartSvg" width="100%" height="50"></svg>
+                                    </div>
+                                </div>
+
+                                <!-- Disk Usage Strip -->
+                                <div
+                                    style="background:rgba(22,27,34,0.7); border:1px solid rgba(255,255,255,0.05); border-radius:12px; padding:1.25rem;">
+                                    <div
+                                        style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+                                        <div
+                                            style="font-size:10px; color:#6e7681; text-transform:uppercase; font-weight:700;">
+                                            Storage (Root Path)</div>
+                                        <div style="font-size:12px; color:#c9d1d9; font-weight:700;"
+                                            x-text="sys.disk_percent + '% USED'">0%</div>
                                     </div>
                                     <div
-                                        style="background:rgba(63,185,80,0.12); border:1px solid rgba(63,185,80,0.25); border-radius:8px; padding:.5rem .75rem; text-align:center;">
-                                        <div
-                                            style="font-size:9px; color:#6e7681; text-transform:uppercase; letter-spacing:.1em;">
-                                            Status</div>
-                                        <div style="font-size:11px; font-weight:700; color:#3fb950; margin-top:2px;"
-                                            x-text="sys.cpu < 50 ? 'GOOD' : sys.cpu < 80 ? 'WARN' : 'HIGH'">GOOD</div>
+                                        style="background:rgba(255,255,255,0.05); border-radius:4px; height:8px; overflow:hidden;">
+                                        <div style="height:100%; transition:width 1s ease; background:#58a6ff;"
+                                            :style="'width:' + sys.disk_percent + '%'"></div>
+                                    </div>
+                                    <div style="font-size:10px; color:#6e7681; margin-top:0.6rem;"
+                                        x-text="sys.disk_used_gb + ' GB used of ' + sys.disk_total_gb + ' GB total'">-
                                     </div>
                                 </div>
-                                <!-- Sparkline -->
-                                <div style="height:70px; position:relative;">
-                                    <svg id="cpuChartSvg" width="100%" height="70" style="display:block;"></svg>
-                                </div>
-                                <!-- Progress bar -->
+
+                                <!-- MySQL Card (Moved for balance) -->
                                 <div
-                                    style="background:rgba(255,255,255,0.05); border-radius:4px; height:4px; margin-top:.75rem; overflow:hidden;">
-                                    <div style="height:100%; border-radius:4px; transition:width .5s ease;"
-                                        :style="'width:' + sys.cpu + '%; background: ' + (sys.cpu < 50 ? '#3fb950' : sys.cpu < 80 ? '#d29922' : '#f85149')">
+                                    style="background:rgba(22,27,34,0.7); border:1px solid rgba(255,255,255,0.05); border-radius:16px; overflow:hidden;">
+                                    <div
+                                        style="display:flex; align-items:center; gap:0.75rem; padding: 1rem 1.25rem; border-bottom:1px solid rgba(255,255,255,0.05);">
+                                        <div style="width:8px; height:8px; border-radius:50%;"
+                                            :style="mysql.status === 'up' ? 'background:#3fb950' : 'background:#f85149'">
+                                        </div>
+                                        <h2
+                                            style="font-size:11px; font-weight:800; letter-spacing:0.05rem; text-transform:uppercase; color:#c9d1d9;">
+                                            Database Instance (MySQL)</h2>
+                                        <span style="font-size:9px; color:#6e7681; margin-left:auto;"
+                                            x-text="mysql.version"></span>
+                                    </div>
+                                    <div
+                                        style="padding:1.25rem; display:grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                                        <div>
+                                            <div
+                                                style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+                                                <span style="font-size:10px; color:#6e7681;">Latency</span>
+                                                <span style="font-size:11px; font-weight:800; color:#e3b341;"
+                                                    x-text="mysql.latency_ms + ' ms'">0 ms</span>
+                                            </div>
+                                            <div
+                                                style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+                                                <span style="font-size:10px; color:#6e7681;">Throughput</span>
+                                                <span style="font-size:11px; font-weight:800; color:#58a6ff;"
+                                                    x-text="mysql.qps">0</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div
+                                                style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+                                                <span style="font-size:10px; color:#6e7681;">Threads</span>
+                                                <span style="font-size:11px; font-weight:800; color:#c9d1d9;"
+                                                    x-text="mysql.threads_connected">0</span>
+                                            </div>
+                                            <div style="display:flex; justify-content:space-between;">
+                                                <span style="font-size:10px; color:#6e7681;">Size</span>
+                                                <span style="font-size:11px; font-weight:800; color:#c9d1d9;"
+                                                    x-text="mysql.db_size_mb + ' MB'">0 MB</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- RAM Card -->
-                            <div style="background:rgba(22,27,34,0.7); backdrop-filter:blur(16px); border:1px solid rgba(88,166,255,0.2); border-radius:16px; padding:1.5rem; position:relative; overflow:hidden; transition: box-shadow .3s;"
-                                onmouseenter="this.style.boxShadow='0 0 32px rgba(88,166,255,0.12)'"
-                                onmouseleave="this.style.boxShadow='none'">
+                            <!-- ── RIGHT COLUMN: GMS SERVER (REMOTE) ── -->
+                            <div style="display:flex; flex-direction:column; gap:1.25rem;">
                                 <div
-                                    style="position:absolute;top:-40px;right:-20px;width:140px;height:140px;background:radial-gradient(circle, rgba(88,166,255,0.12) 0%, transparent 70%);pointer-events:none;">
-                                </div>
-                                <div
-                                    style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:.75rem;">
-                                    <div>
-                                        <div
-                                            style="font-size:10px; letter-spacing:.15em; color:#6e7681; font-weight:700; text-transform:uppercase; margin-bottom:.25rem;">
-                                            Memory Usage</div>
-                                        <div style="font-size:3rem; font-weight:900; font-family:monospace; line-height:1; color:#58a6ff;"
-                                            x-text="sys.ram_p + '%'">0%</div>
-                                        <div style="font-size:10px; color:#6e7681; margin-top:.4rem;"
-                                            x-text="'Used ' + sys.ram_used + ' GB of ' + sys.ram_total + ' GB'">—</div>
+                                    style="display:flex; align-items:center; gap:0.75rem; color:#bc8cff; margin-bottom:0.5rem;">
+                                    <div
+                                        style="width:12px; height:12px; border-radius:3px; background:#bc8cff; box-shadow: 0 0 10px rgba(188,140,255,0.5);">
                                     </div>
-                                    <div style="text-align:right;">
+                                    <h2
+                                        style="font-size:14px; font-weight:800; letter-spacing:0.1rem; text-transform:uppercase;">
+                                        GMS Server (Direct Socket)</h2>
+                                </div>
+
+                                <!-- GMS Connection Details -->
+                                <div
+                                    style="background:rgba(188,140,255,0.05); border:1px solid rgba(188,140,255,0.2); border-radius:16px; padding:1.25rem;">
+                                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                                        <div>
+                                            <div
+                                                style="font-size:10px; color:#6e7681; text-transform:uppercase; font-weight:700;">
+                                                Endpoint</div>
+                                            <div style="font-size:1.1rem; font-weight:800; color:#c9d1d9;"
+                                                x-text="config.gms_ip + ':' + (config.gms_port || '24245')">0.0.0.0:0
+                                            </div>
+                                            <div style="font-size:10px; color:#6e7681; margin-top:0.25rem;"
+                                                x-text="'CLIENT: ' + config.client_code">MEKTEC</div>
+                                        </div>
+                                        <div style="text-align:right;">
+                                            <div
+                                                style="font-size:10px; color:#6e7681; text-transform:uppercase; font-weight:700;">
+                                                Response Time</div>
+                                            <div style="font-size:1.75rem; font-weight:900; color:#bc8cff; font-family:monospace;"
+                                                x-text="gms.latency_ms + ' ms'">0 ms</div>
+                                        </div>
+                                    </div>
+                                    <div
+                                        style="height:35px; margin-top:0.75rem; border-top: 1px solid rgba(188,140,255,0.1); padding-top:0.75rem;">
+                                        <svg id="gmsLatencyChartSvg" width="100%" height="35"></svg>
+                                    </div>
+
+                                    <!-- Diagnostic Blocks -->
+                                    <div
+                                        style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-top:1.25rem;">
                                         <div
-                                            style="font-size:9px; color:#6e7681; text-transform:uppercase; letter-spacing:.1em;">
-                                            Free</div>
-                                        <div style="font-size:1.5rem; font-weight:700; font-family:monospace; color:#58a6ff;"
-                                            x-text="sys.ram_free + ' GB'">—</div>
+                                            style="background:rgba(255,255,255,0.03); padding:0.75rem; border-radius:10px; text-align:center;">
+                                            <div style="font-size:9px; color:#6e7681; text-transform:uppercase;">Last
+                                                Activity</div>
+                                            <div style="font-size:12px; font-weight:700; color:#c9d1d9; margin-top:2px;"
+                                                x-text="gms.last_activity || 'IDLE'">-</div>
+                                        </div>
+                                        <div
+                                            style="background:rgba(255,255,255,0.03); padding:0.75rem; border-radius:10px; text-align:center;">
+                                            <div style="font-size:9px; color:#6e7681; text-transform:uppercase;">Errors
+                                            </div>
+                                            <div style="font-size:12px; font-weight:700; margin-top:2px;"
+                                                :style="gms.total_errors > 0 ? 'color:#f85149' : 'color:#6e7681'"
+                                                x-text="gms.total_errors">0</div>
+                                        </div>
+                                        <div
+                                            style="background:rgba(255,255,255,0.03); padding:0.75rem; border-radius:10px; text-align:center;">
+                                            <div style="font-size:9px; color:#6e7681; text-transform:uppercase;">RX
+                                                Packets</div>
+                                            <div style="font-size:12px; font-weight:700; color:#3fb950; margin-top:2px;"
+                                                x-text="stats.rx">0</div>
+                                        </div>
                                     </div>
                                 </div>
-                                <div style="height:70px; position:relative;">
-                                    <svg id="ramChartSvg" width="100%" height="70" style="display:block;"></svg>
-                                </div>
+
+                                <!-- GMS CONFIG & TOOLS -->
                                 <div
-                                    style="background:rgba(255,255,255,0.05); border-radius:4px; height:4px; margin-top:.75rem; overflow:hidden;">
-                                    <div style="height:100%; border-radius:4px; background:#58a6ff; transition:width .5s ease;"
-                                        :style="'width:' + sys.ram_p + '%'"></div>
+                                    style="background:rgba(22,27,34,0.7); border:1px solid rgba(255,255,255,0.05); border-radius:16px; padding:1.5rem;">
+                                    <h3
+                                        style="font-size:11px; font-weight:800; color:#c9d1d9; margin-bottom:1rem; text-transform:uppercase; letter-spacing:0.05rem;">
+                                        GMS Control Panel</h3>
+
+                                    <div
+                                        style="display:grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom:1.25rem;">
+                                        <div class="input-group">
+                                            <label style="font-size:10px; color:#6e7681; font-weight:700;">POLL INTERVAL
+                                                (MS)</label>
+                                            <input type="number" x-model="config.interval_ms" @change="saveConfig()"
+                                                style="background:rgba(0,0,0,0.2); border:1px solid #30363d; color:#c9d1d9; padding:8px 12px; border-radius:6px; width:100%; outline:none;">
+                                        </div>
+                                        <div style="display:flex; align-items:center; gap:0.75rem; padding-top:1.5rem;">
+                                            <input type="checkbox" x-model="config.auto_query" @change="saveConfig()"
+                                                id="chk_auto_health"
+                                                style="width:18px; height:18px; accent-color:#3fb950; cursor:pointer;">
+                                            <label for="chk_auto_health"
+                                                style="font-size:11px; color:#c9d1d9; cursor:pointer; font-weight:600;">Enable
+                                                Automatic Polling</label>
+                                        </div>
+                                    </div>
+
+                                    <!-- Integrated Manual Request -->
+                                    <div style="border-top:1px solid rgba(255,255,255,0.05); padding-top:1.25rem;">
+                                        <div
+                                            style="font-size:10px; color:#6e7681; font-weight:700; margin-bottom:0.75rem; text-transform:uppercase;">
+                                            Direct Message Injection</div>
+                                        <div class="flex gap-2 mb-2">
+                                            <input type="text" x-model="manual.msg_type" placeholder="Message Type..."
+                                                style="flex:1; background:rgba(0,0,0,0.2); border:1px solid #30363d; color:#c9d1d9; padding:8px 12px; border-radius:6px; outline:none; font-size:12px;">
+                                            <button class="btn btn-primary" style="padding: 0 1.5rem;"
+                                                @click="sendManualRequest()">SEND</button>
+                                        </div>
+                                        <textarea x-model="manual.body" placeholder="Body JSON {}" rows="2"
+                                            style="width:100%; background:rgba(0,0,0,0.2); border:1px solid #30363d; color:#c9d1d9; padding:8px 12px; border-radius:6px; outline:none; font-size:12px; font-family:monospace; resize:none;"></textarea>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- ── Stats Strip ── -->
-                        <div
-                            style="display:grid; grid-template-columns:repeat(4,1fr); gap:.75rem; margin-bottom:1.25rem;">
-                            <template x-for="stat in [
-                            {label:'RX Messages', val: stats.rx, color:'#3fb950', icon:'↓'},
-                            {label:'TX Messages', val: stats.tx, color:'#58a6ff', icon:'↑'},
-                            {label:'Active Clients', val: sys.client_count, color:'#e3b341', icon:'◉'},
-                            {label:'Next Poll', val: countdownText, color:'#bc8cff', icon:'⏱'}
-                        ]" :key="stat.label">
-                                <div
-                                    style="background:rgba(22,27,34,0.6);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:1rem 1.25rem;">
-                                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                                        <div style="font-size:9px; color:#6e7681; text-transform:uppercase; letter-spacing:.12em; font-weight:700;"
-                                            x-text="stat.label"></div>
-                                        <span style="font-size:14px; opacity:.5;" x-text="stat.icon"></span>
-                                    </div>
-                                    <div style="font-size:1.75rem; font-weight:900; font-family:monospace; margin-top:.4rem;"
-                                        :style="'color:' + stat.color" x-text="stat.val">0</div>
-                                </div>
-                            </template>
-                        </div>
-
-                        <!-- ── Bottom Row ── -->
-                        <div style="display:grid; grid-template-columns:1fr 1.8fr; gap:1.25rem;">
-
-                            <!-- MySQL Card -->
-                            <div style="background:rgba(22,27,34,0.7);backdrop-filter:blur(16px);border-radius:16px;overflow:hidden;"
-                                :style="'border: 1px solid ' + (mysql.status === 'up' ? 'rgba(63,185,80,0.25)' : mysql.status === 'unconfigured' ? 'rgba(110,118,129,0.25)' : 'rgba(248,81,73,0.25)')">
-                                <!-- Card header band -->
-                                <div
-                                    style="padding:.85rem 1.25rem; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.05);">
-                                    <span
-                                        style="font-size:10px; font-weight:700; letter-spacing:.15em; color:#6e7681; text-transform:uppercase;">MySQL
-                                        Status</span>
-                                    <span
-                                        style="padding:.25rem .75rem; border-radius:20px; font-size:10px; font-weight:800; letter-spacing:.1em; text-transform:uppercase;"
-                                        :style="mysql.status === 'up' ? 'background:rgba(63,185,80,.15);color:#3fb950;border:1px solid rgba(63,185,80,.3)' : mysql.status === 'unconfigured' ? 'background:rgba(110,118,129,.15);color:#8b949e;border:1px solid rgba(110,118,129,.3)' : 'background:rgba(248,81,73,.15);color:#f85149;border:1px solid rgba(248,81,73,.3)'"
-                                        x-text="mysql.status.toUpperCase()">DOWN</span>
-                                </div>
-                                <div style="padding:1.25rem;">
-                                    <!-- Latency + QPS -->
-                                    <div
-                                        style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
-                                        <div>
-                                            <div
-                                                style="font-size:9px; color:#6e7681; text-transform:uppercase; letter-spacing:.1em;">
-                                                Latency</div>
-                                            <div style="font-size:1.6rem; font-weight:800; font-family:monospace; color:#e3b341;"
-                                                x-text="mysql.latency_ms + ' ms'">0ms</div>
-                                        </div>
-                                        <div>
-                                            <div
-                                                style="font-size:9px; color:#6e7681; text-transform:uppercase; letter-spacing:.1em;">
-                                                QPS</div>
-                                            <div style="font-size:1.6rem; font-weight:800; font-family:monospace; color:#58a6ff;"
-                                                x-text="mysql.qps">0</div>
-                                        </div>
-                                    </div>
-                                    <!-- Stats rows -->
-                                    <div style="display:flex; flex-direction:column; gap:.6rem; font-size:11px;">
-                                        <div
-                                            style="display:flex; justify-content:space-between; padding:.5rem; background:rgba(255,255,255,.03); border-radius:8px;">
-                                            <span style="color:#6e7681;">Threads Connected</span>
-                                            <span style="font-family:monospace; color:#c9d1d9;"
-                                                x-text="mysql.threads_connected">0</span>
-                                        </div>
-                                        <div
-                                            style="display:flex; justify-content:space-between; padding:.5rem; background:rgba(255,255,255,.03); border-radius:8px;">
-                                            <span style="color:#6e7681;">Slow Queries</span>
-                                            <span style="font-family:monospace;"
-                                                :class="mysql.slow_queries > 0 ? 'text-red-400' : 'text-gray-500'"
-                                                x-text="mysql.slow_queries">0</span>
-                                        </div>
-                                        <div
-                                            style="display:flex; justify-content:space-between; padding:.5rem; background:rgba(255,255,255,.03); border-radius:8px;">
-                                            <span style="color:#6e7681;">DB Size</span>
-                                            <span style="font-family:monospace; color:#c9d1d9;"
-                                                x-text="mysql.db_size_mb + ' MB'">0 MB</span>
-                                        </div>
-                                        <div>
-                                            <div
-                                                style="display:flex; justify-content:space-between; font-size:10px; margin-bottom:.3rem;">
-                                                <span style="color:#6e7681;">Buffer Pool</span>
-                                                <span style="color:#c9d1d9; font-family:monospace;"
-                                                    x-text="mysql.buffer_pool_usage + '%'"></span>
-                                            </div>
-                                            <div
-                                                style="background:rgba(255,255,255,0.06); border-radius:4px; height:5px; overflow:hidden;">
-                                                <div style="height:100%; border-radius:4px; background:linear-gradient(90deg,#58a6ff,#bc8cff); transition:width .5s ease;"
-                                                    :style="'width:' + mysql.buffer_pool_usage + '%'"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <!-- Error message -->
-                                    <div x-show="mysql.error"
-                                        style="margin-top:.75rem; padding:.6rem; background:rgba(248,81,73,.1); border:1px solid rgba(248,81,73,.2); border-radius:8px; font-size:10px; color:#f85149; font-family:monospace;"
-                                        x-text="mysql.error"></div>
-                                </div>
-                            </div>
-
+                        <!-- ── BOTTOM ROW: CLIENTS ── -->
+                        <div style="margin-top:2rem;">
                             <!-- Sessions Table -->
                             <div
-                                style="background:rgba(22,27,34,0.7);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.06);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;">
+                                style="background:rgba(22,27,34,0.7); border:1px solid rgba(255,255,255,0.05); border-radius:16px; overflow:hidden; display:flex; flex-direction:column;">
                                 <div
-                                    style="padding:.85rem 1.25rem; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.05); flex-shrink:0;">
+                                    style="padding: 1rem 1.5rem; border-bottom:1px solid rgba(255,255,255,0.05); display:flex; justify-content:space-between; align-items:center;">
+                                    <h2
+                                        style="font-size:12px; font-weight:800; letter-spacing:0.05rem; text-transform:uppercase; color:#c9d1d9;">
+                                        Connected Web Clients</h2>
                                     <span
-                                        style="font-size:10px; font-weight:700; letter-spacing:.15em; color:#6e7681; text-transform:uppercase;">Active
-                                        Sessions</span>
-                                    <span
-                                        style="padding:.2rem .65rem; border-radius:12px; font-size:10px; font-weight:700; background:rgba(227,179,65,.12); color:#e3b341; border:1px solid rgba(227,179,65,.25);"
-                                        x-text="sys.client_count + ' online'">0 online</span>
+                                        style="font-size:11px; background:rgba(227,179,65,0.1); color:#e3b341; padding:2px 8px; border-radius:10px; font-weight:700;"
+                                        x-text="sys.client_count">0</span>
                                 </div>
-                                <div style="overflow-y:auto; flex:1;">
+                                <div style="max-height:160px; overflow-y:auto;">
                                     <table style="width:100%; border-collapse:collapse; font-size:11px;">
-                                        <thead
-                                            style="position:sticky; top:0; background:rgba(13,17,23,.9); backdrop-filter:blur(8px); z-index:10;">
-                                            <tr>
-                                                <th
-                                                    style="padding:.65rem 1rem; text-align:left; color:#6e7681; font-weight:700; font-size:9px; letter-spacing:.12em; text-transform:uppercase; border-bottom:1px solid rgba(255,255,255,.05);">
-                                                    Session ID</th>
-                                                <th
-                                                    style="padding:.65rem 1rem; text-align:left; color:#6e7681; font-weight:700; font-size:9px; letter-spacing:.12em; text-transform:uppercase; border-bottom:1px solid rgba(255,255,255,.05);">
-                                                    IP Address</th>
-                                                <th
-                                                    style="padding:.65rem 1rem; text-align:left; color:#6e7681; font-weight:700; font-size:9px; letter-spacing:.12em; text-transform:uppercase; border-bottom:1px solid rgba(255,255,255,.05);">
-                                                    Connected At</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
+                                        <tbody style="color:#8b949e;">
                                             <template x-for="client in sys.clients" :key="client.sid">
-                                                <tr style="border-bottom:1px solid rgba(255,255,255,.04); transition:background .15s;"
-                                                    onmouseenter="this.style.background='rgba(255,255,255,.03)'"
-                                                    onmouseleave="this.style.background='transparent'">
-                                                    <td style="padding:.65rem 1rem; font-family:monospace; color:#6e7681; font-size:10px;"
-                                                        x-text="client.sid.substring(0,12) + '...'"></td>
-                                                    <td style="padding:.65rem 1rem; color:#c9d1d9; font-weight:600;"
+                                                <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
+                                                    <td style="padding:0.6rem 1.5rem; color:#c9d1d9; font-weight:700;"
                                                         x-text="client.ip"></td>
-                                                    <td style="padding:.65rem 1rem; color:#6e7681;"
-                                                        x-text="client.connected_at"></td>
+                                                    <td style="padding:0.6rem 1.5rem;"
+                                                        x-text="client.sid.substring(0,8)">
+                                                    </td>
+                                                    <td style="padding:0.6rem 1.5rem; text-align:right;"
+                                                        x-text="'Joined ' + client.connected_at"></td>
                                                 </tr>
                                             </template>
-                                            <tr x-show="sys.clients.length === 0">
-                                                <td colspan="3"
-                                                    style="padding:3rem; text-align:center; color:#6e7681; font-style:italic; font-size:12px;">
-                                                    No active connections</td>
-                                            </tr>
                                         </tbody>
                                     </table>
                                 </div>
                             </div>
-                        </div><!-- /padding bottom -->
-                    </div><!-- /max-width wrapper -->
-                </div><!-- /health tab -->
+                        </div>
+                    </div>
+                </div>
+            </div>
 
         </main>
     </div>
@@ -536,7 +562,28 @@
                 allLogs: [],
                 pending_q: [],
                 stats: { rx: 0, tx: 0 },
-                sys: { cpu: 0, ram_p: 0, ram_used: 0, ram_free: 0, client_count: 0, clients: [] },
+                sys: {
+                    cpu: 0,
+                    ram_p: 0,
+                    ram_used: 0,
+                    ram_free: 0,
+                    ram_total: 0,
+                    disk_percent: 0,
+                    disk_used_gb: 0,
+                    disk_total_gb: 0,
+                    hostname: '-',
+                    load_avg: [0, 0, 0],
+                    cpu_temp: 0,
+                    client_count: 0,
+                    clients: []
+                },
+                gms: {
+                    latency_ms: 0,
+                    total_errors: 0,
+                    rx_types: {},
+                    tx_types: {},
+                    last_activity: null
+                },
                 mysql: {
                     status: 'unknown',
                     version: '-',
@@ -567,11 +614,27 @@
                 initws() {
                     console.log('Initializing WebSocket...');
                     try {
-                        this.socket = io({ path: '/socket.io' });
-                        this.socket.on('connect', () => {
+                        this.socket = io({
+                            path: '/socket.io',
+                            transports: ['websocket'],
+                            upgrade: true,
+                            reconnectionDelay: 2000,
+                            reconnectionDelayMax: 10000,
+                        });
+                        this.socket.on('connect', async () => {
                             console.log('BFF Ready (Connected)');
                             this.status = 'connected';
                             this.statusText = 'Connected';
+
+                            // Load current config from backend
+                            try {
+                                const res = await fetch('/api/v1/socket/gms/config');
+                                const data = await res.json();
+                                if (data.success) {
+                                    this.config = { ...this.config, ...data.config };
+                                }
+                            } catch (e) { console.error('Failed to fetch config:', e); }
+
                             this.saveConfig(); // Sync config with backend
                         });
                         this.socket.on('connect_error', (err) => console.error('Connection Error:', err));
@@ -601,10 +664,16 @@
                                 ram_used: data.system.ram_used_gb,
                                 ram_total: data.system.ram_total_gb,
                                 ram_free: data.system.ram_free_gb,
+                                disk_percent: data.system.disk_percent,
+                                disk_used_gb: data.system.disk_used_gb,
+                                disk_total_gb: data.system.disk_total_gb,
+                                hostname: data.system.hostname,
+                                cpu_temp: data.system.cpu_temp,
                                 client_count: data.system.client_count,
                                 clients: data.system.clients || []
                             };
                             this.mysql = data.mysql;
+                            this.gms = data.gms || this.gms;
                             this.updateCharts();
                         });
 
@@ -683,29 +752,42 @@
                 history: {
                     cpu: Array(30).fill(0),
                     ram: Array(30).fill(0),
+                    latency: Array(30).fill(0),
                 },
 
                 initCharts() {
                     // No-op: SVG charts are drawn on each update
                     this._drawSparkline('cpuChartSvg', this.history.cpu, '#3fb950');
                     this._drawSparkline('ramChartSvg', this.history.ram, '#58a6ff');
+                    this._drawSparkline('gmsLatencyChartSvg', this.history.latency, '#bc8cff', 200);
                 },
 
                 updateCharts() {
                     this.history.cpu.push(this.sys.cpu);
                     this.history.ram.push(this.sys.ram_p);
+                    this.history.latency.push(this.gms.latency_ms || 0);
                     if (this.history.cpu.length > 30) this.history.cpu.shift();
                     if (this.history.ram.length > 30) this.history.ram.shift();
+                    if (this.history.latency.length > 30) this.history.latency.shift();
+
                     this._drawSparkline('cpuChartSvg', this.history.cpu, '#3fb950');
                     this._drawSparkline('ramChartSvg', this.history.ram, '#58a6ff');
+                    this._drawSparkline('gmsLatencyChartSvg', this.history.latency, '#bc8cff', 200);
                 },
 
-                _drawSparkline(svgId, values, color) {
+                _drawSparkline(svgId, values, color, predefinedMax = null) {
                     const svg = document.getElementById(svgId);
                     if (!svg) return;
                     const W = svg.clientWidth || svg.getBoundingClientRect().width || 300;
-                    const H = 70;
-                    const max = 100;
+                    const H = svg.clientHeight || svg.getBoundingClientRect().height || 50;
+
+                    // Auto-scale max for latency, or use 100 for percentages
+                    let max = predefinedMax || 100;
+                    if (!predefinedMax) {
+                        const actualMax = Math.max(...values);
+                        if (actualMax > max) max = actualMax * 1.2;
+                    }
+
                     const n = values.length;
                     if (n < 2) return;
 

@@ -30,7 +30,7 @@ else:
     gms_client = GMSClient(sio)
 
 polling_manager = PollingManager(gms_client)
-system_monitor = SystemMonitor(sio)
+system_monitor = SystemMonitor(sio, gms_client)
 
 
 # Configure Loguru to write to file
@@ -45,10 +45,11 @@ def init_logging():
 
     # 1. Main Server Log (Exclude GMS Client & Polling Verbosity)
     logger.add(
-        "logs/server_{time:YYYY-MM-DD_HH-mm}.log",
-        rotation="1 hour",
+        "logs/server_{time:YYYY-MM-DD}.log",
+        rotation="30 minutes",
         retention="1 week",
         level=settings.LOG_LEVEL,
+        format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}",
         filter=lambda record: "app.services.gms_client" not in record["name"]
         and "app.behaviors.polling_manager" not in record["name"],
         enqueue=True,  # Thread-safe
@@ -56,14 +57,75 @@ def init_logging():
 
     # 2. Service Log (Only GMS Client & Polling)
     logger.add(
-        "logs/service_{time:YYYY-MM-DD_HH-mm}.log",
-        rotation="1 hour",
+        "logs/service_{time:YYYY-MM-DD}.log",
+        rotation="30 minutes",
         retention="1 week",
         level=settings.LOG_LEVEL,
+        format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}",
         filter=lambda record: "app.services" in record["name"]
         or "app.behaviors.polling_manager" in record["name"],
         enqueue=True,  # Thread-safe
     )
+
+
+async def startup_diagnostics():
+    """ตรวจสอบและ log สถานะการเชื่อมต่อทั้งหมดตอน startup"""
+    import socket as _socket
+    import pymysql
+
+    # ─── Banner ─────────────────────────────────────────────────────────────
+    logger.info("=" * 62)
+    logger.info("   ESIG HUB v1.0.0  —  Startup Diagnostics")
+    logger.info("=" * 62)
+    logger.info(f"   MODE      : {'🔵 MOCK' if settings.MOCK_MODE else '🟢 LIVE'}")
+    logger.info(
+        f"   GMS       : {settings.GMS_IP}:{settings.GMS_PORT}  (CLIENT={settings.GMS_CLIENT_CODE})"
+    )
+    logger.info(
+        f"   DB        : {settings.DB_HOST}:{settings.DB_PORT} / db='{settings.DB_NAME}'"
+    )
+    logger.info(f"   LOG LEVEL : {settings.LOG_LEVEL}")
+    logger.info("-" * 62)
+
+    # ─── Check 1: MySQL ─────────────────────────────────────────────────────
+    if not settings.DB_NAME or settings.DB_PASS in ("", "your_password_here"):
+        logger.warning(
+            "   [DB]  ⚠️  MySQL SKIPPED    → DB_NAME หรือ DB_PASS ยังไม่ได้ตั้งค่าใน .env"
+        )
+    else:
+        try:
+            conn = pymysql.connect(
+                host=settings.DB_HOST,
+                port=settings.DB_PORT,
+                user=settings.DB_USER,
+                password=settings.DB_PASS,
+                database=settings.DB_NAME,
+                connect_timeout=3,
+            )
+            conn.close()
+            logger.success(
+                f"   [DB]  ✅ MySQL OK        → {settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}"
+            )
+        except Exception as e:
+            logger.error(f"   [DB]  ❌ MySQL FAILED    → {e}")
+
+    # ─── Check 2: GMS TCP Reachability ──────────────────────────────────────
+    if settings.MOCK_MODE:
+        logger.info("   [GMS] 🔵 MOCK MODE       → ข้ามการตรวจสอบ GMS")
+    else:
+        try:
+            s = _socket.create_connection(
+                (settings.GMS_IP, settings.GMS_PORT), timeout=2
+            )
+            s.close()
+            logger.success(
+                f"   [GMS] ✅ GMS Reachable  → {settings.GMS_IP}:{settings.GMS_PORT}"
+            )
+        except Exception as e:
+            logger.warning(f"   [GMS] ⚠️  GMS Unreachable → {e}")
+            logger.warning("           (ปกติ — GMS จะเชื่อมต่อเมื่อกด START SERVICE)")
+
+    logger.info("=" * 62)
 
 
 @asynccontextmanager
@@ -73,8 +135,12 @@ async def lifespan(app: FastAPI):
     loop = asyncio.get_running_loop()
     gms_client.set_loop(loop)
     system_monitor.set_loop(loop)
+    gms_client.set_monitor(system_monitor)  # Wire monitor for daily reset summary
+
+    await startup_diagnostics()
 
     logger.info("ESIG HUB Initializing: Establishing GMS Polling Behavior...")
+    gms_client.set_callbacks(on_message=polling_manager.handle_gms_message)
     polling_manager.start_service()
     system_monitor.start()
 
@@ -233,11 +299,42 @@ async def client_command(sid, data):
         )
 
 
+@sio.on("get_tasks_page")
+async def handle_get_tasks_page(sid, data):
+    """
+    Handle paginated task requests from Frontend
+    Data should include: { "page": 1, "pageSize": 20 }
+    """
+    try:
+        page = data.get("page", 1)
+        page_size = data.get("pageSize", 80)
+        start_time = data.get("startTime")
+        end_time = data.get("endTime")
+
+        result = polling_manager.get_paginated_tasks(
+            page, page_size, start_time, end_time
+        )
+
+        await sio.emit("tasks_page_response", result, to=sid)
+        logger.debug(
+            f"Sent tasks page {page} ({len(result['tasks'])} items) to client {sid}"
+        )
+
+    except Exception as e:
+        logger.error(f"Error handling get_tasks_page: {e}")
+        await sio.emit(
+            "tasks_page_response",
+            {"status": "error", "message": str(e), "tasks": [], "totalCount": 0},
+            to=sid,
+        )
+
+
 @sio.on("refresh_data")
 async def handle_refresh_data(sid, data):
     """Handle on-demand data refresh (e.g. UI navigation triggers)"""
     try:
         msg_type = data.get("msgType")
+        body = data.get("body") or {}
         if not msg_type:
             return
 
@@ -245,9 +342,9 @@ async def handle_refresh_data(sid, data):
         if not gms_client.is_connected():
             return
 
-        # Forward to GMS
+        # Forward to GMS with potential dates/filters from UI
         gms_client.send_request(
-            msg_type, settings.GMS_CLIENT_CODE, settings.GMS_CHANNEL_ID, {}
+            msg_type, settings.GMS_CLIENT_CODE, settings.GMS_CHANNEL_ID, body
         )
     except Exception as e:
         logger.error(f"Refresh Data Error: {e}")
