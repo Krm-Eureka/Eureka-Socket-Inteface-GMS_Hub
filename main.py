@@ -20,6 +20,7 @@ from app.services.mock_gms_client import MockGMSClient
 from app.behaviors.polling_manager import PollingManager
 from app.behaviors.system_monitor import SystemMonitor
 from app.api.v1.gms_router import router as gms_router
+from app.api.v1.ui_router import router as ui_router
 
 # --- Server Orchestration ---
 sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins="*")
@@ -185,6 +186,7 @@ templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
 # Mount API Modules
 app.include_router(gms_router)
+app.include_router(ui_router)
 
 
 @app.get("/favicon.ico", include_in_schema=False)

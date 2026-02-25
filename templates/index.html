@@ -196,6 +196,8 @@
                         @click="activeTab = 'console'">CONSOLE</button>
                     <button class="tab-btn" :class="activeTab === 'health' ? 'active' : ''"
                         @click="activeTab = 'health'; $nextTick(() => initCharts())">HEALTH</button>
+                    <button class="tab-btn" :class="activeTab === 'config' ? 'active' : ''"
+                        @click="activeTab = 'config'; loadUiConfig()">CONFIG ⚡</button>
                 </div>
                 <div class="stat-box">
                     <span class="stat-lbl">RX MSG</span>
@@ -254,8 +256,266 @@
                 </div>
             </div>
 
+            <!-- Tab Content: CONFIG EDITOR -->
+            <div x-show="activeTab === 'config'" x-transition
+                style="display:flex; flex-direction:column; flex:1; min-height:0; overflow-y:auto; padding:1.5rem 2rem 4rem;">
+                <div style="max-width:1100px; margin:0 auto; width:100%;">
+                    <h2
+                        style="font-size:14px; font-weight:800; color:#3fb950; margin-bottom:1.5rem; letter-spacing:.1rem;">
+                        ⚡ UI CONFIG EDITOR</h2>
+
+                    <!-- Password Row -->
+                    <div
+                        style="background:rgba(22,27,34,.8); border:1px solid rgba(241,196,15,.3); border-radius:12px; padding:1rem 1.5rem; margin-bottom:1.5rem; display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+                        <span style="font-size:11px; color:#e3b341; font-weight:700;">🔒 ADMIN PASSWORD</span>
+                        <input type="password" x-model="cfgPwd" placeholder="Enter admin password before saving..."
+                            style="flex:1; min-width:200px; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:8px 12px; border-radius:6px; font-size:12px; outline:none;">
+                        <span x-show="cfgMsg" x-text="cfgMsg" :style="cfgMsgOk ? 'color:#3fb950' : 'color:#f85149'"
+                            style="font-size:11px; font-weight:600; min-width:120px;"></span>
+                    </div>
+
+                    <!-- STATIONS -->
+                    <div
+                        style="background:rgba(22,27,34,.7); border:1px solid rgba(255,255,255,.07); border-radius:16px; padding:1.5rem; margin-bottom:1.5rem;">
+                        <div
+                            style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                            <h3 style="font-size:12px; font-weight:800; color:#c9d1d9; text-transform:uppercase;">🚩
+                                Stations (<span x-text="Object.keys(cfgData.stations||{}).length">0</span>)</h3>
+                            <button class="btn btn-primary" style="padding:4px 12px;font-size:10px;"
+                                @click="editStationCode='';newStation={code:'',alias:'',angle:90,containerType:''};showAddStation=true">+
+                                ADD</button>
+                        </div>
+                        <div style="max-height:280px; overflow-y:auto;">
+                            <table style="width:100%;border-collapse:collapse;font-size:11px;color:#8b949e;">
+                                <thead>
+                                    <tr
+                                        style="border-bottom:1px solid rgba(255,255,255,.05);color:#6e7681;font-size:10px;">
+                                        <th style="padding:.5rem 1rem;text-align:left;">CODE</th>
+                                        <th style="padding:.5rem;text-align:left;">ALIAS</th>
+                                        <th style="padding:.5rem;text-align:center;">ANGLE</th>
+                                        <th style="padding:.5rem;text-align:left;">CONTAINER TYPE</th>
+                                        <th style="padding:.5rem;text-align:center;">ACTIONS</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template x-for="[code, st] in Object.entries(cfgData.stations||{})" :key="code">
+                                        <tr style="border-bottom:1px solid rgba(255,255,255,.03);">
+                                            <td style="padding:.45rem 1rem;color:#c9d1d9;font-weight:700;font-family:monospace;"
+                                                x-text="code"></td>
+                                            <td style="padding:.45rem .5rem;" x-text="st.alias"></td>
+                                            <td style="padding:.45rem;text-align:center;" x-text="st.angle+'°'"></td>
+                                            <td style="padding:.45rem .5rem;font-size:10px;color:#58a6ff;"
+                                                x-text="(st.containerType||[]).join(', ')||'-'"></td>
+                                            <td style="padding:.45rem;text-align:center;">
+                                                <button
+                                                    style="font-size:9px;padding:2px 8px;background:rgba(88,166,255,.15);color:#58a6ff;border:1px solid rgba(88,166,255,.3);border-radius:4px;cursor:pointer;margin-right:4px;"
+                                                    @click="editStationCode=code;newStation={code:code,alias:st.alias,angle:st.angle,containerType:(st.containerType||[]).join(',')};showAddStation=true">EDIT</button>
+                                                <button
+                                                    style="font-size:9px;padding:2px 8px;background:rgba(248,81,73,.1);color:#f85149;border:1px solid rgba(248,81,73,.3);border-radius:4px;cursor:pointer;"
+                                                    @click="deleteStation(code)">DEL</button>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- Add/Edit Station Modal -->
+                        <div x-show="showAddStation" x-cloak
+                            style="position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:1000;">
+                            <div
+                                style="background:#161b22;border:1px solid #30363d;border-radius:16px;padding:2rem;width:420px;max-width:95vw;">
+                                <h3 style="font-size:13px;font-weight:800;color:#c9d1d9;margin-bottom:1.5rem;"
+                                    x-text="editStationCode ? 'EDIT: '+editStationCode : 'ADD STATION'"></h3>
+                                <div style="display:grid;gap:.75rem;">
+                                    <div>
+                                        <label style="font-size:10px;color:#6e7681;font-weight:700;">STATION CODE
+                                            *</label>
+                                        <input x-model="newStation.code" :disabled="!!editStationCode"
+                                            placeholder="e.g. B3F1_3_IN"
+                                            style="width:100%;background:rgba(0,0,0,.3);border:1px solid #30363d;color:#c9d1d9;padding:8px 12px;border-radius:6px;font-size:12px;font-family:monospace;outline:none;margin-top:4px;">
+                                    </div>
+                                    <div>
+                                        <label style="font-size:10px;color:#6e7681;font-weight:700;">ALIAS *</label>
+                                        <input x-model="newStation.alias" placeholder="e.g. B3F1"
+                                            style="width:100%;background:rgba(0,0,0,.3);border:1px solid #30363d;color:#c9d1d9;padding:8px 12px;border-radius:6px;font-size:12px;outline:none;margin-top:4px;">
+                                    </div>
+                                    <div>
+                                        <label style="font-size:10px;color:#6e7681;font-weight:700;">ANGLE (degrees)
+                                            *</label>
+                                        <input type="number" x-model.number="newStation.angle" placeholder="0 or 90"
+                                            style="width:100%;background:rgba(0,0,0,.3);border:1px solid #30363d;color:#c9d1d9;padding:8px 12px;border-radius:6px;font-size:12px;outline:none;margin-top:4px;">
+                                    </div>
+                                    <div>
+                                        <label style="font-size:10px;color:#6e7681;font-weight:700;">CONTAINER TYPES
+                                            (comma-separated)</label>
+                                        <input x-model="newStation.containerType" placeholder="T2000001,T0000006"
+                                            style="width:100%;background:rgba(0,0,0,.3);border:1px solid #30363d;color:#c9d1d9;padding:8px 12px;border-radius:6px;font-size:12px;font-family:monospace;outline:none;margin-top:4px;">
+                                    </div>
+                                </div>
+                                <div style="display:flex;justify-content:flex-end;gap:.75rem;margin-top:1.5rem;">
+                                    <button class="btn btn-outline" style="padding:6px 20px;font-size:11px;"
+                                        @click="showAddStation=false">CANCEL</button>
+                                    <button class="btn btn-primary" style="padding:6px 20px;font-size:11px;"
+                                        @click="saveStation()">SAVE</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FLOORS -->
+                    <div
+                        style="background:rgba(22,27,34,.7); border:1px solid rgba(255,255,255,.07); border-radius:16px; padding:1.5rem; margin-bottom:1.5rem;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+                            <h3 style="font-size:12px;font-weight:800;color:#c9d1d9;text-transform:uppercase;">🏗️
+                                Floors (<span x-text="(cfgData.floors||[]).length"></span>)</h3>
+                            <button class="btn btn-primary" style="padding:4px 12px;font-size:10px;"
+                                @click="showAddFloor=true;newFloor={id:'',label:'',image:'',_file:null}">+ ADD</button>
+                        </div>
+                        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;">
+                            <template x-for="f in (cfgData.floors||[])" :key="f.id">
+                                <div
+                                    style="background:rgba(0,0,0,.3);border:1px solid #30363d;border-radius:10px;padding:1rem;">
+                                    <div style="font-size:12px;font-weight:700;color:#c9d1d9;" x-text="f.label"></div>
+                                    <div style="font-size:10px;color:#6e7681;font-family:monospace;"
+                                        x-text="'ID: '+f.id"></div>
+                                    <img :src="f.image+'?t='+Date.now()"
+                                        style="width:100%;height:70px;object-fit:cover;border-radius:6px;opacity:.7;margin-top:.5rem;"
+                                        onerror="this.style.display='none'">
+                                    <button
+                                        style="font-size:9px;padding:2px 8px;background:rgba(248,81,73,.1);color:#f85149;border:1px solid rgba(248,81,73,.3);border-radius:4px;cursor:pointer;margin-top:.5rem;"
+                                        @click="deleteFloor(f.id)">DELETE</button>
+                                </div>
+                            </template>
+                        </div>
+                        <!-- Add Floor Modal -->
+                        <div x-show="showAddFloor" x-cloak
+                            style="position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:1000;">
+                            <div
+                                style="background:#161b22;border:1px solid #30363d;border-radius:16px;padding:2rem;width:420px;max-width:95vw;">
+                                <h3 style="font-size:13px;font-weight:800;color:#c9d1d9;margin-bottom:1.5rem;">ADD NEW
+                                    FLOOR</h3>
+                                <div style="display:grid;gap:.75rem;">
+                                    <div><label style="font-size:10px;color:#6e7681;font-weight:700;">FLOOR ID (number)
+                                            *</label>
+                                        <input type="number" x-model.number="newFloor.id" placeholder="4"
+                                            style="width:100%;background:rgba(0,0,0,.3);border:1px solid #30363d;color:#c9d1d9;padding:8px 12px;border-radius:6px;font-size:12px;outline:none;margin-top:4px;">
+                                    </div>
+                                    <div><label style="font-size:10px;color:#6e7681;font-weight:700;">LABEL *</label>
+                                        <input x-model="newFloor.label" placeholder="FLOOR 4"
+                                            style="width:100%;background:rgba(0,0,0,.3);border:1px solid #30363d;color:#c9d1d9;padding:8px 12px;border-radius:6px;font-size:12px;outline:none;margin-top:4px;">
+                                    </div>
+                                    <div><label style="font-size:10px;color:#6e7681;font-weight:700;">FLOOR IMAGE
+                                            (.webp/.png) *</label>
+                                        <input type="file" accept=".webp,.png,.jpg,.jpeg"
+                                            @change="newFloor._file=$event.target.files[0];newFloor._filename=$event.target.files[0]?.name"
+                                            style="width:100%;color:#c9d1d9;font-size:11px;margin-top:4px;">
+                                        <div x-show="newFloor._filename" x-text="'✅ '+newFloor._filename"
+                                            style="font-size:10px;color:#3fb950;margin-top:4px;"></div>
+                                    </div>
+                                </div>
+                                <div style="display:flex;justify-content:flex-end;gap:.75rem;margin-top:1.5rem;">
+                                    <button class="btn btn-outline" style="padding:6px 20px;font-size:11px;"
+                                        @click="showAddFloor=false">CANCEL</button>
+                                    <button class="btn btn-primary" style="padding:6px 20px;font-size:11px;"
+                                        @click="saveFloor()">SAVE</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CONTAINER TYPES -->
+                    <div
+                        style="background:rgba(22,27,34,.7); border:1px solid rgba(255,255,255,.07); border-radius:16px; padding:1.5rem;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+                            <h3 style="font-size:12px;font-weight:800;color:#c9d1d9;text-transform:uppercase;">📦
+                                Container Types (<span x-text="(cfgData.containerTypes||[]).length"></span>)</h3>
+                            <button class="btn btn-primary" style="padding:4px 12px;font-size:10px;"
+                                @click="showAddContainer=true;newContainer={id:'',name:'',width:'',length:'',color:'#2ecc71',_file:null}">+
+                                ADD</button>
+                        </div>
+                        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem;">
+                            <template x-for="ct in (cfgData.containerTypes||[])" :key="ct.id">
+                                <div
+                                    style="background:rgba(0,0,0,.3);border:1px solid #30363d;border-radius:10px;padding:1rem;">
+                                    <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem;">
+                                        <div :style="'width:10px;height:10px;border-radius:50%;background:'+ct.color">
+                                        </div>
+                                        <span style="font-size:11px;font-weight:700;color:#c9d1d9;"
+                                            x-text="ct.name"></span>
+                                    </div>
+                                    <div style="font-size:10px;color:#6e7681;font-family:monospace;" x-text="ct.id">
+                                    </div>
+                                    <div style="font-size:10px;color:#6e7681;" x-text="ct.width+'m × '+ct.length+'m'">
+                                    </div>
+                                    <img :src="ct.image+'?t='+Date.now()"
+                                        style="width:100%;height:60px;object-fit:contain;margin-top:.5rem;"
+                                        onerror="this.style.display='none'">
+                                    <button
+                                        style="font-size:9px;padding:2px 8px;background:rgba(248,81,73,.1);color:#f85149;border:1px solid rgba(248,81,73,.3);border-radius:4px;cursor:pointer;margin-top:.5rem;"
+                                        @click="deleteContainerType(ct.id)">DELETE</button>
+                                </div>
+                            </template>
+                        </div>
+                        <!-- Add Container Type Modal -->
+                        <div x-show="showAddContainer" x-cloak
+                            style="position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:1000;">
+                            <div
+                                style="background:#161b22;border:1px solid #30363d;border-radius:16px;padding:2rem;width:420px;max-width:95vw;">
+                                <h3 style="font-size:13px;font-weight:800;color:#c9d1d9;margin-bottom:1.5rem;">ADD
+                                    CONTAINER TYPE</h3>
+                                <div style="display:grid;gap:.75rem;">
+                                    <div><label style="font-size:10px;color:#6e7681;font-weight:700;">TYPE ID *</label>
+                                        <input x-model="newContainer.id" placeholder="T9999999"
+                                            style="width:100%;background:rgba(0,0,0,.3);border:1px solid #30363d;color:#c9d1d9;padding:8px 12px;border-radius:6px;font-size:12px;font-family:monospace;outline:none;margin-top:4px;">
+                                    </div>
+                                    <div><label style="font-size:10px;color:#6e7681;font-weight:700;">DISPLAY NAME
+                                            *</label>
+                                        <input x-model="newContainer.name" placeholder="My Trolley (800x1000)"
+                                            style="width:100%;background:rgba(0,0,0,.3);border:1px solid #30363d;color:#c9d1d9;padding:8px 12px;border-radius:6px;font-size:12px;outline:none;margin-top:4px;">
+                                    </div>
+                                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
+                                        <div><label style="font-size:10px;color:#6e7681;font-weight:700;">WIDTH (m)
+                                                *</label>
+                                            <input type="number" x-model.number="newContainer.width" placeholder="0.8"
+                                                style="width:100%;background:rgba(0,0,0,.3);border:1px solid #30363d;color:#c9d1d9;padding:8px 12px;border-radius:6px;font-size:12px;outline:none;margin-top:4px;">
+                                        </div>
+                                        <div><label style="font-size:10px;color:#6e7681;font-weight:700;">LENGTH (m)
+                                                *</label>
+                                            <input type="number" x-model.number="newContainer.length" placeholder="1.12"
+                                                style="width:100%;background:rgba(0,0,0,.3);border:1px solid #30363d;color:#c9d1d9;padding:8px 12px;border-radius:6px;font-size:12px;outline:none;margin-top:4px;">
+                                        </div>
+                                    </div>
+                                    <div><label style="font-size:10px;color:#6e7681;font-weight:700;">COLOR</label>
+                                        <div style="display:flex;align-items:center;gap:.5rem;margin-top:4px;">
+                                            <input type="color" x-model="newContainer.color"
+                                                style="width:36px;height:36px;border:none;background:none;cursor:pointer;">
+                                            <span x-text="newContainer.color"
+                                                style="font-family:monospace;font-size:11px;color:#c9d1d9;"></span>
+                                        </div>
+                                    </div>
+                                    <div><label style="font-size:10px;color:#6e7681;font-weight:700;">ICON IMAGE
+                                            (.webp/.png) *</label>
+                                        <input type="file" accept=".webp,.png,.jpg,.jpeg"
+                                            @change="newContainer._file=$event.target.files[0];newContainer._filename=$event.target.files[0]?.name"
+                                            style="width:100%;color:#c9d1d9;font-size:11px;margin-top:4px;">
+                                        <div x-show="newContainer._filename" x-text="'✅ '+newContainer._filename"
+                                            style="font-size:10px;color:#3fb950;margin-top:4px;"></div>
+                                    </div>
+                                </div>
+                                <div style="display:flex;justify-content:flex-end;gap:.75rem;margin-top:1.5rem;">
+                                    <button class="btn btn-outline" style="padding:6px 20px;font-size:11px;"
+                                        @click="showAddContainer=false">CANCEL</button>
+                                    <button class="btn btn-primary" style="padding:6px 20px;font-size:11px;"
+                                        @click="saveContainerType()">SAVE</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <!-- Tab Content: HEALTH Dashboard -->
+
             <div x-show="activeTab === 'health'" x-transition
                 style="display:flex; flex-direction:column; flex:1; min-height:0; overflow-y:auto; padding:1.5rem 2rem 4rem 2rem; background: radial-gradient(ellipse at top left, rgba(63,185,80,0.04) 0%, transparent 60%), radial-gradient(ellipse at bottom right, rgba(88,166,255,0.04) 0%, transparent 60%);">
 
@@ -811,7 +1071,206 @@
                         <path d="${fillPath}" fill="url(#${gradId})"/>
                         <polyline points="${polyline}" fill="none" stroke="${color}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
                     `;
-                }
+                },
+
+                // ─── UI CONFIG EDITOR ──────────────────────────────────────
+                cfgData: { stations: {}, floors: [], containerTypes: [] },
+                cfgPwd: '',
+                cfgMsg: '',
+                cfgMsgOk: false,
+
+                // Station modal
+                showAddStation: false,
+                editStationCode: '',
+                newStation: { code: '', alias: '', angle: 90, containerType: '' },
+
+                // Floor modal
+                showAddFloor: false,
+                newFloor: { id: '', label: '', image: '', _file: null, _filename: '' },
+
+                // Container type modal
+                showAddContainer: false,
+                newContainer: { id: '', name: '', width: '', length: '', color: '#2ecc71', _file: null, _filename: '' },
+
+                _cfgNotify(msg, ok) {
+                    this.cfgMsg = msg;
+                    this.cfgMsgOk = ok;
+                    setTimeout(() => { this.cfgMsg = ''; }, 4000);
+                },
+
+                _cfgHeaders() {
+                    return { 'X-Admin-Password': this.cfgPwd };
+                },
+
+                async loadUiConfig() {
+                    try {
+                        const r = await fetch('/api/v1/ui/config');
+                        const d = await r.json();
+                        if (d.success) this.cfgData = d.data;
+                    } catch (e) {
+                        this._cfgNotify('❌ Failed to load config', false);
+                    }
+                },
+
+                async saveStation() {
+                    const code = this.newStation.code.trim().toUpperCase();
+                    const alias = this.newStation.alias.trim();
+
+                    // --- Client-side Validation ---
+                    if (!code) return this._cfgNotify('❌ Station Code is required', false);
+                    if (!alias) return this._cfgNotify('❌ Alias is required', false);
+                    if (typeof this.newStation.angle !== 'number') return this._cfgNotify('❌ Angle must be a number', false);
+                    if (!this.cfgPwd) return this._cfgNotify('❌ Password required', false);
+
+                    const body = {
+                        alias,
+                        angle: this.newStation.angle,
+                        containerType: this.newStation.containerType
+                            ? this.newStation.containerType.split(',').map(s => s.trim()).filter(Boolean)
+                            : []
+                    };
+
+                    const isEdit = !!this.editStationCode;
+                    const url = isEdit
+                        ? `/api/v1/ui/config/stations/${this.editStationCode}`
+                        : `/api/v1/ui/config/stations?code=${code}`;
+                    const method = isEdit ? 'PATCH' : 'POST';
+
+                    try {
+                        const r = await fetch(url, {
+                            method,
+                            headers: { 'Content-Type': 'application/json', ...this._cfgHeaders() },
+                            body: JSON.stringify(body)
+                        });
+                        const d = await r.json();
+                        if (d.success) {
+                            this._cfgNotify(`✅ Station ${isEdit ? 'updated' : 'added'}`, true);
+                            this.showAddStation = false;
+                            this.editStationCode = '';
+                            await this.loadUiConfig();
+                        } else {
+                            this._cfgNotify('❌ ' + (d.detail || d.message), false);
+                        }
+                    } catch (e) {
+                        this._cfgNotify('❌ Network error', false);
+                    }
+                },
+
+                async deleteStation(code) {
+                    if (!this.cfgPwd) return this._cfgNotify('❌ Password required', false);
+                    if (!confirm(`Delete station '${code}'?`)) return;
+                    try {
+                        const r = await fetch(`/api/v1/ui/config/stations/${code}`, {
+                            method: 'DELETE',
+                            headers: this._cfgHeaders()
+                        });
+                        const d = await r.json();
+                        if (d.success) { this._cfgNotify('✅ Deleted', true); await this.loadUiConfig(); }
+                        else this._cfgNotify('❌ ' + (d.detail || d.message), false);
+                    } catch (e) { this._cfgNotify('❌ Network error', false); }
+                },
+
+                async _uploadFile(file, subfolder = '') {
+                    const fd = new FormData();
+                    fd.append('file', file);
+                    const url = `/api/v1/ui/assets/upload${subfolder ? '?subfolder=' + subfolder : ''}`;
+                    const r = await fetch(url, { method: 'POST', headers: this._cfgHeaders(), body: fd });
+                    const d = await r.json();
+                    if (!d.success) throw new Error(d.detail || d.message || 'Upload failed');
+                    return d.url;
+                },
+
+                async saveFloor() {
+                    // --- Validation ---
+                    if (!this.newFloor.id && this.newFloor.id !== 0) return this._cfgNotify('❌ Floor ID is required', false);
+                    if (!this.newFloor.label.trim()) return this._cfgNotify('❌ Label is required', false);
+                    if (!this.newFloor._file) return this._cfgNotify('❌ Floor image is required — please select a file', false);
+                    if (!this.cfgPwd) return this._cfgNotify('❌ Password required', false);
+
+                    try {
+                        // 1. Upload image first
+                        const imgUrl = await this._uploadFile(this.newFloor._file);
+                        // 2. Add floor record
+                        const r = await fetch('/api/v1/ui/config/floors', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', ...this._cfgHeaders() },
+                            body: JSON.stringify({ id: this.newFloor.id, label: this.newFloor.label.trim(), image: imgUrl })
+                        });
+                        const d = await r.json();
+                        if (d.success) {
+                            this._cfgNotify('✅ Floor added', true);
+                            this.showAddFloor = false;
+                            await this.loadUiConfig();
+                        } else {
+                            this._cfgNotify('❌ ' + (d.detail || d.message), false);
+                        }
+                    } catch (e) { this._cfgNotify('❌ ' + e.message, false); }
+                },
+
+                async deleteFloor(id) {
+                    if (!this.cfgPwd) return this._cfgNotify('❌ Password required', false);
+                    if (!confirm(`Delete Floor ${id}?`)) return;
+                    try {
+                        const r = await fetch(`/api/v1/ui/config/floors/${id}`, {
+                            method: 'DELETE', headers: this._cfgHeaders()
+                        });
+                        const d = await r.json();
+                        if (d.success) { this._cfgNotify('✅ Deleted', true); await this.loadUiConfig(); }
+                        else this._cfgNotify('❌ ' + (d.detail || d.message), false);
+                    } catch (e) { this._cfgNotify('❌ Network error', false); }
+                },
+
+                async saveContainerType() {
+                    // --- Validation ---
+                    if (!this.newContainer.id.trim()) return this._cfgNotify('❌ Type ID is required', false);
+                    if (!this.newContainer.name.trim()) return this._cfgNotify('❌ Name is required', false);
+                    if (!this.newContainer.width || this.newContainer.width <= 0) return this._cfgNotify('❌ Width must be > 0', false);
+                    if (!this.newContainer.length || this.newContainer.length <= 0) return this._cfgNotify('❌ Length must be > 0', false);
+                    if (!this.newContainer._file) return this._cfgNotify('❌ Container image is required — please select a file', false);
+                    if (!this.cfgPwd) return this._cfgNotify('❌ Password required', false);
+
+                    try {
+                        const imgUrl = await this._uploadFile(this.newContainer._file, 'ContainerImg');
+                        const body = {
+                            id: this.newContainer.id.trim(),
+                            name: this.newContainer.name.trim(),
+                            width: parseFloat(this.newContainer.width),
+                            length: parseFloat(this.newContainer.length),
+                            height: 1.0,
+                            baseHeight: 0.37,
+                            image: imgUrl,
+                            color: this.newContainer.color,
+                            containerCategory: this.newContainer.id.trim()
+                        };
+                        const r = await fetch('/api/v1/ui/config/container-types', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', ...this._cfgHeaders() },
+                            body: JSON.stringify(body)
+                        });
+                        const d = await r.json();
+                        if (d.success) {
+                            this._cfgNotify('✅ Container type added', true);
+                            this.showAddContainer = false;
+                            await this.loadUiConfig();
+                        } else {
+                            this._cfgNotify('❌ ' + (d.detail || d.message), false);
+                        }
+                    } catch (e) { this._cfgNotify('❌ ' + e.message, false); }
+                },
+
+                async deleteContainerType(id) {
+                    if (!this.cfgPwd) return this._cfgNotify('❌ Password required', false);
+                    if (!confirm(`Delete container type '${id}'?`)) return;
+                    try {
+                        const r = await fetch(`/api/v1/ui/config/container-types/${id}`, {
+                            method: 'DELETE', headers: this._cfgHeaders()
+                        });
+                        const d = await r.json();
+                        if (d.success) { this._cfgNotify('✅ Deleted', true); await this.loadUiConfig(); }
+                        else this._cfgNotify('❌ ' + (d.detail || d.message), false);
+                    } catch (e) { this._cfgNotify('❌ Network error', false); }
+                },
+
             }
         }
     </script>

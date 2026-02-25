@@ -1,0 +1,439 @@
+{
+    "_comment": "UI Configuration - managed via ESIG Admin Console (port 1244). Changes take effect on next FE page reload.",
+    "_version": "1.0.0",
+    "map": {
+        "MULTIPLIER": 50,
+        "SNAP_DISTANCE": 30,
+        "ORIGIN_OFFSET_X": 0,
+        "ORIGIN_OFFSET_Y": 0,
+        "DEFAULT_LOC_SIZE": 1.2,
+        "OPACITY": 1.0,
+        "ANGLE_OFFSET": 0
+    },
+    "floors": [
+        {
+            "id": 1,
+            "label": "FLOOR 1",
+            "image": "/api/v1/ui/assets/Floor1.webp"
+        },
+        {
+            "id": 2,
+            "label": "FLOOR 2",
+            "image": "/api/v1/ui/assets/Floor2.webp"
+        },
+        {
+            "id": 3,
+            "label": "FLOOR 3",
+            "image": "/api/v1/ui/assets/Floor3.webp"
+        }
+    ],
+    "robot": {
+        "WIDTH": 0.5,
+        "LENGTH": 0.75,
+        "IDLE_COLOR": "#95a5a6",
+        "WORKING_COLOR": "#3498db",
+        "CHARGING_COLOR": "#2ecc71",
+        "ERROR_COLOR": "#e74c3c",
+        "OFFLINE_COLOR": "#9b59b6",
+        "ID_LABEL_BG": "rgba(0,0,0,0.8)"
+    },
+    "colors": {
+        "STATION_NAME": "#00e5ff",
+        "EMPTY_STATION": "#00bcd4",
+        "ACTIVE_STATION": "#2ecc71",
+        "SHELF": "#95a5a6",
+        "SHELF_BUSY": "#0b228bff",
+        "SHELF_STATUS_2": "#e67e22",
+        "STATION_RESERVED": "#E59866",
+        "LABEL_BG": "rgba(0, 0, 0, 0.7)",
+        "TASK_PENDING": "#f1c40f",
+        "TASK_RUNNING": "#3498db",
+        "TASK_DONE": "#2ecc71",
+        "TASK_ERROR": "#e74c3c",
+        "TASK_CANCELLED": "#95a5a6",
+        "TASK_SUSPENDED": "#9b59b6",
+        "TASK_ABNORMAL": "#c0392b"
+    },
+    "stations": {
+        "B3F1": {
+            "alias": "B3F1",
+            "angle": 90,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "B3F1_1_IN": {
+            "alias": "B3F1",
+            "angle": 90,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "B3F1_2_IN": {
+            "alias": "B3F1",
+            "angle": 90,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "B3F1_1_OUT": {
+            "alias": "B3F1",
+            "angle": 90,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "B3F1_2_OUT": {
+            "alias": "B3F1",
+            "angle": 90,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "WAIT_B3F1_CLS": {
+            "alias": "WAIT_B3F1",
+            "angle": 90,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "WAIT_B3F1_OPN": {
+            "alias": "WAIT_B3F1",
+            "angle": 90,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "B4F1": {
+            "alias": "B4F1",
+            "angle": 90
+        },
+        "WAIT_B4F1_CLS": {
+            "alias": "WAIT_B4F1",
+            "angle": 90,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "WAIT_B4F1_OPN": {
+            "alias": "WAIT_B4F1",
+            "angle": 90,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "PACK": {
+            "alias": "PACK",
+            "angle": 0,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "PACKING_1": {
+            "alias": "PACK",
+            "angle": 0,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "PACKING_2": {
+            "alias": "PACK",
+            "angle": 0,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "PACKING_STATION": {
+            "alias": "PACK",
+            "angle": 0,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "ST-001": {
+            "alias": "PACK",
+            "angle": 0,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "LIFT": {
+            "alias": "LIFT",
+            "angle": 90,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "ELEVATOR": {
+            "alias": "LIFT",
+            "angle": 90,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "PP_HDD": {
+            "alias": "PP_HDD",
+            "angle": 90,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "HDD_CLS": {
+            "alias": "WAIT_PP_HDD",
+            "angle": 90,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "HDD_OPN": {
+            "alias": "WAIT_PP_HDD",
+            "angle": 90,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "ROT": {
+            "alias": "WAIT_ROT",
+            "angle": 0,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "AUTO_PACK": {
+            "alias": "AUTO_PACK",
+            "angle": 0,
+            "containerType": [
+                "T0000006"
+            ]
+        },
+        "AUTO_PACK_1": {
+            "alias": "AUTO_PACK",
+            "angle": 0,
+            "containerType": [
+                "T0000006"
+            ]
+        },
+        "AUTO_PACK_2": {
+            "alias": "AUTO_PACK",
+            "angle": 90,
+            "containerType": [
+                "T0000006"
+            ]
+        },
+        "B3F3_1": {
+            "alias": "B3F3_1",
+            "angle": 0,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "B3F3_2": {
+            "alias": "B3F3_2",
+            "angle": 0,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "B3F3_3": {
+            "alias": "B3F3_3",
+            "angle": 0,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "B3F3_4": {
+            "alias": "B3F3_4",
+            "angle": 0,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "B3F3_5": {
+            "alias": "B3F3_5",
+            "angle": 0,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "B3F3_6": {
+            "alias": "B3F3_6",
+            "angle": 0,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "B3F3_7": {
+            "alias": "B3F3_7",
+            "angle": 0,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "B3F3_8": {
+            "alias": "B3F3_8",
+            "angle": 0,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "B3F3_9": {
+            "alias": "B3F3_9",
+            "angle": 0,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "B3F3_10": {
+            "alias": "B3F3_10",
+            "angle": 0,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "B3F3_11": {
+            "alias": "B3F3_11",
+            "angle": 0,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "B3F3_12": {
+            "alias": "B3F3_12",
+            "angle": 0,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "B3F3_13": {
+            "alias": "B3F3_13",
+            "angle": 0,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "B3F3_14": {
+            "alias": "B3F3_14",
+            "angle": 0,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "B3F3_15": {
+            "alias": "B3F3_15",
+            "angle": 0,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "B3F3_16": {
+            "alias": "B3F3_16",
+            "angle": 0,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "PD_B3F3": {
+            "alias": "PD_B3F3",
+            "angle": 0,
+            "containerType": [
+                "T2000001",
+                "T0000006"
+            ]
+        },
+        "B3F2_1": {
+            "alias": "B3F2_1",
+            "angle": 0,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "B3F2_2": {
+            "alias": "B3F2_2",
+            "angle": 0,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "B3F2_3": {
+            "alias": "B3F2_3",
+            "angle": 0,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "B3F2_4": {
+            "alias": "B3F2_4",
+            "angle": 0,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "B3F2_5": {
+            "alias": "B3F2_5",
+            "angle": 0,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "B3F2_6": {
+            "alias": "B3F2_6",
+            "angle": 0,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "B3F2_7": {
+            "alias": "B3F2_7",
+            "angle": 0,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "B3F2_8": {
+            "alias": "B3F2_8",
+            "angle": 0,
+            "containerType": [
+                "T2000001"
+            ]
+        },
+        "PD_B3F2": {
+            "alias": "PD_B3F2",
+            "angle": 90,
+            "containerType": [
+                "T2000001",
+                "T0000006"
+            ]
+        },
+        "BUFFER_B3F2": {
+            "alias": "BUFFER_B3F2",
+            "angle": 0,
+            "containerType": [
+                "T2000001"
+            ]
+        }
+    },
+    "containerTypes": [
+        {
+            "id": "T2000001",
+            "name": "Cage Trolley (800x1120)",
+            "width": 0.8,
+            "length": 1.12,
+            "height": 1.12,
+            "baseHeight": 0.37,
+            "image": "/api/v1/ui/assets/ContainerImg/T2000001.webp",
+            "color": "#2ecc71",
+            "containerCategory": "T2000001"
+        },
+        {
+            "id": "T0000006",
+            "name": "Production Cart",
+            "width": 0.55,
+            "length": 0.85,
+            "height": 1.51,
+            "baseHeight": 0.39,
+            "image": "/api/v1/ui/assets/ContainerImg/T0000006.webp",
+            "color": "#f1c40f",
+            "containerCategory": "T0000006"
+        }
+    ]
+}
