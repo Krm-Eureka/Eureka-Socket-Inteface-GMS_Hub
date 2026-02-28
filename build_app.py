@@ -62,6 +62,7 @@ def build():
             f"--add-data=static{separator}static",
             f"--add-data=templates{separator}templates",
             f"--add-data=app{separator}app",
+            f"--add-data=static/ui_assets{separator}ui_assets",
             "--collect-all",
             "uvicorn",
             "--collect-all",

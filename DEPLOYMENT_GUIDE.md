@@ -80,5 +80,5 @@ icacls "C:\inetpub\wwwroot\ESIG_HUB" /grant "IIS_IUSRS:(OI)(CI)M" /T
 
 ---
 
-**ESIG HUB v1.0.0**  
+**ESIG HUB v1.1.0**  
 *Update: 2026-02-23*

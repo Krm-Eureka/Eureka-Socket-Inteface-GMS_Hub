@@ -1,6 +1,14 @@
 {
     "_comment": "UI Configuration - managed via ESIG Admin Console (port 1244). Changes take effect on next FE page reload.",
-    "_version": "1.0.0",
+    "_source": "backend",
+    "_version": "1.0.1",
+    "site": {
+        "name": "Mektec Thailand",
+        "shortName": "MEK01",
+        "primaryColor": "#00b300",
+        "gmsClientCode": "MEKTEC",
+        "logoUrl": null
+    },
     "map": {
         "MULTIPLIER": 50,
         "SNAP_DISTANCE": 30,
@@ -8,7 +16,8 @@
         "ORIGIN_OFFSET_Y": 0,
         "DEFAULT_LOC_SIZE": 1.2,
         "OPACITY": 1.0,
-        "ANGLE_OFFSET": 0
+        "ANGLE_OFFSET": 0,
+        "ENABLE_SOCKET_LOG": false
     },
     "floors": [
         {
@@ -133,14 +142,16 @@
             "alias": "PACK",
             "angle": 0,
             "containerType": [
-                "T2000001"
+                "T2000001",
+                "T0000006"
             ]
         },
         "PACKING_2": {
             "alias": "PACK",
             "angle": 0,
             "containerType": [
-                "T2000001"
+                "T2000001",
+                "T0000006"
             ]
         },
         "PACKING_STATION": {

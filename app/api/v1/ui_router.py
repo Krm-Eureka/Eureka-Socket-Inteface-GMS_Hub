@@ -1,10 +1,12 @@
 import json
 import os
 import shutil
+import time
 from pathlib import Path
-from fastapi import APIRouter, HTTPException, UploadFile, File, Header
+from fastapi import APIRouter, HTTPException, UploadFile, File, Header, Request
 from fastapi.responses import FileResponse
 from loguru import logger
+from app.services.config_log_service import log_config_change
 
 router = APIRouter(prefix="/api/v1/ui", tags=["UI Config"])
 
@@ -12,10 +14,17 @@ router = APIRouter(prefix="/api/v1/ui", tags=["UI Config"])
 BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent  # ESIG root
 DATA_DIR = BASE_DIR / "app" / "data"
 CONFIG_FILE = DATA_DIR / "ui_config.json"
-ASSETS_DIR = BASE_DIR / "static" / "ui_assets"
+
+# Dynamic asset path: handles both development (static/ui_assets) and PyInstaller build (ui_assets next to static)
+_built_assets = BASE_DIR / "ui_assets"
+if _built_assets.exists():
+    ASSETS_DIR = _built_assets
+else:
+    ASSETS_DIR = BASE_DIR / "static" / "ui_assets"
 
 # Ensure directories exist at startup
 DATA_DIR.mkdir(parents=True, exist_ok=True)
+ASSETS_DIR.mkdir(parents=True, exist_ok=True)
 ASSETS_DIR.mkdir(parents=True, exist_ok=True)
 (ASSETS_DIR / "ContainerImg").mkdir(parents=True, exist_ok=True)
 
@@ -54,6 +63,12 @@ def _check_password(x_admin_password: str | None) -> None:
         )
 
 
+async def _notify_ui_update(request: Request) -> None:
+    """Emit Socket.IO event to tell frontend clients to reload UI Config."""
+    if hasattr(request.app.state, "sio"):
+        await request.app.state.sio.emit("esig:ui:config_updated", {"ts": time.time()})
+
+
 # ─── Endpoints ─────────────────────────────────────────────────────────────────
 
 
@@ -70,7 +85,7 @@ async def get_ui_config():
 
 @router.patch("/config/map")
 async def update_map_config(
-    body: dict, x_admin_password: str | None = Header(default=None)
+    request: Request, body: dict, x_admin_password: str | None = Header(default=None)
 ):
     """
     PATCH /api/v1/ui/config/map
@@ -81,13 +96,80 @@ async def update_map_config(
     config = _load_config()
     config["map"].update(body)
     _save_config(config)
+    await _notify_ui_update(request)
+    log_config_change(
+        request.client.host if request.client else "unknown", "map", "update", str(body)
+    )
     logger.info(f"UI Config [map] updated: {body}")
     return {"success": True, "message": "Map config updated."}
 
 
+@router.patch("/config/site")
+async def update_site_config(
+    request: Request, body: dict, x_admin_password: str | None = Header(default=None)
+):
+    """PATCH /api/v1/ui/config/site - Update branding and site info."""
+    _check_password(x_admin_password)
+    config = _load_config()
+    config["site"].update(body)
+    _save_config(config)
+    await _notify_ui_update(request)
+    log_config_change(
+        request.client.host if request.client else "unknown",
+        "site",
+        "update",
+        str(body),
+    )
+    logger.info(f"UI Config [site] updated: {body}")
+    return {"success": True, "message": "Site configuration updated."}
+
+
+@router.patch("/config/robot")
+async def update_robot_config(
+    request: Request, body: dict, x_admin_password: str | None = Header(default=None)
+):
+    """PATCH /api/v1/ui/config/robot - Update robot dimensions and colors."""
+    _check_password(x_admin_password)
+    config = _load_config()
+    config["robot"].update(body)
+    _save_config(config)
+    await _notify_ui_update(request)
+    log_config_change(
+        request.client.host if request.client else "unknown",
+        "robot",
+        "update",
+        str(body),
+    )
+    logger.info(f"UI Config [robot] updated: {body}")
+    return {"success": True, "message": "Robot configuration updated."}
+
+
+@router.patch("/config/colors")
+async def update_colors_config(
+    request: Request, body: dict, x_admin_password: str | None = Header(default=None)
+):
+    """PATCH /api/v1/ui/config/colors - Update system status colors."""
+    _check_password(x_admin_password)
+    config = _load_config()
+    config["colors"].update(body)
+    _save_config(config)
+    await _notify_ui_update(request)
+    log_config_change(
+        request.client.host if request.client else "unknown",
+        "colors",
+        "update",
+        str(body),
+    )
+    logger.info(f"UI Config [colors] updated: {body}")
+    return {"success": True, "message": "System colors updated."}
+
+
 @router.post("/config/stations")
 async def add_station(
-    code: str, body: dict, x_admin_password: str | None = Header(default=None)
+    request: Request,
+    code: str,
+    body: dict,
+    x_admin_password: str | None = Header(default=None),
 ):
     """
     POST /api/v1/ui/config/stations?code=STATION_CODE
@@ -119,13 +201,23 @@ async def add_station(
 
     config["stations"][upper_code] = body
     _save_config(config)
+    await _notify_ui_update(request)
+    log_config_change(
+        request.client.host if request.client else "unknown",
+        "stations",
+        "add",
+        f"Station: {upper_code} | Body: {body}",
+    )
     logger.info(f"UI Config: Added station '{upper_code}' -> {body}")
     return {"success": True, "message": f"Station '{upper_code}' added.", "data": body}
 
 
 @router.patch("/config/stations/{code}")
 async def update_station(
-    code: str, body: dict, x_admin_password: str | None = Header(default=None)
+    request: Request,
+    code: str,
+    body: dict,
+    x_admin_password: str | None = Header(default=None),
 ):
     """
     PATCH /api/v1/ui/config/stations/{code}
@@ -138,9 +230,34 @@ async def update_station(
         raise HTTPException(
             status_code=404, detail=f"Station '{upper_code}' not found."
         )
+
+    # Note: Extract newCode safely outside of the loop
+    new_code = body.pop("newCode", None)
+
+    if new_code:
+        new_upper = new_code.strip().upper()
+        if new_upper != upper_code:
+            if new_upper in config["stations"]:
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"Target station code '{new_upper}' already exists.",
+                )
+            # Rename the key
+            config["stations"][new_upper] = config["stations"].pop(upper_code)
+            upper_code = new_upper  # Keep reference for the update below
+
     config["stations"][upper_code].update(body)
     _save_config(config)
-    logger.info(f"UI Config: Updated station '{upper_code}' -> {body}")
+    await _notify_ui_update(request)
+    log_config_change(
+        request.client.host if request.client else "unknown",
+        "stations",
+        "update",
+        f"Station: {upper_code} | Body: {body}",
+    )
+    logger.info(
+        f"UI Config: Updated station '{upper_code}' -> {config['stations'][upper_code]}"
+    )
     return {
         "success": True,
         "message": f"Station '{upper_code}' updated.",
@@ -150,7 +267,7 @@ async def update_station(
 
 @router.delete("/config/stations/{code}")
 async def delete_station(
-    code: str, x_admin_password: str | None = Header(default=None)
+    request: Request, code: str, x_admin_password: str | None = Header(default=None)
 ):
     """
     DELETE /api/v1/ui/config/stations/{code}
@@ -165,12 +282,21 @@ async def delete_station(
         )
     del config["stations"][upper_code]
     _save_config(config)
+    await _notify_ui_update(request)
+    log_config_change(
+        request.client.host if request.client else "unknown",
+        "stations",
+        "delete",
+        f"Station: {upper_code}",
+    )
     logger.info(f"UI Config: Deleted station '{upper_code}'")
     return {"success": True, "message": f"Station '{upper_code}' deleted."}
 
 
 @router.post("/config/floors")
-async def add_floor(body: dict, x_admin_password: str | None = Header(default=None)):
+async def add_floor(
+    request: Request, body: dict, x_admin_password: str | None = Header(default=None)
+):
     """
     POST /api/v1/ui/config/floors
     Add a new floor. Body: { "id": 4, "label": "FLOOR 4", "image": "/api/v1/ui/assets/Floor4.webp" }
@@ -199,13 +325,17 @@ async def add_floor(body: dict, x_admin_password: str | None = Header(default=No
     config["floors"].append(body)
     config["floors"].sort(key=lambda f: f["id"])
     _save_config(config)
+    await _notify_ui_update(request)
+    log_config_change(
+        request.client.host if request.client else "unknown", "floors", "add", str(body)
+    )
     logger.info(f"UI Config: Added floor {body}")
     return {"success": True, "message": f"Floor {body['id']} added.", "data": body}
 
 
 @router.delete("/config/floors/{floor_id}")
 async def delete_floor(
-    floor_id: int, x_admin_password: str | None = Header(default=None)
+    request: Request, floor_id: int, x_admin_password: str | None = Header(default=None)
 ):
     """DELETE /api/v1/ui/config/floors/{floor_id} — Remove a floor."""
     _check_password(x_admin_password)
@@ -215,13 +345,65 @@ async def delete_floor(
     if len(config["floors"]) == original_count:
         raise HTTPException(status_code=404, detail=f"Floor id={floor_id} not found.")
     _save_config(config)
+    await _notify_ui_update(request)
+    log_config_change(
+        request.client.host if request.client else "unknown",
+        "floors",
+        "delete",
+        f"Floor ID: {floor_id}",
+    )
     logger.info(f"UI Config: Deleted floor id={floor_id}")
     return {"success": True, "message": f"Floor {floor_id} deleted."}
 
 
+@router.patch("/config/floors/{floor_id}")
+async def update_floor(
+    request: Request,
+    floor_id: int,
+    body: dict,
+    x_admin_password: str | None = Header(default=None),
+):
+    """PATCH /api/v1/ui/config/floors/{floor_id} — Update an existing floor."""
+    _check_password(x_admin_password)
+    config = _load_config()
+
+    # Validation
+    if not isinstance(body.get("id"), (int, float)):
+        raise HTTPException(status_code=422, detail="Floor 'id' must be a number.")
+
+    index = next((i for i, f in enumerate(config["floors"]) if f["id"] == floor_id), -1)
+    if index == -1:
+        raise HTTPException(status_code=404, detail=f"Floor id={floor_id} not found.")
+
+    # Handle ID change if necessary (though ID is usually fixed for floors)
+    new_id = body.get("id")
+    if new_id != floor_id:
+        if any(f["id"] == new_id for f in config["floors"]):
+            raise HTTPException(
+                status_code=409, detail=f"Target Floor id={new_id} already exists."
+            )
+
+    config["floors"][index].update(body)
+    config["floors"].sort(key=lambda f: f["id"])
+    _save_config(config)
+    await _notify_ui_update(request)
+    log_config_change(
+        request.client.host if request.client else "unknown",
+        "floors",
+        "update",
+        str(body),
+    )
+    logger.info(f"UI Config: Updated floor {floor_id} -> {body}")
+    return {
+        "success": True,
+        "message": f"Floor {floor_id} updated.",
+        "data": config["floors"][index],
+    }
+
+
 @router.post("/config/container-types")
 async def add_container_type(
-    body: dict, x_admin_password: str | None = Header(default=None)
+    request: Request, body: dict, x_admin_password: str | None = Header(default=None)
 ):
     """
     POST /api/v1/ui/config/container-types
@@ -261,6 +443,13 @@ async def add_container_type(
         )
     config["containerTypes"].append(body)
     _save_config(config)
+    await _notify_ui_update(request)
+    log_config_change(
+        request.client.host if request.client else "unknown",
+        "container-types",
+        "add",
+        str(body),
+    )
     logger.info(f"UI Config: Added container type '{body['id']}'")
     return {
         "success": True,
@@ -271,7 +460,7 @@ async def add_container_type(
 
 @router.delete("/config/container-types/{type_id}")
 async def delete_container_type(
-    type_id: str, x_admin_password: str | None = Header(default=None)
+    request: Request, type_id: str, x_admin_password: str | None = Header(default=None)
 ):
     """DELETE /api/v1/ui/config/container-types/{type_id} — Remove a container type."""
     _check_password(x_admin_password)
@@ -285,8 +474,76 @@ async def delete_container_type(
             status_code=404, detail=f"Container type '{type_id}' not found."
         )
     _save_config(config)
+    await _notify_ui_update(request)
+    log_config_change(
+        request.client.host if request.client else "unknown",
+        "container-types",
+        "delete",
+        f"Type ID: {type_id}",
+    )
     logger.info(f"UI Config: Deleted container type '{type_id}'")
     return {"success": True, "message": f"Container type '{type_id}' deleted."}
+
+
+@router.patch("/config/container-types/{type_id}")
+async def update_container_type(
+    request: Request,
+    type_id: str,
+    body: dict,
+    x_admin_password: str | None = Header(default=None),
+):
+    """
+    PATCH /api/v1/ui/config/container-types/{type_id}
+    Update an existing container type (name, width, length, color, image, etc.).
+    Requires X-Admin-Password header.
+    """
+    _check_password(x_admin_password)
+    config = _load_config()
+    index = next(
+        (
+            i
+            for i, c in enumerate(config.get("containerTypes", []))
+            if c["id"] == type_id
+        ),
+        -1,
+    )
+
+    if index == -1:
+        raise HTTPException(
+            status_code=404, detail=f"Container type '{type_id}' not found."
+        )
+
+    # Note: Extract newType safely without triggering loop modifications later
+    new_type_id = body.pop("newType", None)
+
+    if new_type_id:
+        if new_type_id != type_id:
+            if any(c["id"] == new_type_id for c in config["containerTypes"]):
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"Target type id '{new_type_id}' already exists.",
+                )
+            # Update the ID immediately
+            config["containerTypes"][index]["id"] = new_type_id
+            type_id = new_type_id  # Update reference for logging/returning
+
+    # Apply other updates
+    config["containerTypes"][index].update(body)
+
+    _save_config(config)
+    await _notify_ui_update(request)
+    log_config_change(
+        request.client.host if request.client else "unknown",
+        "container-types",
+        "update",
+        f"Type ID: {type_id} | Body: {body}",
+    )
+    logger.info(f"UI Config: Updated container type '{type_id}' -> {body}")
+    return {
+        "success": True,
+        "message": f"Container type '{type_id}' updated.",
+        "data": config["containerTypes"][index],
+    }
 
 
 # ─── Asset (Image) Endpoints ───────────────────────────────────────────────────
@@ -334,6 +591,12 @@ async def upload_asset(
         f"/api/v1/ui/assets/{subfolder + '/' if subfolder else ''}{file.filename}"
     )
     logger.info(f"UI Asset uploaded: {save_path}")
+    log_config_change(
+        request.client.host if request.client else "unknown",
+        "assets",
+        "upload",
+        f"File: {file.filename} | Path: {relative_path}",
+    )
     return {
         "success": True,
         "message": f"File '{file.filename}' uploaded successfully.",

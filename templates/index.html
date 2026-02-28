@@ -136,7 +136,7 @@
                     <img src="/static/images/esig_hub.png" alt="ESIG HUB" class="h-12 w-auto">
                     <div>
                         <h1 class="text-xs text-gray-500 uppercase tracking-widest font-bold">ESIG HUB</h1>
-                        <div class="text-[10px] text-gray-400">v1.2.1</div>
+                        <div class="text-[10px] text-gray-400">v1.1.0</div>
                     </div>
                 </div>
             </div>
@@ -274,6 +274,254 @@
                             style="font-size:11px; font-weight:600; min-width:120px;"></span>
                     </div>
 
+                    <!-- SITE SETTINGS -->
+                    <div
+                        style="background:rgba(22,27,34,.85); border:1px solid rgba(63,185,80,.2); border-radius:16px; padding:1.5rem; margin-bottom:1.5rem; backdrop-filter:blur(20px);">
+                        <div
+                            style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
+                            <h3 style="font-size:12px; font-weight:800; color:#3fb950; text-transform:uppercase;">🏢
+                                Site Settings</h3>
+                            <button class="btn btn-primary"
+                                style="padding:4px 16px; font-size:10px; background:#238636;" @click="saveSiteConfig()">
+                                SAVE SITE
+                            </button>
+                        </div>
+                        <div
+                            style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1.5rem;">
+                            <div class="input-group">
+                                <label style="font-size:10px; color:#6e7681; font-weight:700;">SITE NAME</label>
+                                <input type="text" x-model="cfgData.site.name"
+                                    style="width:100%; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:10px 14px; border-radius:8px; font-size:13px; outline:none; margin-top:6px;">
+                            </div>
+                            <div class="input-group">
+                                <label style="font-size:10px; color:#6e7681; font-weight:700;">SHORT NAME</label>
+                                <input type="text" x-model="cfgData.site.shortName"
+                                    style="width:100%; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:10px 14px; border-radius:8px; font-size:13px; font-family:monospace; outline:none; margin-top:6px;">
+                            </div>
+                            <div class="input-group">
+                                <label style="font-size:10px; color:#6e7681; font-weight:700;">PRIMARY COLOR</label>
+                                <div style="display:flex; align-items:center; gap:0.75rem; margin-top:0.6rem;">
+                                    <input type="color" x-model="cfgData.site.primaryColor"
+                                        style="width:36px; height:36px; border:none; background:none; cursor:pointer;">
+                                    <input type="text" x-model="cfgData.site.primaryColor"
+                                        style="flex:1; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:8px 12px; border-radius:6px; font-size:12px; font-family:monospace; outline:none;">
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label style="font-size:10px; color:#6e7681; font-weight:700;">GMS CLIENT CODE</label>
+                                <input type="text" x-model="cfgData.site.gmsClientCode"
+                                    style="width:100%; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:10px 14px; border-radius:8px; font-size:13px; font-family:monospace; outline:none; margin-top:6px;">
+                            </div>
+                            <div class="input-group" style="grid-column: span 2;">
+                                <label style="font-size:10px; color:#6e7681; font-weight:700;">LOGO URL
+                                    (OPTIONAL)</label>
+                                <input type="text" x-model="cfgData.site.logoUrl"
+                                    placeholder="/api/v1/ui/assets/logo.png"
+                                    style="width:100%; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:10px 14px; border-radius:8px; font-size:13px; outline:none; margin-top:6px;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- GLOBAL MAP SETTINGS -->
+                    <div
+                        style="background:rgba(22,27,34,.85); border:1px solid rgba(88,166,255,.2); border-radius:16px; padding:1.5rem; margin-bottom:1.5rem; backdrop-filter:blur(20px);">
+                        <div
+                            style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
+                            <h3 style="font-size:12px; font-weight:800; color:#58a6ff; text-transform:uppercase;">🗺️
+                                Global Map Settings</h3>
+                            <button class="btn btn-primary"
+                                style="padding:4px 16px; font-size:10px; background:#238636;" @click="saveMapConfig()">
+                                SAVE SETTINGS
+                            </button>
+                        </div>
+                        <div
+                            style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1.5rem;">
+                            <div class="input-group">
+                                <label style="font-size:10px; color:#6e7681; font-weight:700;">SOCKET LOGGING</label>
+                                <div style="display:flex; align-items:center; gap:0.75rem; margin-top:0.5rem;">
+                                    <input type="checkbox" x-model="cfgData.map.ENABLE_SOCKET_LOG" id="chk_socket_log"
+                                        style="width:20px; height:20px; accent-color:#3fb950; cursor:pointer;">
+                                    <label for="chk_socket_log"
+                                        style="font-size:12px; color:#c9d1d9; cursor:pointer; font-weight:600;"
+                                        x-text="cfgData.map.ENABLE_SOCKET_LOG ? 'ENABLED' : 'DISABLED'"></label>
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label style="font-size:10px; color:#6e7681; font-weight:700;">MULTIPLIER (PX PER
+                                    M)</label>
+                                <input type="number" x-model.number="cfgData.map.MULTIPLIER"
+                                    style="width:100%; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:10px 14px; border-radius:8px; font-size:13px; font-family:monospace; outline:none; margin-top:6px;">
+                            </div>
+                            <div class="input-group">
+                                <label style="font-size:10px; color:#6e7681; font-weight:700;">SNAP DISTANCE
+                                    (PX)</label>
+                                <input type="number" x-model.number="cfgData.map.SNAP_DISTANCE"
+                                    style="width:100%; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:10px 14px; border-radius:8px; font-size:13px; font-family:monospace; outline:none; margin-top:6px;">
+                            </div>
+                            <div class="input-group">
+                                <label style="font-size:10px; color:#6e7681; font-weight:700;">ANGLE OFFSET
+                                    (DEG)</label>
+                                <input type="number" x-model.number="cfgData.map.ANGLE_OFFSET"
+                                    style="width:100%; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:10px 14px; border-radius:8px; font-size:13px; font-family:monospace; outline:none; margin-top:6px;">
+                            </div>
+                            <div class="input-group">
+                                <label style="font-size:10px; color:#6e7681; font-weight:700;">ORIGIN OFFSET X</label>
+                                <input type="number" x-model.number="cfgData.map.ORIGIN_OFFSET_X"
+                                    style="width:100%; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:10px 14px; border-radius:8px; font-size:13px; font-family:monospace; outline:none; margin-top:6px;">
+                            </div>
+                            <div class="input-group">
+                                <label style="font-size:10px; color:#6e7681; font-weight:700;">ORIGIN OFFSET Y</label>
+                                <input type="number" x-model.number="cfgData.map.ORIGIN_OFFSET_Y"
+                                    style="width:100%; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:10px 14px; border-radius:8px; font-size:13px; font-family:monospace; outline:none; margin-top:6px;">
+                            </div>
+                            <div class="input-group">
+                                <label style="font-size:10px; color:#6e7681; font-weight:700;">DEFAULT LOC SIZE</label>
+                                <input type="number" step="0.1" x-model.number="cfgData.map.DEFAULT_LOC_SIZE"
+                                    style="width:100%; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:10px 14px; border-radius:8px; font-size:13px; font-family:monospace; outline:none; margin-top:6px;">
+                            </div>
+                            <div class="input-group">
+                                <label style="font-size:10px; color:#6e7681; font-weight:700;">MAP OPACITY</label>
+                                <input type="number" step="0.1" x-model.number="cfgData.map.OPACITY"
+                                    style="width:100%; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:10px 14px; border-radius:8px; font-size:13px; font-family:monospace; outline:none; margin-top:6px;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ROBOT SETTINGS -->
+                    <div
+                        style="background:rgba(22,27,34,.85); border:1px solid rgba(255,152,0,.2); border-radius:16px; padding:1.5rem; margin-bottom:1.5rem; backdrop-filter:blur(20px);">
+                        <div
+                            style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
+                            <h3 style="font-size:12px; font-weight:800; color:#ff9800; text-transform:uppercase;">🤖
+                                Robot Settings</h3>
+                            <button class="btn btn-primary"
+                                style="padding:4px 16px; font-size:10px; background:#238636;"
+                                @click="saveRobotConfig()">
+                                SAVE ROBOT
+                            </button>
+                        </div>
+                        <div
+                            style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1.5rem; margin-bottom:1.5rem;">
+                            <div class="input-group">
+                                <label style="font-size:10px; color:#6e7681; font-weight:700;">WIDTH (M)</label>
+                                <input type="number" step="0.01" x-model.number="cfgData.robot.WIDTH"
+                                    style="width:100%; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:10px 14px; border-radius:8px; font-size:13px; font-family:monospace; outline:none; margin-top:6px;">
+                            </div>
+                            <div class="input-group">
+                                <label style="font-size:10px; color:#6e7681; font-weight:700;">LENGTH (M)</label>
+                                <input type="number" step="0.01" x-model.number="cfgData.robot.LENGTH"
+                                    style="width:100%; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:10px 14px; border-radius:8px; font-size:13px; font-family:monospace; outline:none; margin-top:6px;">
+                            </div>
+                            <div class="input-group">
+                                <label style="font-size:10px; color:#6e7681; font-weight:700;">IDLE COLOR</label>
+                                <div style="display:flex; align-items:center; gap:0.75rem; margin-top:0.6rem;">
+                                    <div
+                                        style="position:relative; width:32px; height:32px; border-radius:8px; overflow:hidden; border:1px solid #30363d; background:rgba(255,255,255,0.05);">
+                                        <input type="color" x-model="cfgData.robot.IDLE_COLOR"
+                                            style="position:absolute; top:-5px; left:-5px; width:150%; height:150%; cursor:pointer; border:none; background:none; padding:0;">
+                                    </div>
+                                    <input type="text" x-model="cfgData.robot.IDLE_COLOR"
+                                        style="flex:1; background:rgba(0,0,0,.2); border:1px solid #30363d; color:#c9d1d9; padding:6px 10px; border-radius:6px; font-size:11px; font-family:monospace; outline:none;">
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label style="font-size:10px; color:#6e7681; font-weight:700;">WORKING COLOR</label>
+                                <div style="display:flex; align-items:center; gap:0.75rem; margin-top:0.6rem;">
+                                    <div
+                                        style="position:relative; width:32px; height:32px; border-radius:8px; overflow:hidden; border:1px solid #30363d; background:rgba(255,255,255,0.05);">
+                                        <input type="color" x-model="cfgData.robot.WORKING_COLOR"
+                                            style="position:absolute; top:-5px; left:-5px; width:150%; height:150%; cursor:pointer; border:none; background:none; padding:0;">
+                                    </div>
+                                    <input type="text" x-model="cfgData.robot.WORKING_COLOR"
+                                        style="flex:1; background:rgba(0,0,0,.2); border:1px solid #30363d; color:#c9d1d9; padding:6px 10px; border-radius:6px; font-size:11px; font-family:monospace; outline:none;">
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label style="font-size:10px; color:#6e7681; font-weight:700;">ERROR COLOR</label>
+                                <div style="display:flex; align-items:center; gap:0.75rem; margin-top:0.6rem;">
+                                    <div
+                                        style="position:relative; width:32px; height:32px; border-radius:8px; overflow:hidden; border:1px solid #30363d; background:rgba(255,255,255,0.05);">
+                                        <input type="color" x-model="cfgData.robot.ERROR_COLOR"
+                                            style="position:absolute; top:-5px; left:-5px; width:150%; height:150%; cursor:pointer; border:none; background:none; padding:0;">
+                                    </div>
+                                    <input type="text" x-model="cfgData.robot.ERROR_COLOR"
+                                        style="flex:1; background:rgba(0,0,0,.2); border:1px solid #30363d; color:#c9d1d9; padding:6px 10px; border-radius:6px; font-size:11px; font-family:monospace; outline:none;">
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label style="font-size:10px; color:#6e7681; font-weight:700;">CHARGING COLOR</label>
+                                <div style="display:flex; align-items:center; gap:0.75rem; margin-top:0.6rem;">
+                                    <div
+                                        style="position:relative; width:32px; height:32px; border-radius:8px; overflow:hidden; border:1px solid #30363d; background:rgba(255,255,255,0.05);">
+                                        <input type="color" x-model="cfgData.robot.CHARGING_COLOR"
+                                            style="position:absolute; top:-5px; left:-5px; width:150%; height:150%; cursor:pointer; border:none; background:none; padding:0;">
+                                    </div>
+                                    <input type="text" x-model="cfgData.robot.CHARGING_COLOR"
+                                        style="flex:1; background:rgba(0,0,0,.2); border:1px solid #30363d; color:#c9d1d9; padding:6px 10px; border-radius:6px; font-size:11px; font-family:monospace; outline:none;">
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label style="font-size:10px; color:#6e7681; font-weight:700;">OFFLINE COLOR</label>
+                                <div style="display:flex; align-items:center; gap:0.75rem; margin-top:0.6rem;">
+                                    <div
+                                        style="position:relative; width:32px; height:32px; border-radius:8px; overflow:hidden; border:1px solid #30363d; background:rgba(255,255,255,0.05);">
+                                        <input type="color" x-model="cfgData.robot.OFFLINE_COLOR"
+                                            style="position:absolute; top:-5px; left:-5px; width:150%; height:150%; cursor:pointer; border:none; background:none; padding:0;">
+                                    </div>
+                                    <input type="text" x-model="cfgData.robot.OFFLINE_COLOR"
+                                        style="flex:1; background:rgba(0,0,0,.2); border:1px solid #30363d; color:#c9d1d9; padding:6px 10px; border-radius:6px; font-size:11px; font-family:monospace; outline:none;">
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label style="font-size:10px; color:#6e7681; font-weight:700;">LABEL BG</label>
+                                <div style="display:flex; align-items:center; gap:0.75rem; margin-top:0.6rem;">
+                                    <div
+                                        style="position:relative; width:32px; height:32px; border-radius:8px; overflow:hidden; border:1px solid #30363d; background:rgba(255,255,255,0.05);">
+                                        <input type="color" x-model="cfgData.robot.ID_LABEL_BG"
+                                            x-show="!cfgData.robot.ID_LABEL_BG.includes('rgba')"
+                                            style="position:absolute; top:-5px; left:-5px; width:150%; height:150%; cursor:pointer; border:none; background:none; padding:0;">
+                                    </div>
+                                    <input type="text" x-model="cfgData.robot.ID_LABEL_BG"
+                                        style="flex:1; background:rgba(0,0,0,.2); border:1px solid #30363d; color:#c9d1d9; padding:6px 10px; border-radius:6px; font-size:11px; font-family:monospace; outline:none;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SYSTEM COLORS -->
+                    <div
+                        style="background:rgba(22,27,34,.85); border:1px solid rgba(0,229,255,.2); border-radius:16px; padding:1.5rem; margin-bottom:1.5rem; backdrop-filter:blur(20px);">
+                        <div
+                            style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
+                            <h3 style="font-size:12px; font-weight:800; color:#00e5ff; text-transform:uppercase;">🎨
+                                System Colors</h3>
+                            <button class="btn btn-primary"
+                                style="padding:4px 16px; font-size:10px; background:#238636;"
+                                @click="saveColorsConfig()">
+                                SAVE COLORS
+                            </button>
+                        </div>
+                        <div
+                            style="display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:1.25rem;">
+                            <template x-for="[key, val] in Object.entries(cfgData.colors || {})" :key="key">
+                                <div class="input-group">
+                                    <label
+                                        style="font-size:9px; color:#6e7681; font-weight:700; display:block; margin-bottom:4px;"
+                                        x-text="key"></label>
+                                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                                        <div x-show="!cfgData.colors[key].includes('rgba')"
+                                            style="position:relative; width:24px; height:24px; border-radius:6px; overflow:hidden; border:1px solid #30363d;">
+                                            <input type="color" x-model="cfgData.colors[key]"
+                                                style="position:absolute; top:-4px; left:-4px; width:150%; height:150%; cursor:pointer; border:none; background:none; padding:0;">
+                                        </div>
+                                        <input type="text" x-model="cfgData.colors[key]"
+                                            style="flex:1; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:6px 10px; border-radius:6px; font-size:11px; font-family:monospace; outline:none;">
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
                     <!-- STATIONS -->
                     <div
                         style="background:rgba(22,27,34,.7); border:1px solid rgba(255,255,255,.07); border-radius:16px; padding:1.5rem; margin-bottom:1.5rem;">
@@ -309,7 +557,7 @@
                                             <td style="padding:.45rem;text-align:center;">
                                                 <button
                                                     style="font-size:9px;padding:2px 8px;background:rgba(88,166,255,.15);color:#58a6ff;border:1px solid rgba(88,166,255,.3);border-radius:4px;cursor:pointer;margin-right:4px;"
-                                                    @click="editStationCode=code;newStation={code:code,alias:st.alias,angle:st.angle,containerType:(st.containerType||[]).join(',')};showAddStation=true">EDIT</button>
+                                                    @click="editStationCode=code;newStation={code:code,oldCode:code,alias:st.alias,angle:st.angle,containerType:(st.containerType||[]).join(',')};showAddStation=true">EDIT</button>
                                                 <button
                                                     style="font-size:9px;padding:2px 8px;background:rgba(248,81,73,.1);color:#f85149;border:1px solid rgba(248,81,73,.3);border-radius:4px;cursor:pointer;"
                                                     @click="deleteStation(code)">DEL</button>
@@ -320,7 +568,7 @@
                             </table>
                         </div>
                         <!-- Add/Edit Station Modal -->
-                        <div x-show="showAddStation" x-cloak
+                        <div x-show="showAddStation" x-cloak @keydown.escape.window="showAddStation=false"
                             style="position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:1000;">
                             <div
                                 style="background:#161b22;border:1px solid #30363d;border-radius:16px;padding:2rem;width:420px;max-width:95vw;">
@@ -330,8 +578,7 @@
                                     <div>
                                         <label style="font-size:10px;color:#6e7681;font-weight:700;">STATION CODE
                                             *</label>
-                                        <input x-model="newStation.code" :disabled="!!editStationCode"
-                                            placeholder="e.g. B3F1_3_IN"
+                                        <input x-model="newStation.code" placeholder="e.g. B3F1_3_IN"
                                             style="width:100%;background:rgba(0,0,0,.3);border:1px solid #30363d;color:#c9d1d9;padding:8px 12px;border-radius:6px;font-size:12px;font-family:monospace;outline:none;margin-top:4px;">
                                     </div>
                                     <div>
@@ -369,7 +616,8 @@
                             <h3 style="font-size:12px;font-weight:800;color:#c9d1d9;text-transform:uppercase;">🏗️
                                 Floors (<span x-text="(cfgData.floors||[]).length"></span>)</h3>
                             <button class="btn btn-primary" style="padding:4px 12px;font-size:10px;"
-                                @click="showAddFloor=true;newFloor={id:'',label:'',image:'',_file:null}">+ ADD</button>
+                                @click="editFloorId=null;newFloor={id:'',label:'',image:'',_file:null};showAddFloor=true">+
+                                ADD</button>
                         </div>
                         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;">
                             <template x-for="f in (cfgData.floors||[])" :key="f.id">
@@ -381,24 +629,31 @@
                                     <img :src="f.image+'?t='+Date.now()"
                                         style="width:100%;height:70px;object-fit:cover;border-radius:6px;opacity:.7;margin-top:.5rem;"
                                         onerror="this.style.display='none'">
-                                    <button
-                                        style="font-size:9px;padding:2px 8px;background:rgba(248,81,73,.1);color:#f85149;border:1px solid rgba(248,81,73,.3);border-radius:4px;cursor:pointer;margin-top:.5rem;"
-                                        @click="deleteFloor(f.id)">DELETE</button>
+                                    <div style="display:flex; gap:4px; margin-top:.5rem;">
+                                        <button
+                                            style="flex:1; font-size:9px;padding:2px 8px;background:rgba(88,166,255,.15);color:#58a6ff;border:1px solid rgba(88,166,255,.3);border-radius:4px;cursor:pointer;"
+                                            @click="editFloorId=f.id; newFloor={id:f.id, label:f.label, image:f.image, _file:null}; showAddFloor=true">EDIT</button>
+                                        <button
+                                            style="flex:1; font-size:9px;padding:2px 8px;background:rgba(248,81,73,.1);color:#f85149;border:1px solid rgba(248,81,73,.3);border-radius:4px;cursor:pointer;"
+                                            @click="deleteFloor(f.id)">DEL</button>
+                                    </div>
                                 </div>
                             </template>
                         </div>
                         <!-- Add Floor Modal -->
-                        <div x-show="showAddFloor" x-cloak
+                        <div x-show="showAddFloor" x-cloak @keydown.escape.window="showAddFloor=false"
                             style="position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:1000;">
                             <div
                                 style="background:#161b22;border:1px solid #30363d;border-radius:16px;padding:2rem;width:420px;max-width:95vw;">
-                                <h3 style="font-size:13px;font-weight:800;color:#c9d1d9;margin-bottom:1.5rem;">ADD NEW
-                                    FLOOR</h3>
+                                <h3 style="font-size:13px;font-weight:800;color:#c9d1d9;margin-bottom:1.5rem;"
+                                    x-text="editFloorId !== null ? 'EDIT FLOOR: ' + editFloorId : 'ADD NEW FLOOR'"></h3>
                                 <div style="display:grid;gap:.75rem;">
                                     <div><label style="font-size:10px;color:#6e7681;font-weight:700;">FLOOR ID (number)
                                             *</label>
                                         <input type="number" x-model.number="newFloor.id" placeholder="4"
-                                            style="width:100%;background:rgba(0,0,0,.3);border:1px solid #30363d;color:#c9d1d9;padding:8px 12px;border-radius:6px;font-size:12px;outline:none;margin-top:4px;">
+                                            :disabled="editFloorId !== null"
+                                            style="width:100%;background:rgba(0,0,0,.3);border:1px solid #30363d;color:#c9d1d9;padding:8px 12px;border-radius:6px;font-size:12px;outline:none;margin-top:4px;"
+                                            :style="editFloorId !== null ? 'opacity: 0.6' : 'opacity: 1'">
                                     </div>
                                     <div><label style="font-size:10px;color:#6e7681;font-weight:700;">LABEL *</label>
                                         <input x-model="newFloor.label" placeholder="FLOOR 4"
@@ -409,7 +664,20 @@
                                         <input type="file" accept=".webp,.png,.jpg,.jpeg"
                                             @change="newFloor._file=$event.target.files[0];newFloor._filename=$event.target.files[0]?.name"
                                             style="width:100%;color:#c9d1d9;font-size:11px;margin-top:4px;">
-                                        <div x-show="newFloor._filename" x-text="'✅ '+newFloor._filename"
+
+                                        <!-- Image Preview -->
+                                        <div
+                                            style="margin-top:10px; border:1px solid #30363d; border-radius:8px; overflow:hidden; background:rgba(0,0,0,0.2); height:100px; display:flex; align-items:center; justify-content:center;">
+                                            <template x-if="newFloor.image || newFloor._file">
+                                                <img :src="newFloor._file ? URL.createObjectURL(newFloor._file) : (newFloor.image + '?t=' + Date.now())"
+                                                    style="max-width:100%; max-height:100%; object-fit:contain;">
+                                            </template>
+                                            <template x-if="!newFloor.image && !newFloor._file">
+                                                <div style="color:#484f58; font-size:10px;">NO IMAGE SELECTED</div>
+                                            </template>
+                                        </div>
+
+                                        <div x-show="newFloor._filename" x-text="'✅ New file: '+newFloor._filename"
                                             style="font-size:10px;color:#3fb950;margin-top:4px;"></div>
                                     </div>
                                 </div>
@@ -430,7 +698,7 @@
                             <h3 style="font-size:12px;font-weight:800;color:#c9d1d9;text-transform:uppercase;">📦
                                 Container Types (<span x-text="(cfgData.containerTypes||[]).length"></span>)</h3>
                             <button class="btn btn-primary" style="padding:4px 12px;font-size:10px;"
-                                @click="showAddContainer=true;newContainer={id:'',name:'',width:'',length:'',color:'#2ecc71',_file:null}">+
+                                @click="editContainerId=null;newContainer={id:'',name:'',width:'',length:'',color:'#2ecc71',_file:null};showAddContainer=true">+
                                 ADD</button>
                         </div>
                         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem;">
@@ -450,23 +718,31 @@
                                     <img :src="ct.image+'?t='+Date.now()"
                                         style="width:100%;height:60px;object-fit:contain;margin-top:.5rem;"
                                         onerror="this.style.display='none'">
-                                    <button
-                                        style="font-size:9px;padding:2px 8px;background:rgba(248,81,73,.1);color:#f85149;border:1px solid rgba(248,81,73,.3);border-radius:4px;cursor:pointer;margin-top:.5rem;"
-                                        @click="deleteContainerType(ct.id)">DELETE</button>
+                                    <div style="display:flex; gap:4px; margin-top:.5rem;">
+                                        <button
+                                            style="flex:1; font-size:9px;padding:2px 8px;background:rgba(88,166,255,.15);color:#58a6ff;border:1px solid rgba(88,166,255,.3);border-radius:4px;cursor:pointer;"
+                                            @click="editContainerId=ct.id; newContainer={id:ct.id, name:ct.name, width:ct.width, length:ct.length, color:ct.color, image:ct.image, _file:null}; showAddContainer=true">EDIT</button>
+                                        <button
+                                            style="flex:1; font-size:9px;padding:2px 8px;background:rgba(248,81,73,.1);color:#f85149;border:1px solid rgba(248,81,73,.3);border-radius:4px;cursor:pointer;"
+                                            @click="deleteContainerType(ct.id)">DEL</button>
+                                    </div>
                                 </div>
                             </template>
                         </div>
                         <!-- Add Container Type Modal -->
-                        <div x-show="showAddContainer" x-cloak
+                        <div x-show="showAddContainer" x-cloak @keydown.escape.window="showAddContainer=false"
                             style="position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:1000;">
                             <div
                                 style="background:#161b22;border:1px solid #30363d;border-radius:16px;padding:2rem;width:420px;max-width:95vw;">
-                                <h3 style="font-size:13px;font-weight:800;color:#c9d1d9;margin-bottom:1.5rem;">ADD
-                                    CONTAINER TYPE</h3>
+                                <h3 style="font-size:13px;font-weight:800;color:#c9d1d9;margin-bottom:1.5rem;"
+                                    x-text="editContainerId !== null ? 'EDIT TYPE: ' + editContainerId : 'ADD CONTAINER TYPE'">
+                                </h3>
                                 <div style="display:grid;gap:.75rem;">
                                     <div><label style="font-size:10px;color:#6e7681;font-weight:700;">TYPE ID *</label>
                                         <input x-model="newContainer.id" placeholder="T9999999"
-                                            style="width:100%;background:rgba(0,0,0,.3);border:1px solid #30363d;color:#c9d1d9;padding:8px 12px;border-radius:6px;font-size:12px;font-family:monospace;outline:none;margin-top:4px;">
+                                            :disabled="editContainerId !== null"
+                                            style="width:100%;background:rgba(0,0,0,.3);border:1px solid #30363d;color:#c9d1d9;padding:8px 12px;border-radius:6px;font-size:12px;font-family:monospace;outline:none;margin-top:4px;"
+                                            :style="editContainerId !== null ? 'opacity: 0.6' : 'opacity: 1'">
                                     </div>
                                     <div><label style="font-size:10px;color:#6e7681;font-weight:700;">DISPLAY NAME
                                             *</label>
@@ -498,7 +774,21 @@
                                         <input type="file" accept=".webp,.png,.jpg,.jpeg"
                                             @change="newContainer._file=$event.target.files[0];newContainer._filename=$event.target.files[0]?.name"
                                             style="width:100%;color:#c9d1d9;font-size:11px;margin-top:4px;">
-                                        <div x-show="newContainer._filename" x-text="'✅ '+newContainer._filename"
+
+                                        <!-- Icon Preview -->
+                                        <div
+                                            style="margin-top:10px; border:1px solid #30363d; border-radius:8px; overflow:hidden; background:rgba(0,0,0,0.2); height:80px; display:flex; align-items:center; justify-content:center;">
+                                            <template x-if="newContainer.image || newContainer._file">
+                                                <img :src="newContainer._file ? URL.createObjectURL(newContainer._file) : (newContainer.image + '?t=' + Date.now())"
+                                                    style="max-width:80%; max-height:80%; object-fit:contain;">
+                                            </template>
+                                            <template x-if="!newContainer.image && !newContainer._file">
+                                                <div style="color:#484f58; font-size:10px;">NO ICON SELECTED</div>
+                                            </template>
+                                        </div>
+
+                                        <div x-show="newContainer._filename"
+                                            x-text="'✅ New file: '+newContainer._filename"
                                             style="font-size:10px;color:#3fb950;margin-top:4px;"></div>
                                     </div>
                                 </div>
@@ -552,9 +842,9 @@
                                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.25rem;">
                                     <!-- CPU Card -->
                                     <div
-                                        style="background:rgba(22,27,34,0.7); border:1px solid rgba(63,185,80,0.2); border-radius:16px; padding:1.5rem; position:relative;">
+                                        style="background:rgba(22,27,34,0.7); border:1px solid rgba(63,185,80,0.2); border-radius:16px; padding:1.5rem; position:relative; overflow:hidden;">
                                         <div
-                                            style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1rem;">
+                                            style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.5rem; position:relative; z-index:1;">
                                             <div>
                                                 <div
                                                     style="font-size:10px; color:#6e7681; font-weight:700; text-transform:uppercase;">
@@ -563,32 +853,38 @@
                                                     x-text="sys.cpu + '%'">0%</div>
                                             </div>
                                         </div>
+                                        <div
+                                            style="height:60px; margin-top:0.5rem; margin-left:-1.5rem; margin-right:-1.5rem; margin-bottom:-1.5rem;">
+                                            <svg id="cpuChartSvg" width="100%" height="60"
+                                                preserveAspectRatio="none"></svg>
+                                        </div>
                                     </div>
-                                    <div style="height:50px;"><svg id="cpuChartSvg" width="100%" height="50"></svg>
-                                    </div>
-                                </div>
 
-                                <!-- RAM Card -->
-                                <div
-                                    style="background:rgba(22,27,34,0.7); border:1px solid rgba(88,166,255,0.2); border-radius:16px; padding:1.5rem;">
+                                    <!-- RAM Card -->
                                     <div
-                                        style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1rem;">
-                                        <div>
-                                            <div
-                                                style="font-size:10px; color:#6e7681; font-weight:700; text-transform:uppercase;">
-                                                Memory</div>
-                                            <div style="font-size:2.5rem; font-weight:900; font-family:monospace; color:#58a6ff;"
-                                                x-text="sys.ram_p + '%'">0%</div>
+                                        style="background:rgba(22,27,34,0.7); border:1px solid rgba(88,166,255,0.2); border-radius:16px; padding:1.5rem; position:relative; overflow:hidden;">
+                                        <div
+                                            style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.5rem; position:relative; z-index:1;">
+                                            <div>
+                                                <div
+                                                    style="font-size:10px; color:#6e7681; font-weight:700; text-transform:uppercase;">
+                                                    Memory</div>
+                                                <div style="font-size:2.5rem; font-weight:900; font-family:monospace; color:#58a6ff;"
+                                                    x-text="sys.ram_p + '%'">0%</div>
+                                            </div>
+                                            <div style="text-align:right;">
+                                                <div
+                                                    style="font-size:10px; color:#6e7681; font-weight:700; text-transform:uppercase;">
+                                                    Free</div>
+                                                <div style="font-size:1.2rem; font-weight:800; color:#58a6ff;"
+                                                    x-text="sys.ram_free + 'GB'">0GB</div>
+                                            </div>
                                         </div>
-                                        <div style="text-align:right;">
-                                            <div
-                                                style="font-size:10px; color:#6e7681; font-weight:700; text-transform:uppercase;">
-                                                Free</div>
-                                            <div style="font-size:1.2rem; font-weight:800; color:#58a6ff;"
-                                                x-text="sys.ram_free + 'GB'">0GB</div>
+                                        <div
+                                            style="height:60px; margin-top:0.5rem; margin-left:-1.5rem; margin-right:-1.5rem; margin-bottom:-1.5rem;">
+                                            <svg id="ramChartSvg" width="100%" height="60"
+                                                preserveAspectRatio="none"></svg>
                                         </div>
-                                    </div>
-                                    <div style="height:50px;"><svg id="ramChartSvg" width="100%" height="50"></svg>
                                     </div>
                                 </div>
 
@@ -752,19 +1048,61 @@
                                         </div>
                                     </div>
 
-                                    <!-- Integrated Manual Request -->
+                                    <!-- Enhanced Manual Request -->
                                     <div style="border-top:1px solid rgba(255,255,255,0.05); padding-top:1.25rem;">
                                         <div
-                                            style="font-size:10px; color:#6e7681; font-weight:700; margin-bottom:0.75rem; text-transform:uppercase;">
-                                            Direct Message Injection</div>
-                                        <div class="flex gap-2 mb-2">
-                                            <input type="text" x-model="manual.msg_type" placeholder="Message Type..."
-                                                style="flex:1; background:rgba(0,0,0,0.2); border:1px solid #30363d; color:#c9d1d9; padding:8px 12px; border-radius:6px; outline:none; font-size:12px;">
-                                            <button class="btn btn-primary" style="padding: 0 1.5rem;"
-                                                @click="sendManualRequest()">SEND</button>
+                                            style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+                                            <div
+                                                style="font-size:10px; color:#6e7681; font-weight:700; text-transform:uppercase;">
+                                                🚀 Direct Message Injection</div>
+                                            <div style="display:flex; gap:0.4rem;">
+                                                <template
+                                                    x-for="t in ['Location', 'Station', 'Workflow', 'Robot', 'Container']">
+                                                    <button @click="manual.msg_type = t + 'ListMsg'; manual.body = '{}'"
+                                                        style="font-size:8px; padding:2px 6px; background:rgba(88,166,255,0.1); color:#58a6ff; border:1px solid rgba(88,166,255,0.2); border-radius:4px; cursor:pointer;"
+                                                        x-text="t"></button>
+                                                </template>
+                                            </div>
                                         </div>
-                                        <textarea x-model="manual.body" placeholder="Body JSON {}" rows="2"
-                                            style="width:100%; background:rgba(0,0,0,0.2); border:1px solid #30363d; color:#c9d1d9; padding:8px 12px; border-radius:6px; outline:none; font-size:12px; font-family:monospace; resize:none;"></textarea>
+
+                                        <div style="display:flex; gap:0.5rem; margin-bottom:0.75rem;">
+                                            <div style="flex:1; position:relative;">
+                                                <input type="text" x-model="manual.msg_type"
+                                                    placeholder="Message Type (e.g. RobotListMsg)"
+                                                    style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #30363d; color:#c9d1d9; padding:10px 14px; border-radius:8px; font-size:13px; font-family:monospace; outline:none; transition:border 0.2s;"
+                                                    onfocus="this.style.border='1px solid #58a6ff'"
+                                                    onblur="this.style.border='1px solid #30363d'">
+                                            </div>
+                                            <button class="btn btn-primary"
+                                                style="padding:0 1.5rem; background:#238636; border-radius:8px; font-weight:800; display:flex; align-items:center; gap:0.5rem;"
+                                                @click="sendManualRequest()">
+                                                <span>SEND</span>
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                                    stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                                                    stroke-linejoin="round">
+                                                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                                                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                                                </svg>
+                                            </button>
+                                        </div>
+
+                                        <div style="position:relative;">
+                                            <textarea x-model="manual.body" placeholder='{ "id": 123 }' rows="4"
+                                                style="width:100%; background:rgba(0,0,0,0.4); border:1px solid #30363d; color:#7ee787; padding:12px; border-radius:8px; font-family:monospace; font-size:12px; resize:vertical; outline:none; transition:border 0.2s;"
+                                                onfocus="this.style.border='1px solid #3fb950'"
+                                                onblur="this.style.border='1px solid #30363d'"></textarea>
+                                            <div
+                                                style="position:absolute; top:8px; right:12px; font-size:9px; color:#444; pointer-events:none;">
+                                                JSON</div>
+                                        </div>
+
+                                        <div style="display:flex; justify-content:space-between; margin-top:0.5rem;">
+                                            <div style="font-size:9px; color:#6e7681;">Tip: Message will be routed
+                                                through GMS Client</div>
+                                            <button @click="manual.body = '{}'"
+                                                style="font-size:9px; color:#f85149; background:none; border:none; cursor:pointer; font-weight:600;">CLEAR
+                                                BODY</button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1041,35 +1379,56 @@
                     const W = svg.clientWidth || svg.getBoundingClientRect().width || 300;
                     const H = svg.clientHeight || svg.getBoundingClientRect().height || 50;
 
-                    // Auto-scale max for latency, or use 100 for percentages
+                    // Auto-scale max
                     let max = predefinedMax || 100;
                     if (!predefinedMax) {
-                        const actualMax = Math.max(...values);
-                        if (actualMax > max) max = actualMax * 1.2;
+                        const actualMax = Math.max(...values, 1);
+                        max = Math.max(actualMax * 1.1, 1);
                     }
 
                     const n = values.length;
                     if (n < 2) return;
 
-                    const pts = values.map((v, i) => {
-                        const x = (i / (n - 1)) * W;
-                        const y = H - (v / max) * H;
-                        return `${x.toFixed(1)},${y.toFixed(1)}`;
-                    });
+                    const stepX = W / (n - 1);
+                    const getCoords = (v, i) => {
+                        return { x: i * stepX, y: H - (Math.min(v, max) / max) * (H - 4) - 2 };
+                    };
 
-                    const polyline = pts.join(' ');
-                    const fillPath = `M0,${H} L${pts[0]} ${pts.join(' L')} L${((n - 1) / (n - 1)) * W},${H} Z`;
+                    const points = values.map((v, i) => getCoords(v, i));
+
+                    // Simple smoothing (Catmull-Rom like)
+                    let d = `M ${points[0].x},${points[0].y}`;
+                    for (let i = 0; i < n - 1; i++) {
+                        const p0 = points[Math.max(i - 1, 0)];
+                        const p1 = points[i];
+                        const p2 = points[i + 1];
+                        const p3 = points[Math.min(i + 2, n - 1)];
+
+                        const cp1x = p1.x + (p2.x - p0.x) / 6;
+                        const cp1y = p1.y + (p2.y - p0.y) / 6;
+                        const cp2x = p2.x - (p3.x - p1.x) / 6;
+                        const cp2y = p2.y - (p3.y - p1.y) / 6;
+
+                        d += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${p2.x},${p2.y}`;
+                    }
+
+                    const fillPath = `${d} L ${W},${H} L 0,${H} Z`;
                     const gradId = `g_${svgId}`;
 
                     svg.innerHTML = `
                         <defs>
                             <linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stop-color="${color}" stop-opacity="0.35"/>
-                                <stop offset="100%" stop-color="${color}" stop-opacity="0.02"/>
+                                <stop offset="0%" stop-color="${color}" stop-opacity="0.4"/>
+                                <stop offset="100%" stop-color="${color}" stop-opacity="0.0"/>
                             </linearGradient>
+                            <filter id="glow_${svgId}">
+                                <feGaussianBlur stdDeviation="1.5" result="blur"/>
+                                <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+                            </filter>
                         </defs>
-                        <path d="${fillPath}" fill="url(#${gradId})"/>
-                        <polyline points="${polyline}" fill="none" stroke="${color}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+                        <path d="${fillPath}" fill="url(#${gradId})" style="transition: d 0.3s ease;"/>
+                        <path d="${d}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" 
+                            style="filter: drop-shadow(0 0 4px ${color}66); transition: d 0.3s ease;"/>
                     `;
                 },
 
@@ -1082,14 +1441,16 @@
                 // Station modal
                 showAddStation: false,
                 editStationCode: '',
-                newStation: { code: '', alias: '', angle: 90, containerType: '' },
+                newStation: { code: '', alias: '', angle: 90, containerType: '', oldCode: '' },
 
                 // Floor modal
                 showAddFloor: false,
+                editFloorId: null,
                 newFloor: { id: '', label: '', image: '', _file: null, _filename: '' },
 
                 // Container type modal
                 showAddContainer: false,
+                editContainerId: null,
                 newContainer: { id: '', name: '', width: '', length: '', color: '#2ecc71', _file: null, _filename: '' },
 
                 _cfgNotify(msg, ok) {
@@ -1112,6 +1473,66 @@
                     }
                 },
 
+                async saveMapConfig() {
+                    if (!this.cfgPwd) return this._cfgNotify('❌ Password required', false);
+                    try {
+                        const r = await fetch('/api/v1/ui/config/map', {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json', ...this._cfgHeaders() },
+                            body: JSON.stringify(this.cfgData.map)
+                        });
+                        const d = await r.json();
+                        if (d.success) {
+                            this._cfgNotify('✅ Global settings saved', true);
+                            await this.loadUiConfig();
+                        } else {
+                            this._cfgNotify('❌ ' + (d.detail || d.message), false);
+                        }
+                    } catch (e) { this._cfgNotify('❌ Network error', false); }
+                },
+
+                async saveSiteConfig() {
+                    if (!this.cfgPwd) return this._cfgNotify('❌ Password required', false);
+                    try {
+                        const r = await fetch('/api/v1/ui/config/site', {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json', ...this._cfgHeaders() },
+                            body: JSON.stringify(this.cfgData.site)
+                        });
+                        const d = await r.json();
+                        if (d.success) { this._cfgNotify('✅ Site settings saved', true); await this.loadUiConfig(); }
+                        else this._cfgNotify('❌ ' + (d.detail || d.message), false);
+                    } catch (e) { this._cfgNotify('❌ Network error', false); }
+                },
+
+                async saveRobotConfig() {
+                    if (!this.cfgPwd) return this._cfgNotify('❌ Password required', false);
+                    try {
+                        const r = await fetch('/api/v1/ui/config/robot', {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json', ...this._cfgHeaders() },
+                            body: JSON.stringify(this.cfgData.robot)
+                        });
+                        const d = await r.json();
+                        if (d.success) { this._cfgNotify('✅ Robot settings saved', true); await this.loadUiConfig(); }
+                        else this._cfgNotify('❌ ' + (d.detail || d.message), false);
+                    } catch (e) { this._cfgNotify('❌ Network error', false); }
+                },
+
+                async saveColorsConfig() {
+                    if (!this.cfgPwd) return this._cfgNotify('❌ Password required', false);
+                    try {
+                        const r = await fetch('/api/v1/ui/config/colors', {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json', ...this._cfgHeaders() },
+                            body: JSON.stringify(this.cfgData.colors)
+                        });
+                        const d = await r.json();
+                        if (d.success) { this._cfgNotify('✅ Colors saved', true); await this.loadUiConfig(); }
+                        else this._cfgNotify('❌ ' + (d.detail || d.message), false);
+                    } catch (e) { this._cfgNotify('❌ Network error', false); }
+                },
+
                 async saveStation() {
                     const code = this.newStation.code.trim().toUpperCase();
                     const alias = this.newStation.alias.trim();
@@ -1131,6 +1552,10 @@
                     };
 
                     const isEdit = !!this.editStationCode;
+                    if (isEdit && code !== this.newStation.oldCode) {
+                        body.newCode = code;
+                    }
+
                     const url = isEdit
                         ? `/api/v1/ui/config/stations/${this.editStationCode}`
                         : `/api/v1/ui/config/stations?code=${code}`;
@@ -1181,25 +1606,32 @@
                 },
 
                 async saveFloor() {
-                    // --- Validation ---
                     if (!this.newFloor.id && this.newFloor.id !== 0) return this._cfgNotify('❌ Floor ID is required', false);
                     if (!this.newFloor.label.trim()) return this._cfgNotify('❌ Label is required', false);
-                    if (!this.newFloor._file) return this._cfgNotify('❌ Floor image is required — please select a file', false);
                     if (!this.cfgPwd) return this._cfgNotify('❌ Password required', false);
 
+                    const isEdit = this.editFloorId !== null;
+                    if (!isEdit && !this.newFloor._file) return this._cfgNotify('❌ Floor image is required for new floor', false);
+
                     try {
-                        // 1. Upload image first
-                        const imgUrl = await this._uploadFile(this.newFloor._file);
-                        // 2. Add floor record
-                        const r = await fetch('/api/v1/ui/config/floors', {
-                            method: 'POST',
+                        let imgUrl = this.newFloor.image;
+                        if (this.newFloor._file) {
+                            imgUrl = await this._uploadFile(this.newFloor._file);
+                        }
+
+                        const url = isEdit ? `/api/v1/ui/config/floors/${this.editFloorId}` : '/api/v1/ui/config/floors';
+                        const method = isEdit ? 'PATCH' : 'POST';
+
+                        const r = await fetch(url, {
+                            method,
                             headers: { 'Content-Type': 'application/json', ...this._cfgHeaders() },
                             body: JSON.stringify({ id: this.newFloor.id, label: this.newFloor.label.trim(), image: imgUrl })
                         });
                         const d = await r.json();
                         if (d.success) {
-                            this._cfgNotify('✅ Floor added', true);
+                            this._cfgNotify(`✅ Floor ${isEdit ? 'updated' : 'added'}`, true);
                             this.showAddFloor = false;
+                            this.editFloorId = null;
                             await this.loadUiConfig();
                         } else {
                             this._cfgNotify('❌ ' + (d.detail || d.message), false);
@@ -1221,36 +1653,43 @@
                 },
 
                 async saveContainerType() {
-                    // --- Validation ---
                     if (!this.newContainer.id.trim()) return this._cfgNotify('❌ Type ID is required', false);
                     if (!this.newContainer.name.trim()) return this._cfgNotify('❌ Name is required', false);
                     if (!this.newContainer.width || this.newContainer.width <= 0) return this._cfgNotify('❌ Width must be > 0', false);
                     if (!this.newContainer.length || this.newContainer.length <= 0) return this._cfgNotify('❌ Length must be > 0', false);
-                    if (!this.newContainer._file) return this._cfgNotify('❌ Container image is required — please select a file', false);
                     if (!this.cfgPwd) return this._cfgNotify('❌ Password required', false);
 
+                    const isEdit = this.editContainerId !== null;
+                    if (!isEdit && !this.newContainer._file) return this._cfgNotify('❌ Container image is required for new type', false);
+
                     try {
-                        const imgUrl = await this._uploadFile(this.newContainer._file, 'ContainerImg');
+                        let imgUrl = this.newContainer.image;
+                        if (this.newContainer._file) {
+                            imgUrl = await this._uploadFile(this.newContainer._file, 'ContainerImg');
+                        }
+
                         const body = {
                             id: this.newContainer.id.trim(),
                             name: this.newContainer.name.trim(),
                             width: parseFloat(this.newContainer.width),
                             length: parseFloat(this.newContainer.length),
-                            height: 1.0,
-                            baseHeight: 0.37,
                             image: imgUrl,
-                            color: this.newContainer.color,
-                            containerCategory: this.newContainer.id.trim()
+                            color: this.newContainer.color
                         };
-                        const r = await fetch('/api/v1/ui/config/container-types', {
-                            method: 'POST',
+
+                        const url = isEdit ? `/api/v1/ui/config/container-types/${this.editContainerId}` : '/api/v1/ui/config/container-types';
+                        const method = isEdit ? 'PATCH' : 'POST';
+
+                        const r = await fetch(url, {
+                            method,
                             headers: { 'Content-Type': 'application/json', ...this._cfgHeaders() },
                             body: JSON.stringify(body)
                         });
                         const d = await r.json();
                         if (d.success) {
-                            this._cfgNotify('✅ Container type added', true);
+                            this._cfgNotify(`✅ Container type ${isEdit ? 'updated' : 'added'}`, true);
                             this.showAddContainer = false;
+                            this.editContainerId = null;
                             await this.loadUiConfig();
                         } else {
                             this._cfgNotify('❌ ' + (d.detail || d.message), false);
@@ -1274,6 +1713,9 @@
             }
         }
     </script>
+    <footer class="fixed bottom-0 right-0 p-4 text-xs text-slate-500 opacity-50 pointer-events-none">
+        ESIG HUB v1.1.0
+    </footer>
 </body>
 
 </html>

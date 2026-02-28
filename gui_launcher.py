@@ -10,6 +10,9 @@ from PIL import Image, ImageTk
 import pystray
 from pystray import MenuItem as item
 
+# ─── CLI Flags ────────────────────────────────────────────────────────────────
+AUTO_START_MODE = "--autostart" in sys.argv  # รันโดยไม่ต้องกด Start Server เอง
+
 # Handle path for PyInstaller bundled executable
 if getattr(sys, "frozen", False):
     EXE_DIR = os.path.dirname(sys.executable)
@@ -69,6 +72,7 @@ class EsigHubLauncher:
         self.process = None
         self.is_running = False
         self.tray_icon = None
+        self.auto_start = AUTO_START_MODE  # จาก --autostart flag
 
         # UI Components
         self.setup_ui()
@@ -96,7 +100,7 @@ class EsigHubLauncher:
         header.pack(fill=tk.X)
         tk.Label(
             header,
-            text="ESIG HUB v1.0.0",
+            text="ESIG HUB v1.1.0",
             font=("Segoe UI", 16, "bold"),
             bg="#2c3e50",
             fg="white",
@@ -198,16 +202,27 @@ class EsigHubLauncher:
 
         def task():
             try:
-                # Use EXE_DIR for .env (since it's beside the launcher)
                 env_path = os.path.join(EXE_DIR, ".env")
-
-                # In frozen mode, skip main.py import check if server is actually startable
                 skip_main = getattr(sys, "frozen", False)
-
                 results, _ = diagnostic.run_all_checks(
                     env_file=env_path, skip_import=skip_main
                 )
                 self.root.after(0, lambda r=results: self.update_diag_ui(r))
+
+                # ─── Auto-Start: ถ้า --autostart และ ทุก check ผ่าน ────────────
+                if self.auto_start:
+                    all_passed = all(results.values())
+                    if all_passed:
+                        self.root.after(500, self._auto_start_and_minimize)
+                    else:
+                        # มี check ล้มเหลว → แสดง window ให้ admin เห็น
+                        failed = [k for k, v in results.items() if not v]
+                        self.root.after(
+                            0,
+                            lambda f=failed: self.append_log(
+                                f"[AUTO-START] Aborted — checks failed: {f}\n"
+                            ),
+                        )
             except Exception as e:
                 err_msg = str(e)
                 self.root.after(
@@ -215,6 +230,13 @@ class EsigHubLauncher:
                 )
 
         threading.Thread(target=task, daemon=True).start()
+
+    def _auto_start_and_minimize(self):
+        """เรียกโดยอัตโนมัติเมื่อ --autostart และ diagnostics ผ่านทั้งหมด"""
+        self.append_log("[AUTO-START] All diagnostics passed — starting server...\n")
+        self.start_server()
+        # หลัง 3 วินาที minimize ลง system tray
+        self.root.after(3000, self.minimize_to_tray)
 
     def toggle_server(self):
         if self.is_running:
@@ -301,6 +323,33 @@ class EsigHubLauncher:
         self.log_area.insert(tk.END, msg)
         self.log_area.see(tk.END)
 
+    def minimize_to_tray(self):
+        self.root.withdraw()
+
+        if not self.tray_icon:
+            icon_path = os.path.join(RESOURCE_DIR, "static", "images", "esig_hub.png")
+            img = Image.open(icon_path)
+
+            menu = (
+                item("Show Window", lambda: self.show_window()),
+                item("Exit", lambda: self.quit_app()),
+            )
+            self.tray_icon = pystray.Icon("ESIG HUB", img, "ESIG HUB Launcher", menu)
+            threading.Thread(target=self.tray_icon.run, daemon=True).start()
+
+    def show_window(self):
+        if self.tray_icon:
+
+            self.root.after(0, self.root.deiconify)
+            self.root.after(0, self.root.lift)
+
+    def quit_app(self):
+        if self.tray_icon:
+            self.tray_icon.stop()
+        if self.is_running:
+            self.stop_server()
+        self.root.after(0, self.root.destroy)
+
 
 if __name__ == "__main__":
     if os.name != "nt":
@@ -315,45 +364,13 @@ if __name__ == "__main__":
             # If server is running, we offer to minimize to tray or quit
             msg = "Server is still running.\n\n'Yes' - Exit everything\n'No' - Minimize to System Tray\n'Cancel' - Back to App"
             choice = messagebox.askyesnocancel("Exit ESIG HUB", msg)
-            if choice is True:  # Yes
-                app.stop_server()
-                if app.tray_icon:
-                    app.tray_icon.stop()
-                root.destroy()
-            elif choice is False:  # No -> Tray
-                minimize_to_tray()
+            if choice is True:
+                app.quit_app()
+            elif choice is False:
+                app.minimize_to_tray()
         else:
             if messagebox.askokcancel("Quit", "Are you sure you want to exit?"):
-                if app.tray_icon:
-                    app.tray_icon.stop()
-                root.destroy()
-
-    def minimize_to_tray():
-        root.withdraw()  # Hide main window
-
-        if not app.tray_icon:
-            icon_path = os.path.join(RESOURCE_DIR, "static", "images", "esig_hub.png")
-            img = Image.open(icon_path)
-
-            menu = (
-                item("Show Window", lambda: show_window()),
-                item("Exit", lambda: quit_app()),
-            )
-            app.tray_icon = pystray.Icon("ESIG HUB", img, "ESIG HUB Launcher", menu)
-            threading.Thread(target=app.tray_icon.run, daemon=True).start()
-
-    def show_window():
-        if app.tray_icon:
-            # app.tray_icon.stop() # Keep it running or stop? Better stop and recreate or just hide
-            root.after(0, root.deiconify)
-            root.after(0, root.lift)
-
-    def quit_app():
-        if app.tray_icon:
-            app.tray_icon.stop()
-        if app.is_running:
-            app.stop_server()
-        root.after(0, root.destroy)
+                app.quit_app()
 
     root.protocol("WM_DELETE_WINDOW", on_closing)
     root.mainloop()

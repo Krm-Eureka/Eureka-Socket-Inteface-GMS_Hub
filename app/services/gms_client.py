@@ -8,6 +8,7 @@ from typing import Dict, Optional, Callable
 from loguru import logger
 from app.core.config import settings
 from app.core.constants import AppStatus, AppErrorCode
+from app.services.log_service import write_debug_log as _log_debug
 
 
 class GMSClient:
@@ -33,7 +34,16 @@ class GMSClient:
         }
         self.last_rx_time = time.time()
         self.pending_requests = set()  # Track in-flight request types
+        self._pending_times: Dict[str, float] = {}  # msgType → time.time() ตอนส่ง
         self._monitor = None  # Injected via set_monitor() after construction
+
+        # ─── Socket.IO Room Routing ─────────────────────────────────────────────
+        # Events listed here are sent ONLY to clients in the 'page:map' room,
+        # avoiding unnecessary JS processing on Task/Container/other pages.
+        self._map_only_events = {
+            "gms:data:LocationListMsg",
+            "gms:data:RobotInfoMsg",
+        }
         self._start_midnight_reset()  # Schedule daily counter reset at 00:00
 
     def _start_midnight_reset(self):
@@ -41,39 +51,45 @@ class GMSClient:
 
         def _reset_loop():
             while True:
-                now = datetime.datetime.now()
-                # Calculate seconds until next midnight
-                next_midnight = (now + datetime.timedelta(days=1)).replace(
-                    hour=0, minute=0, second=0, microsecond=0
-                )
-                sleep_secs = (next_midnight - now).total_seconds()
-                time.sleep(sleep_secs)
-
-                old_rx, old_tx = self.stats["rx"], self.stats["tx"]
-                self.stats = {"rx": 0, "tx": 0}
-
-                # Build daily summary from system monitor if available
-                summary = {}
-                if self._monitor:
-                    summary = self._monitor.get_daily_summary()
-                    self._monitor.reset_daily_stats()
-
-                log_msg = (
-                    f"[DAILY RESET — {now.strftime('%Y-%m-%d')}]\n"
-                    f"  GMS Counter  : RX={old_rx}  TX={old_tx}\n"
-                )
-                if summary:
-                    log_msg += (
-                        f"  CPU          : min={summary['cpu_min']}%  max={summary['cpu_max']}%  avg={summary['cpu_avg']}%\n"
-                        f"  RAM          : min={summary['ram_min']}%  max={summary['ram_max']}%  avg={summary['ram_avg']}%\n"
-                        f"  DB Latency   : min={summary['db_latency_min']}ms  max={summary['db_latency_max']}ms\n"
-                        f"  DB QPS (max) : {summary['qps_max']}\n"
-                        f"  DB Errors    : {summary['db_errors']}\n"
-                        f"  Samples      : {summary['samples']}"
+                try:
+                    now = datetime.datetime.now()
+                    # Calculate seconds until next midnight
+                    next_midnight = (now + datetime.timedelta(days=1)).replace(
+                        hour=0, minute=0, second=0, microsecond=0
                     )
+                    sleep_secs = (next_midnight - now).total_seconds()
+                    time.sleep(sleep_secs)
 
-                logger.info(log_msg)
-                self.emit_log("SYS", "DAILY_RESET", {"report": log_msg})
+                    old_rx, old_tx = self.stats["rx"], self.stats["tx"]
+                    self.stats = {"rx": 0, "tx": 0}
+
+                    # Build daily summary from system monitor if available
+                    summary = {}
+                    if self._monitor:
+                        summary = self._monitor.get_daily_summary()
+                        self._monitor.reset_daily_stats()
+
+                    log_msg = (
+                        f"[DAILY RESET — {now.strftime('%Y-%m-%d')}]\n"
+                        f"  GMS Counter  : RX={old_rx}  TX={old_tx}\n"
+                    )
+                    if summary:
+                        log_msg += (
+                            f"  CPU          : min={summary['cpu_min']}%  max={summary['cpu_max']}%  avg={summary['cpu_avg']}%\n"
+                            f"  RAM          : min={summary['ram_min']}%  max={summary['ram_max']}%  avg={summary['ram_avg']}%\n"
+                            f"  DB Latency   : min={summary['db_latency_min']}ms  max={summary['db_latency_max']}ms\n"
+                            f"  DB QPS (max) : {summary['qps_max']}\n"
+                            f"  DB Errors    : {summary['db_errors']}\n"
+                            f"  Samples      : {summary['samples']}"
+                        )
+
+                    logger.info(log_msg)
+                    self.emit_log("SYS", "DAILY_RESET", {"report": log_msg})
+                except Exception as e:
+                    logger.error(f"Midnight reset loop error: {e}")
+                    time.sleep(
+                        60
+                    )  # Wait 1 minute before retrying on error to avoid CPU spike
 
         t = threading.Thread(target=_reset_loop, daemon=True, name="midnight-reset")
         t.start()
@@ -199,6 +215,11 @@ class GMSClient:
             # 2. Log Event (Generic)
             self.emit_log("RX", msg_type, data)
 
+            # 📝 Debug Log: RX (with RTT and body preview ≤ 5 items)
+            sent_at = self._pending_times.pop(msg_type, None)
+            elapsed_ms = round((time.time() - sent_at) * 1000) if sent_at else None
+            self._write_debug_log("RX", msg_type, body, elapsed_ms=elapsed_ms)
+
             # Update Diagnostics
             self.gms_stats["last_activity"] = datetime.datetime.now().strftime(
                 "%H:%M:%S"
@@ -277,8 +298,9 @@ class GMSClient:
         }
 
         if self.send_raw(req_data):
-            # Mark as pending
+            # Mark as pending + record send time for RTT
             self.pending_requests.add(msg_type)
+            self._pending_times[msg_type] = time.time()  # บันทึกเวลาส่ง
             self._emit_pending()
 
             # Update Diagnostics
@@ -291,6 +313,8 @@ class GMSClient:
 
             logger.debug(f"📤 [SEND] {msg_type} -> ID: {req_id}")
             self.emit_log("TX", msg_type, req_data)
+            # 📝 Debug Log: TX
+            self._write_debug_log("TX", msg_type, body, elapsed_ms=None)
             return True
         return False
 
@@ -336,6 +360,10 @@ class GMSClient:
             },
         )
 
+    def _write_debug_log(self, direction: str, msg_type: str, body, elapsed_ms):
+        """Delegate to log_service — keeps gms_client clean."""
+        _log_debug(direction, msg_type, body, elapsed_ms)
+
     def emit_error(self, code: str, message: str):
         self.emit_socket(
             "gms:error",
@@ -346,12 +374,21 @@ class GMSClient:
             },
         )
 
-    def emit_socket(self, event: str, data: Dict):
+    def emit_socket(self, event: str, data: Dict, room: str = None):
         if not self._loop:
             return
         try:
-            logger.debug(f"📤 [SOCKET] Emitting {event}")
-            asyncio.run_coroutine_threadsafe(self._sio.emit(event, data), self._loop)
+            # Route map-only events to page:map room to avoid spamming other pages
+            target_room = room or (
+                "page:map" if event in self._map_only_events else None
+            )
+            if target_room:
+                logger.debug(f"📤 [SOCKET] Emitting {event} → room={target_room}")
+                coro = self._sio.emit(event, data, room=target_room)
+            else:
+                logger.debug(f"📤 [SOCKET] Emitting {event} → all")
+                coro = self._sio.emit(event, data)
+            asyncio.run_coroutine_threadsafe(coro, self._loop)
         except Exception as e:
             logger.error(f"Socket Emit Failed ({event}): {e}")
 

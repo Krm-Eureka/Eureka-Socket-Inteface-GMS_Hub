@@ -6,6 +6,7 @@ import pymysql
 import pymysql.cursors
 from loguru import logger
 from app.core.config import settings
+from app.services.log_service import write_daily_log as _log_daily
 
 
 class SystemMonitor:
@@ -23,6 +24,7 @@ class SystemMonitor:
         self._is_busy = False  # Guard against overlapping health checks
         self.clients = {}  # {sid: {ip: str, connected_at: str}}
         self._daily = self._blank_daily()
+        self._last_log_date = None  # เขียน daily summary 1 ครั้งต่อวัน
 
     @staticmethod
     def _blank_daily():
@@ -66,6 +68,10 @@ class SystemMonitor:
     def reset_daily_stats(self):
         """Reset daily tracking counters (called at midnight)."""
         self._daily = self._blank_daily()
+
+    def _write_daily_log(self, snapshot: dict, label: str = "DAILY_SUMMARY"):
+        """Delegate to log_service — keeps system_monitor clean."""
+        _log_daily(snapshot, self.get_daily_summary(), label=label)
 
     def set_loop(self, loop):
         self._loop = loop
@@ -297,6 +303,19 @@ class SystemMonitor:
                         asyncio.run_coroutine_threadsafe(
                             self._sio.emit("health_stats", health_packet), self._loop
                         )
+
+                    # 📋 เขียน Daily Summary 1 ครั้งต่อวัน (เมื่อวันเปลี่ยน = ตีหนึ่ง/เที่ยงคืน)
+                    import datetime as _dt
+
+                    today_str = _dt.datetime.now().strftime("%Y-%m-%d")
+                    if self._last_log_date and self._last_log_date != today_str:
+                        # วันเปลี่ยนแล้ว — เขียนสรุปของเมื่อวัน
+                        try:
+                            self._write_daily_log(health_packet, label="DAILY_SUMMARY")
+                        except Exception as log_err:
+                            logger.warning(f"[DailyLog] Write failed: {log_err}")
+                    self._last_log_date = today_str
+
                 finally:
                     self._is_busy = False
 

@@ -14,7 +14,9 @@ class PollingManager:
         self._gms = gms_client
         self._running = False
         self._stop_event = threading.Event()
-        self._tier_lock = threading.Lock()  # Thread-safe tier management
+        self._tier_lock = (
+            threading.RLock()
+        )  # RLock: reentrant — safe for nested acquire in set_client_page → set_dynamic_tier
         self.client_code = settings.GMS_CLIENT_CODE
         self.channel_id = settings.GMS_CHANNEL_ID
         self.auto_query = True
@@ -33,7 +35,7 @@ class PollingManager:
         self.fast_msg_types = [
             "RobotInfoMsg",
             "ContainerListMsg",
-            "WorkflowInstanceListMsg",
+            # WorkflowInstanceListMsg ย้ายไป slow tier แล้ว — ลด load fast poll
         ]
         self.slow_msg_types = [
             "LocationListMsg",
@@ -47,6 +49,8 @@ class PollingManager:
         }
 
         self._last_slow_query = 0
+        self.workflow_refresh_interval = 10 * 60  # 10 minutes
+        self._last_workflow_refresh = 0
 
     def start_service(self):
         if self._running:
@@ -118,18 +122,15 @@ class PollingManager:
 
     def set_client_page(self, sid: str, page: str):
         """Track which page each client is on and adjust tiers accordingly."""
-        # Remove sid from all page watcher sets
-        for watchers in self._page_watchers.values():
-            watchers.discard(sid)
+        with self._tier_lock:  # Atomic: discard + add must not interleave between concurrent callers
+            for watchers in self._page_watchers.values():
+                watchers.discard(sid)
+            if page in self._page_watchers:
+                self._page_watchers[page].add(sid)
+            any_on_map = bool(self._page_watchers["map"])
+            any_on_task = bool(self._page_watchers["taskmonitoring"])
 
-        # Add to new page watcher set (if it's a tracked page)
-        if page in self._page_watchers:
-            self._page_watchers[page].add(sid)
-
-        # Recalculate tiers based on remaining watchers
-        any_on_map = bool(self._page_watchers["map"])
-        any_on_task = bool(self._page_watchers["taskmonitoring"])
-
+        # set_dynamic_tier also acquires _tier_lock — safe because RLock is reentrant
         self.set_dynamic_tier("LocationListMsg", "fast" if any_on_map else "slow")
         self.set_dynamic_tier(
             "WorkflowInstanceListMsg", "fast" if (any_on_task or any_on_map) else "slow"
@@ -150,60 +151,65 @@ class PollingManager:
         max_backoff = settings.GMS_RECONNECT_MAX_DELAY
 
         while self._running:
-            sock = self._gms.connect()
-            if sock:
-                backoff_seconds = (
-                    settings.GMS_RECONNECT_INITIAL_DELAY
-                )  # Reset on success
-                # 1. Connected: Perform Startup Query (Once per connect)
-                logger.info("Performing Startup Query (One-time)...")
-                for msg_type in self.startup_msg_types:
-                    body = {}
-                    if msg_type == "WorkflowInstanceListMsg":
-                        # Today at 00:00:00
-                        today_dt = datetime.datetime.now().replace(
-                            hour=0, minute=0, second=0, microsecond=0
+            try:
+                sock = self._gms.connect()
+                if sock:
+                    backoff_seconds = (
+                        settings.GMS_RECONNECT_INITIAL_DELAY
+                    )  # Reset on success
+                    # 1. Connected: Perform Startup Query (Once per connect)
+                    logger.info("Performing Startup Query (One-time)...")
+                    for msg_type in self.startup_msg_types:
+                        body = {}
+                        if msg_type == "WorkflowInstanceListMsg":
+                            # Today at 00:00:00
+                            today_dt = datetime.datetime.now().replace(
+                                hour=0, minute=0, second=0, microsecond=0
+                            )
+                            start_dt = today_dt - datetime.timedelta(days=14)
+                            end_dt = today_dt + datetime.timedelta(days=1)
+                            body = {
+                                "msgType": "WorkflowInstanceListMsg",
+                                "startTime": start_dt.strftime("%Y-%m-%d 00:00:00"),
+                                "endTime": end_dt.strftime("%Y-%m-%d 00:00:00"),
+                            }
+                        self._gms.send_request(
+                            msg_type, self.client_code, self.channel_id, body
                         )
-                        start_dt = today_dt - datetime.timedelta(days=14)
-                        end_dt = today_dt + datetime.timedelta(days=1)
-                        body = {
-                            "msgType": "WorkflowInstanceListMsg",
-                            "startTime": start_dt.strftime("%Y-%m-%d 00:00:00"),
-                            "endTime": end_dt.strftime("%Y-%m-%d 00:00:00"),
-                        }
-                    self._gms.send_request(
-                        msg_type, self.client_code, self.channel_id, body
+
+                    # 2. Start sub-behavioral loops
+                    hb_thread = threading.Thread(
+                        target=self._heartbeat_loop,
+                        args=(sock,),
+                        name="HeartbeatThread",
+                        daemon=True,
                     )
+                    poll_thread = threading.Thread(
+                        target=self._polling_loop,
+                        args=(sock,),
+                        name="PollingThread",
+                        daemon=True,
+                    )
+                    hb_thread.start()
+                    poll_thread.start()
 
-                # 2. Start sub-behavioral loops
-                hb_thread = threading.Thread(
-                    target=self._heartbeat_loop,
-                    args=(sock,),
-                    name="HeartbeatThread",
-                    daemon=True,
-                )
-                poll_thread = threading.Thread(
-                    target=self._polling_loop,
-                    args=(sock,),
-                    name="PollingThread",
-                    daemon=True,
-                )
-                hb_thread.start()
-                poll_thread.start()
+                    # Blocking read loop (The Service part)
+                    self._gms.read_loop(lambda: self._running)
 
-                # Blocking read loop (The Service part)
-                self._gms.read_loop(lambda: self._running)
-
-            if self._running:
-                logger.warning(
-                    f"GMS Session lost or failed. Retrying in {backoff_seconds}s..."
-                )
-                # Ensure it's disconnected properly
-                self._gms.disconnect()
-                if self._stop_event.wait(backoff_seconds):
+                if self._running:
+                    logger.warning(
+                        f"GMS Session lost or failed. Retrying in {backoff_seconds}s..."
+                    )
+                    # Ensure it's disconnected properly
+                    self._gms.disconnect()
+                    if self._stop_event.wait(backoff_seconds):
+                        break
+                    # Exponential backoff
+                    backoff_seconds = min(backoff_seconds * 2, max_backoff)
+            except Exception as e:
+                logger.error(f"Critical error in Session Worker: {e}")
+                if self._stop_event.wait(1.0):
                     break
-                # Exponential backoff
-                backoff_seconds = min(backoff_seconds * 2, max_backoff)
 
     def _heartbeat_loop(self, sock_ref):
         logger.info("Heartbeat Loop Started")
@@ -351,8 +357,14 @@ class PollingManager:
                     start_dt_7d = today_dt - datetime.timedelta(days=7)
                     end_dt_1d = today_dt + datetime.timedelta(days=1)
 
+                    # RC-1 Fix: snapshot lists while holding the lock to prevent
+                    # RuntimeError if set_dynamic_tier modifies them concurrently
+                    with self._tier_lock:
+                        fast_types = list(self.fast_msg_types)
+                        slow_types = list(self.slow_msg_types)
+
                     # 1. Fast Layer (1s Interval)
-                    for msg_type in self.fast_msg_types:
+                    for msg_type in fast_types:
                         # Skip if a similar request is pending to avoid flooding
                         if msg_type in self._gms.pending_requests:
                             continue
@@ -370,20 +382,35 @@ class PollingManager:
                     # 2. Slow Layer (30s Interval)
                     if now - self._last_slow_query >= self.slow_query_interval:
                         self._last_slow_query = now
-                        for msg_type in self.slow_msg_types:
+                        for msg_type in slow_types:
                             if msg_type in self._gms.pending_requests:
                                 continue
                             body = {}
                             if msg_type == "WorkflowInstanceListMsg":
+                                # 7 วันย้อนหลัง 00:00:00 → วันนี้ 23:59:59
+                                end_today = today_dt.replace(
+                                    hour=23, minute=59, second=59
+                                )
                                 body = {
                                     "msgType": "WorkflowInstanceListMsg",
-                                    "startTime": start_dt_30d.strftime(
+                                    "startTime": start_dt_7d.strftime(
                                         "%Y-%m-%d 00:00:00"
                                     ),
-                                    "endTime": end_dt_1d.strftime("%Y-%m-%d 00:00:00"),
+                                    "endTime": end_today.strftime("%Y-%m-%d 23:59:59"),
                                 }
                             self._gms.send_request(
                                 msg_type, self.client_code, self.channel_id, body
+                            )
+
+                    # 3. Very Slow Layer (10m Interval) - OPT-3
+                    if (
+                        now - self._last_workflow_refresh
+                        >= self.workflow_refresh_interval
+                    ):
+                        self._last_workflow_refresh = now
+                        if "WorkflowListMsg" not in self._gms.pending_requests:
+                            self._gms.send_request(
+                                "WorkflowListMsg", self.client_code, self.channel_id, {}
                             )
 
                     # Dynamic wait to keep 1s interval even with processing time

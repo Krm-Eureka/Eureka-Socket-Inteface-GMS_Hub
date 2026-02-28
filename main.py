@@ -10,9 +10,12 @@ from fastapi.openapi.docs import get_swagger_ui_html
 from contextlib import asynccontextmanager
 from loguru import logger
 
+_base_dir = os.environ.get("ESIG_BASE_DIR", ".")
+_log_dir = os.path.join(_base_dir, "logs")
+
 # Ensure logs directory exists
-if not os.path.exists("logs"):
-    os.makedirs("logs")
+if not os.path.exists(_log_dir):
+    os.makedirs(_log_dir)
 
 from app.core.config import settings
 from app.services.gms_client import GMSClient
@@ -24,6 +27,13 @@ from app.api.v1.ui_router import router as ui_router
 
 # --- Server Orchestration ---
 sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins="*")
+
+# ─── Socket.IO Rooms ───────────────────────────────────────────────────────────
+# Clients are placed in page-specific rooms so heavy GMS messages (LocationListMsg,
+# RobotInfoMsg) are only broadcast to clients who are actually viewing the Map.
+# All other messages continue to broadcast globally.
+PAGE_ROOMS = {"map", "taskmonitoring", "containers", "workflows", "dashboard"}
+MAP_ONLY_EVENTS = {"gms:data:LocationListMsg", "gms:data:RobotInfoMsg"}
 if settings.MOCK_MODE:
     logger.warning(">>> RUNNING IN MOCK MODE <<<")
     gms_client = MockGMSClient(sio)
@@ -46,7 +56,7 @@ def init_logging():
 
     # 1. Main Server Log (Exclude GMS Client & Polling Verbosity)
     logger.add(
-        "logs/server_{time:YYYY-MM-DD}.log",
+        os.path.join(_log_dir, "server_{time:YYYY-MM-DD}.log"),
         rotation="30 minutes",
         retention="1 week",
         level=settings.LOG_LEVEL,
@@ -56,9 +66,29 @@ def init_logging():
         enqueue=True,  # Thread-safe
     )
 
-    # 2. Service Log (Only GMS Client & Polling)
+    # 2. Fast Polling File (1 Sec)
     logger.add(
-        "logs/service_{time:YYYY-MM-DD}.log",
+        os.path.join(_log_dir, "polling_fast_{time:YYYY-MM-DD}.log"),
+        rotation="30 minutes",
+        retention="1 week",
+        level=settings.LOG_LEVEL,
+        filter=lambda record: "Polling Fast" in record["message"],
+        format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}",
+    )
+
+    # 3. Slow Polling File (30 Sec)
+    logger.add(
+        os.path.join(_log_dir, "polling_slow_{time:YYYY-MM-DD}.log"),
+        rotation="30 minutes",
+        retention="1 week",
+        level=settings.LOG_LEVEL,
+        filter=lambda record: "Polling Slow" in record["message"],
+        format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}",
+    )
+
+    # 4. Service Log (Only GMS Client & Polling)
+    logger.add(
+        os.path.join(_log_dir, "service_{time:YYYY-MM-DD}.log"),
         rotation="30 minutes",
         retention="1 week",
         level=settings.LOG_LEVEL,
@@ -76,7 +106,7 @@ async def startup_diagnostics():
 
     # ─── Banner ─────────────────────────────────────────────────────────────
     logger.info("=" * 62)
-    logger.info("   ESIG HUB v1.0.0  —  Startup Diagnostics")
+    logger.info("   ESIG HUB v1.1.0  —  Startup Diagnostics")
     logger.info("=" * 62)
     logger.info(f"   MODE      : {'🔵 MOCK' if settings.MOCK_MODE else '🟢 LIVE'}")
     logger.info(
@@ -156,8 +186,9 @@ async def lifespan(app: FastAPI):
 
 # --- FastAPI Initialization ---
 app = FastAPI(
-    title="ESIG HUB - EA Socket Interface GMS Hub", version="1.0.0", lifespan=lifespan
+    title="ESIG HUB - EA Socket Interface GMS Hub", version="1.1.0", lifespan=lifespan
 )
+app.state.sio = sio
 
 # Static & Middleware
 from fastapi.middleware.cors import CORSMiddleware
@@ -179,8 +210,20 @@ app.add_middleware(
 
 # Use absolute paths for static and templates to be robust in IIS
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Check if ui_assets exists alongside static (typical for PyInstaller internal output)
+ui_assets_path = os.path.join(BASE_DIR, "ui_assets")
+if not os.path.exists(ui_assets_path):
+    # Fallback for development: it's inside static
+    ui_assets_path = os.path.join(BASE_DIR, "static", "ui_assets")
+
 app.mount(
     "/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static"
+)
+app.mount(
+    "/api/v1/ui/assets",
+    StaticFiles(directory=ui_assets_path),
+    name="ui_assets_api",
 )
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
@@ -232,6 +275,9 @@ async def connect(sid, environ):
             client_ip = client[0]
 
     system_monitor.add_client(sid, client_ip)
+    # Default room: map (matches the app's default page)
+    # set_active_page will move the client to the correct room once FE signals
+    await sio.enter_room(sid, "page:map")
     await sio.emit(
         "status_update",
         {
@@ -354,10 +400,18 @@ async def handle_refresh_data(sid, data):
 
 @sio.on("set_active_page")
 async def handle_set_active_page(sid, data):
-    """Handle page navigation signals for polling optimization (per-client)"""
+    """Handle page navigation signals — move client to the correct Socket.IO room
+    so map-only events (LocationListMsg, RobotInfoMsg) don't spam other pages."""
     try:
         page = data.get("page", "")
         logger.info(f"Client {sid} entered page: {page}")
+
+        # Move client to the correct page room
+        for room in PAGE_ROOMS:
+            await sio.leave_room(sid, f"page:{room}")
+        if page in PAGE_ROOMS:
+            await sio.enter_room(sid, f"page:{page}")
+
         polling_manager.set_client_page(sid, page)
     except Exception as e:
         logger.error(f"Set Active Page Error: {e}")

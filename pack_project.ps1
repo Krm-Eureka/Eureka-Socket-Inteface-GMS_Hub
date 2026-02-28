@@ -1,6 +1,6 @@
 # ESIG HUB Packager - สร้างไฟล์ .tar.gz สำหรับ Deployment
 $ProjectName = "ESIG_HUB"
-$Version = "1.0.0"
+$Version = "1.0.1"
 $OutputFile = "$ProjectName`_$Version.tar.gz"
 
 Write-Host "📦 Starting package process for $ProjectName..." -ForegroundColor Cyan
