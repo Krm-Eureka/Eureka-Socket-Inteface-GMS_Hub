@@ -1,11 +1,10 @@
-# ESIG HUB Packager - สร้างไฟล์ .tar.gz สำหรับ Deployment
+# ESIG HUB Packager
 $ProjectName = "ESIG_HUB"
-$Version = "1.0.1"
+$Version = "1.1.2"
 $OutputFile = "$ProjectName`_$Version.tar.gz"
 
-Write-Host "📦 Starting package process for $ProjectName..." -ForegroundColor Cyan
+Write-Host "Starting package process for $ProjectName..." -ForegroundColor Cyan
 
-# สร้างรายการไฟล์ที่จะรวม (ไม่รวมโฟลเดอร์ที่ไม่จำเป็น)
 $ExcludeList = @(
     "__pycache__/*",
     ".git/*",
@@ -18,15 +17,15 @@ $ExcludeList = @(
     ".gemini/*"
 )
 
-# ใช้คำสั่ง tar (มีใน Windows 10/11)
-# --exclude ช่วยให้เราข้ามโฟลเดอร์ที่ไม่เอาได้
+# Use tar command (built into Windows 10/11)
+# --exclude helps exclude directories we don't want
 $TarCommand = "tar -czvf $OutputFile --exclude=__pycache__ --exclude=.git --exclude=.venv --exclude=logs --exclude=.gemini --exclude=*.tar.gz ."
 
-Write-Host "🚀 Running: $TarCommand" -ForegroundColor Yellow
+Write-Host "Running: $TarCommand" -ForegroundColor Yellow
 Invoke-Expression $TarCommand
 
 if ($LASTEXITCODE -eq 0) {
-    Write-Host "✅ Created package successfully: $OutputFile" -ForegroundColor Green
+    Write-Host "Created package successfully: $OutputFile" -ForegroundColor Green
 } else {
-    Write-Host "❌ Failed to create package." -ForegroundColor Red
+    Write-Host "Failed to create package." -ForegroundColor Red
 }

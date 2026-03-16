@@ -99,14 +99,14 @@ def init_logging():
     )
 
 
-async def startup_diagnostics():
+async def startup_diagnostics(app):
     """ตรวจสอบและ log สถานะการเชื่อมต่อทั้งหมดตอน startup"""
     import socket as _socket
     import pymysql
 
     # ─── Banner ─────────────────────────────────────────────────────────────
     logger.info("=" * 62)
-    logger.info("   ESIG HUB v1.1.0  —  Startup Diagnostics")
+    logger.info(f"   ESIG HUB {app.version}  —  Startup Diagnostics")
     logger.info("=" * 62)
     logger.info(f"   MODE      : {'🔵 MOCK' if settings.MOCK_MODE else '🟢 LIVE'}")
     logger.info(
@@ -168,7 +168,7 @@ async def lifespan(app: FastAPI):
     system_monitor.set_loop(loop)
     gms_client.set_monitor(system_monitor)  # Wire monitor for daily reset summary
 
-    await startup_diagnostics()
+    await startup_diagnostics(app)
 
     logger.info("ESIG HUB Initializing: Establishing GMS Polling Behavior...")
     gms_client.set_callbacks(on_message=polling_manager.handle_gms_message)
@@ -186,7 +186,7 @@ async def lifespan(app: FastAPI):
 
 # --- FastAPI Initialization ---
 app = FastAPI(
-    title="ESIG HUB - EA Socket Interface GMS Hub", version="1.1.0", lifespan=lifespan
+    title="ESIG HUB - EA Socket Interface GMS Hub", version="1.1.2", lifespan=lifespan
 )
 app.state.sio = sio
 
@@ -217,13 +217,12 @@ if not os.path.exists(ui_assets_path):
     # Fallback for development: it's inside static
     ui_assets_path = os.path.join(BASE_DIR, "static", "ui_assets")
 
+# NOTE: /api/v1/ui/assets is intentionally NOT mounted as StaticFiles here.
+# The serve_asset() route in ui_router.py handles asset serving with proper 404
+# validation. Having both a StaticFiles mount AND a router handler on the same
+# prefix causes the router handler to be silently bypassed (mount takes priority in FastAPI).
 app.mount(
     "/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static"
-)
-app.mount(
-    "/api/v1/ui/assets",
-    StaticFiles(directory=ui_assets_path),
-    name="ui_assets_api",
 )
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 

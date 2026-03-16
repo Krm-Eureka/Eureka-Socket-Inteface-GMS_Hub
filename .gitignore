@@ -32,3 +32,6 @@ build/
 dist/
 *.spec
 packages_offline/
+*.tar.gz
+setup_output/
+*_0.webp

@@ -587,9 +587,13 @@ async def upload_asset(
     with open(save_path, "wb") as f:
         shutil.copyfileobj(file.file, f)
 
-    relative_path = (
+    # Append timestamp as cache-buster so browsers always fetch the latest image.
+    ts = int(time.time())
+    raw_path = (
         f"/api/v1/ui/assets/{subfolder + '/' if subfolder else ''}{file.filename}"
     )
+    relative_path = f"{raw_path}?v={ts}"
+
     logger.info(f"UI Asset uploaded: {save_path}")
     log_config_change(
         request.client.host if request.client else "unknown",

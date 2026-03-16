@@ -1,7 +1,7 @@
 ; esig_setup.iss - Inno Setup Script สำหรับ ESIG HUB
 
 #define MyAppName "ESIG HUB"
-#define MyAppVersion "1.1.0"
+#define MyAppVersion "1.1.2"
 #define MyAppPublisher "Mektec"
 #define MyAppExeName "ESIG_HUB_Launcher.exe"
 #define MyProjectDir "d:\KRM\25\25LA001 - Mektec\MEKTEC_APP\ESIG"
@@ -17,7 +17,7 @@ DefaultGroupName={#MyAppName}
 
 ; Output Directory (Where the final setup.exe will be saved)
 OutputDir={#MyProjectDir}\setup_output
-OutputBaseFilename=ESIG_HUB_Setup_v1.1.0
+OutputBaseFilename=ESIG_HUB_Setup_v1.1.2
 
 ; Icon setting
 SetupIconFile={#MyProjectDir}\esig_hub.ico

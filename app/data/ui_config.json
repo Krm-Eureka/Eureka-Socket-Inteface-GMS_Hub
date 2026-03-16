@@ -436,7 +436,7 @@
             "containerCategory": "T2000001"
         },
         {
-            "id": "T0000006",
+            "id": "T0000005",
             "name": "Production Cart",
             "width": 0.55,
             "length": 0.85,
@@ -444,7 +444,7 @@
             "baseHeight": 0.39,
             "image": "/api/v1/ui/assets/ContainerImg/T0000006.webp",
             "color": "#f1c40f",
-            "containerCategory": "T0000006"
+            "containerCategory": "T0000005"
         }
     ]
 }
