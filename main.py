@@ -186,7 +186,7 @@ async def lifespan(app: FastAPI):
 
 # --- FastAPI Initialization ---
 app = FastAPI(
-    title="ESIG HUB - EA Socket Interface GMS Hub", version="1.1.2", lifespan=lifespan
+    title="ESIG HUB - EA Socket Interface GMS Hub", version="2.0.0", lifespan=lifespan
 )
 app.state.sio = sio
 

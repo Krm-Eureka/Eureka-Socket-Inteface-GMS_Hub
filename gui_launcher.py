@@ -134,7 +134,7 @@ class EsigHubLauncher:
         header.pack(fill=tk.X)
         tk.Label(
             header,
-            text="ESIG HUB v1.1.2",
+            text="ESIG HUB v2.0.0",
             font=("Segoe UI", 16, "bold"),
             bg="#2c3e50",
             fg="white",
