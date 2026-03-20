@@ -268,12 +268,14 @@ class PollingManager:
 
                         # 2. Merge new tasks (potentially update status)
                         for t in new_tasks:
+                            if t is None: continue
                             tid = t.get("instanceId") or t.get("workflowInstanceId")
                             if tid:
                                 task_map[tid] = t
 
                         # 3. Define robust sorting key (Latest first)
                         def get_sort_key(task):
+                            if task is None: return ("0000-00-00 00:00:00", 0)
                             st = str(task.get("startTime") or "0000-00-00 00:00:00")
                             # Secondary sort by taskId (numeric)
                             tid_val = task.get("taskId")

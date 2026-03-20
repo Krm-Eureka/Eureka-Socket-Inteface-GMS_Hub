@@ -1,5 +1,35 @@
+<style>
+    @media (max-width: 640px) {
+        .config-editor-container {
+            padding: 1rem !important;
+        }
+        .config-card {
+            padding: 1rem !important;
+        }
+        .modal-content {
+            padding: 1.25rem !important;
+            width: 95% !important;
+        }
+        .preview-header {
+            top: 10px !important;
+            right: 15px !important;
+            gap: 0.5rem !important;
+        }
+        .preview-name {
+            font-size: 11px !important;
+            max-width: 150px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .zoom-controls {
+            bottom: 20px !important;
+            padding: 6px 15px !important;
+        }
+    }
+</style>
 <!-- FULL WIDTH: SCROLLABLE EDITOR -->
-<div style="width: 100%; padding: 1.5rem; padding-bottom: 4rem;">
+<div class="config-editor-container" style="width: 100%; padding: 1.5rem; padding-bottom: 4rem;">
     <div style="max-width:800px; margin:0 auto; width:100%;">
         <h2 style="font-size:14px; font-weight:800; color:#3fb950; margin-bottom:1.5rem; letter-spacing:.1rem;">
             ⚡ UI CONFIG EDITOR</h2>
@@ -300,8 +330,8 @@
             <!-- Add/Edit Station Modal -->
             <div x-show="showAddStation" x-cloak @keydown.escape.window="showAddStation=false"
                 style="position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:1000;">
-                <div
-                    style="background:#161b22;border:1px solid #30363d;border-radius:16px;padding:2rem;width:420px;max-width:95vw;">
+                <div class="modal-content"
+                    style="background:#161b22;border:1px solid #30363d;border-radius:16px;padding:2rem;width:420px;max-width:95vw;max-height:95vh;overflow-y:auto;">
                     <h3 style="font-size:13px;font-weight:800;color:#c9d1d9;margin-bottom:1.5rem;"
                         x-text="editStationCode ? 'EDIT: '+editStationCode : 'ADD STATION'"></h3>
                     <div style="display:grid;gap:.75rem;">
@@ -374,8 +404,8 @@
             <!-- Add Floor Modal -->
             <div x-show="showAddFloor" x-cloak @keydown.escape.window="showAddFloor=false"
                 style="position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:1000;">
-                <div
-                    style="background:#161b22;border:1px solid #30363d;border-radius:16px;padding:2rem;width:420px;max-width:95vw;">
+                <div class="modal-content"
+                    style="background:#161b22;border:1px solid #30363d;border-radius:16px;padding:2rem;width:420px;max-width:95vw;max-height:95vh;overflow-y:auto;">
                     <h3 style="font-size:13px;font-weight:800;color:#c9d1d9;margin-bottom:1.5rem;"
                         x-text="editFloorId !== null ? 'EDIT FLOOR: ' + editFloorId : 'ADD NEW FLOOR'"></h3>
                     <div style="display:grid;gap:.75rem;">
@@ -463,8 +493,8 @@
             <!-- Add Container Type Modal -->
             <div x-show="showAddContainer" x-cloak @keydown.escape.window="showAddContainer=false"
                 style="position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:1000;">
-                <div
-                    style="background:#161b22;border:1px solid #30363d;border-radius:16px;padding:2rem;width:420px;max-width:95vw;">
+                <div class="modal-content"
+                    style="background:#161b22;border:1px solid #30363d;border-radius:16px;padding:2rem;width:420px;max-width:95vw;max-height:95vh;overflow-y:auto;">
                     <h3 style="font-size:13px;font-weight:800;color:#c9d1d9;margin-bottom:1.5rem;"
                         x-text="editContainerId !== null ? 'EDIT TYPE: ' + editContainerId : 'ADD CONTAINER TYPE'">
                     </h3>
@@ -536,8 +566,8 @@
 <div x-show="showPreviewModal" x-cloak @keydown.escape.window="showPreviewModal=false; resetZoom()"
     style="position:fixed; inset:0; background:rgba(0,0,0,0.9); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:9999; backdrop-filter:blur(10px);">
 
-    <div style="position:absolute; top:20px; right:30px; display:flex; gap:1rem; align-items:center; z-index:10001;">
-        <span
+    <div class="preview-header" style="position:absolute; top:20px; right:30px; display:flex; gap:1rem; align-items:center; z-index:10001;">
+        <span class="preview-name"
             style="color:#c9d1d9; font-weight:800; font-size:14px; background:rgba(0,0,0,0.5); padding:4px 12px; border-radius:12px; backdrop-filter:blur(4px); border:1px solid rgba(255,255,255,0.1);"
             x-text="activePreviewName"></span>
         <button @click="showPreviewModal=false; resetZoom()"
@@ -545,7 +575,7 @@
     </div>
 
     <!-- ZOOM CONTROLS -->
-    <div
+    <div class="zoom-controls"
         style="position:absolute; bottom:40px; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:1rem; background:rgba(22,27,34,0.8); padding:8px 20px; border-radius:40px; border:1px solid rgba(255,255,255,0.1); z-index:10001; backdrop-filter:blur(8px); box-shadow:0 8px 32px rgba(0,0,0,0.5);">
         <button @click="zoomOut()"
             style="background:none; border:none; color:white; font-size:20px; cursor:pointer; width:30px;">−</button>

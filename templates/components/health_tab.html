@@ -1,3 +1,19 @@
+<style>
+    @media (max-width: 640px) {
+        .health-main-grid {
+            gap: 1rem !important;
+        }
+        .kpi-grid {
+            gap: 0.75rem !important;
+        }
+        .health-card-body {
+            padding: 1rem !important;
+        }
+        .mobile-p-1 {
+            padding: 1rem !important;
+        }
+    }
+</style>
 <div class="health-main-grid">
 
     <!-- ── LEFT COLUMN: BFF SERVER (LOCAL) ── -->
@@ -211,8 +227,8 @@
             <!-- Enhanced Manual Request -->
             <div style="border-top:1px solid rgba(255,255,255,0.05); padding-top:1.25rem;">
                 <!-- Send Method Selection -->
-                <div
-                    style="display:flex; align-items:center; gap:1.5rem; margin-bottom:1rem; background:rgba(0,0,0,0.2); padding:10px 15px; border-radius:10px; border:1px solid rgba(255,255,255,0.05);">
+                <div class="mobile-flex-wrap"
+                    style="display:flex; align-items:center; gap:1rem; margin-bottom:1rem; background:rgba(0,0,0,0.2); padding:10px 15px; border-radius:10px; border:1px solid rgba(255,255,255,0.05); flex-wrap:wrap;">
                     <span
                         style="font-size:9px; color:#6e7681; font-weight:800; text-transform:uppercase; letter-spacing:0.05rem;">SEND
                         METHOD:</span>
@@ -232,10 +248,10 @@
                     </label>
                 </div>
 
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem; flex-wrap:wrap; gap:0.5rem;">
                     <div style="font-size:10px; color:#6e7681; font-weight:700; text-transform:uppercase;">
                         🚀 Direct Message Injection</div>
-                    <div style="display:flex; gap:0.4rem;">
+                    <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
                         <template x-for="t in ['Location', 'Station', 'Container']">
                             <button @click="manual.msg_type = t + 'ListMsg'; manual.body = '{}'"
                                 style="font-size:8px; padding:2px 6px; background:rgba(88,166,255,0.1); color:#58a6ff; border:1px solid rgba(88,166,255,0.2); border-radius:4px; cursor:pointer;"
@@ -317,7 +333,7 @@
                 style="font-size:11px; background:rgba(227,179,65,0.1); color:#e3b341; padding:2px 8px; border-radius:10px; font-weight:700;"
                 x-text="sys.client_count">0</span>
         </div>
-        <div style="max-height:160px; overflow-y:auto;">
+        <div style="max-height:160px; overflow:auto;">
             <table style="width:100%; border-collapse:collapse; font-size:11px;">
                 <tbody style="color:#8b949e;">
                     <template x-for="client in sys.clients" :key="client.sid">

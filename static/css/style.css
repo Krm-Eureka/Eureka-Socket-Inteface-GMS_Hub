@@ -659,3 +659,11 @@ input:focus {
         ::-webkit-scrollbar-thumb:hover {
             background: rgba(88, 166, 255, 0.4);
         }
+@media (max-width: 640px) {
+    .tab-content-health {
+        padding: 1rem 1rem 4rem !important;
+    }
+    .tab-content-config {
+        padding: 0.5rem !important;
+    }
+}
