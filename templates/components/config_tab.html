@@ -1,0 +1,571 @@
+<!-- FULL WIDTH: SCROLLABLE EDITOR -->
+<div style="width: 100%; padding: 1.5rem; padding-bottom: 4rem;">
+    <div style="max-width:800px; margin:0 auto; width:100%;">
+        <h2 style="font-size:14px; font-weight:800; color:#3fb950; margin-bottom:1.5rem; letter-spacing:.1rem;">
+            ⚡ UI CONFIG EDITOR</h2>
+
+        <!-- Password Row -->
+        <div
+            style="background:rgba(22,27,34,.8); border:1px solid rgba(241,196,15,.3); border-radius:12px; padding:1rem 1.5rem; margin-bottom:1.5rem; display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+            <span style="font-size:11px; color:#e3b341; font-weight:700;">🔒 ADMIN PASSWORD</span>
+            <input type="password" x-model="cfgPwd" placeholder="Enter admin password before saving..."
+                style="flex:1; min-width:200px; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:8px 12px; border-radius:6px; font-size:12px; outline:none;">
+            <span x-show="cfgMsg" x-text="cfgMsg" :style="cfgMsgOk ? 'color:#3fb950' : 'color:#f85149'"
+                style="font-size:11px; font-weight:600; min-width:120px;"></span>
+        </div>
+
+        <!-- SITE SETTINGS -->
+        <div
+            style="background:rgba(22,27,34,.85); border:1px solid rgba(63,185,80,.2); border-radius:16px; padding:1.5rem; margin-bottom:1.5rem; backdrop-filter:blur(20px);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
+                <h3 style="font-size:12px; font-weight:800; color:#3fb950; text-transform:uppercase;">🏢
+                    Site Settings</h3>
+                <button class="btn btn-primary" style="padding:4px 16px; font-size:10px; background:#238636;"
+                    @click="saveSiteConfig()">
+                    SAVE SITE
+                </button>
+            </div>
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1.5rem;">
+                <div class="input-group">
+                    <label style="font-size:10px; color:#6e7681; font-weight:700;">SITE NAME</label>
+                    <input type="text" x-model="cfgData.site.name"
+                        style="width:100%; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:10px 14px; border-radius:8px; font-size:13px; outline:none; margin-top:6px;">
+                </div>
+                <div class="input-group">
+                    <label style="font-size:10px; color:#6e7681; font-weight:700;">SHORT NAME</label>
+                    <input type="text" x-model="cfgData.site.shortName"
+                        style="width:100%; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:10px 14px; border-radius:8px; font-size:13px; font-family:monospace; outline:none; margin-top:6px;">
+                </div>
+                <div class="input-group">
+                    <label style="font-size:10px; color:#6e7681; font-weight:700;">PRIMARY COLOR</label>
+                    <div style="display:flex; align-items:center; gap:0.75rem; margin-top:0.6rem;">
+                        <input type="color"
+                            :value="(cfgData.site.primaryColor || '').startsWith('#') ? cfgData.site.primaryColor : '#58a6ff'"
+                            @input="cfgData.site.primaryColor = $event.target.value"
+                            style="width:36px; height:36px; border:none; background:none; cursor:pointer;">
+                        <input type="text" x-model="cfgData.site.primaryColor"
+                            style="flex:1; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:8px 12px; border-radius:6px; font-size:12px; font-family:monospace; outline:none;">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label style="font-size:10px; color:#6e7681; font-weight:700;">GMS CLIENT CODE</label>
+                    <input type="text" x-model="cfgData.site.gmsClientCode"
+                        style="width:100%; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:10px 14px; border-radius:8px; font-size:13px; font-family:monospace; outline:none; margin-top:6px;">
+                </div>
+                <div class="input-group" style="grid-column: span 2;">
+                    <label style="font-size:10px; color:#6e7681; font-weight:700;">LOGO URL
+                        (OPTIONAL)</label>
+                    <input type="text" x-model="cfgData.site.logoUrl" placeholder="/api/v1/ui/assets/logo.png"
+                        style="width:100%; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:10px 14px; border-radius:8px; font-size:13px; outline:none; margin-top:6px;">
+                </div>
+            </div>
+        </div>
+
+        <!-- GLOBAL MAP SETTINGS -->
+        <div
+            style="background:rgba(22,27,34,.85); border:1px solid rgba(88,166,255,.2); border-radius:16px; padding:1.5rem; margin-bottom:1.5rem; backdrop-filter:blur(20px);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
+                <h3 style="font-size:12px; font-weight:800; color:#58a6ff; text-transform:uppercase;">🗺️
+                    Global Map Settings</h3>
+                <button class="btn btn-primary" style="padding:4px 16px; font-size:10px; background:#238636;"
+                    @click="saveMapConfig()">
+                    SAVE SETTINGS
+                </button>
+            </div>
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1.5rem;">
+                <div class="input-group">
+                    <label style="font-size:10px; color:#6e7681; font-weight:700;">SOCKET LOGGING</label>
+                    <div style="display:flex; align-items:center; gap:0.75rem; margin-top:0.5rem;">
+                        <input type="checkbox" x-model="cfgData.map.ENABLE_SOCKET_LOG" id="chk_socket_log"
+                            style="width:20px; height:20px; accent-color:#3fb950; cursor:pointer;">
+                        <label for="chk_socket_log"
+                            style="font-size:12px; color:#c9d1d9; cursor:pointer; font-weight:600;"
+                            x-text="cfgData.map.ENABLE_SOCKET_LOG ? 'ENABLED' : 'DISABLED'"></label>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label style="font-size:10px; color:#6e7681; font-weight:700;">MULTIPLIER (PX PER
+                        M)</label>
+                    <input type="number" x-model.number="cfgData.map.MULTIPLIER"
+                        style="width:100%; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:10px 14px; border-radius:8px; font-size:13px; font-family:monospace; outline:none; margin-top:6px;">
+                </div>
+                <div class="input-group">
+                    <label style="font-size:10px; color:#6e7681; font-weight:700;">SNAP DISTANCE
+                        (PX)</label>
+                    <input type="number" x-model.number="cfgData.map.SNAP_DISTANCE"
+                        style="width:100%; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:10px 14px; border-radius:8px; font-size:13px; font-family:monospace; outline:none; margin-top:6px;">
+                </div>
+                <div class="input-group">
+                    <label style="font-size:10px; color:#6e7681; font-weight:700;">ANGLE OFFSET
+                        (DEG)</label>
+                    <input type="number" x-model.number="cfgData.map.ANGLE_OFFSET"
+                        style="width:100%; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:10px 14px; border-radius:8px; font-size:13px; font-family:monospace; outline:none; margin-top:6px;">
+                </div>
+                <div class="input-group">
+                    <label style="font-size:10px; color:#6e7681; font-weight:700;">ORIGIN OFFSET X</label>
+                    <input type="number" x-model.number="cfgData.map.ORIGIN_OFFSET_X"
+                        style="width:100%; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:10px 14px; border-radius:8px; font-size:13px; font-family:monospace; outline:none; margin-top:6px;">
+                </div>
+                <div class="input-group">
+                    <label style="font-size:10px; color:#6e7681; font-weight:700;">ORIGIN OFFSET Y</label>
+                    <input type="number" x-model.number="cfgData.map.ORIGIN_OFFSET_Y"
+                        style="width:100%; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:10px 14px; border-radius:8px; font-size:13px; font-family:monospace; outline:none; margin-top:6px;">
+                </div>
+                <div class="input-group">
+                    <label style="font-size:10px; color:#6e7681; font-weight:700;">DEFAULT LOC SIZE</label>
+                    <input type="number" step="0.1" x-model.number="cfgData.map.DEFAULT_LOC_SIZE"
+                        style="width:100%; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:10px 14px; border-radius:8px; font-size:13px; font-family:monospace; outline:none; margin-top:6px;">
+                </div>
+                <div class="input-group">
+                    <label style="font-size:10px; color:#6e7681; font-weight:700;">MAP OPACITY</label>
+                    <input type="number" step="0.1" x-model.number="cfgData.map.OPACITY"
+                        style="width:100%; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:10px 14px; border-radius:8px; font-size:13px; font-family:monospace; outline:none; margin-top:6px;">
+                </div>
+            </div>
+        </div>
+
+        <!-- ROBOT SETTINGS -->
+        <div
+            style="background:rgba(22,27,34,.85); border:1px solid rgba(255,152,0,.2); border-radius:16px; padding:1.5rem; margin-bottom:1.5rem; backdrop-filter:blur(20px);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
+                <h3 style="font-size:12px; font-weight:800; color:#ff9800; text-transform:uppercase;">🤖
+                    Robot Settings</h3>
+                <button class="btn btn-primary" style="padding:4px 16px; font-size:10px; background:#238636;"
+                    @click="saveRobotConfig()">
+                    SAVE ROBOT
+                </button>
+            </div>
+            <div
+                style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1.5rem; margin-bottom:1.5rem;">
+                <div class="input-group">
+                    <label style="font-size:10px; color:#6e7681; font-weight:700;">WIDTH (M)</label>
+                    <input type="number" step="0.01" x-model.number="cfgData.robot.WIDTH"
+                        style="width:100%; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:10px 14px; border-radius:8px; font-size:13px; font-family:monospace; outline:none; margin-top:6px;">
+                </div>
+                <div class="input-group">
+                    <label style="font-size:10px; color:#6e7681; font-weight:700;">LENGTH (M)</label>
+                    <input type="number" step="0.01" x-model.number="cfgData.robot.LENGTH"
+                        style="width:100%; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:10px 14px; border-radius:8px; font-size:13px; font-family:monospace; outline:none; margin-top:6px;">
+                </div>
+                <!-- Idle Color -->
+                <div class="input-group">
+                    <label style="font-size:10px; color:#6e7681; font-weight:700;">IDLE COLOR</label>
+                    <div style="display:flex; align-items:center; gap:0.75rem; margin-top:0.6rem;">
+                        <input type="color"
+                            :value="(cfgData.robot.IDLE_COLOR || '').startsWith('#') ? cfgData.robot.IDLE_COLOR : '#8b949e'"
+                            @input="cfgData.robot.IDLE_COLOR = $event.target.value"
+                            style="width:36px; height:36px; border:none; background:none; cursor:pointer;">
+                        <input type="text" x-model="cfgData.robot.IDLE_COLOR"
+                            style="flex:1; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:8px 12px; border-radius:6px; font-size:12px; font-family:monospace; outline:none;">
+                    </div>
+                </div>
+                <!-- Working Color -->
+                <div class="input-group">
+                    <label style="font-size:10px; color:#6e7681; font-weight:700;">WORKING COLOR</label>
+                    <div style="display:flex; align-items:center; gap:0.75rem; margin-top:0.6rem;">
+                        <input type="color"
+                            :value="(cfgData.robot.WORKING_COLOR || '').startsWith('#') ? cfgData.robot.WORKING_COLOR : '#238636'"
+                            @input="cfgData.robot.WORKING_COLOR = $event.target.value"
+                            style="width:36px; height:36px; border:none; background:none; cursor:pointer;">
+                        <input type="text" x-model="cfgData.robot.WORKING_COLOR"
+                            style="flex:1; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:8px 12px; border-radius:6px; font-size:12px; font-family:monospace; outline:none;">
+                    </div>
+                </div>
+                <!-- Error Color -->
+                <div class="input-group">
+                    <label style="font-size:10px; color:#6e7681; font-weight:700;">ERROR COLOR</label>
+                    <div style="display:flex; align-items:center; gap:0.75rem; margin-top:0.6rem;">
+                        <input type="color"
+                            :value="(cfgData.robot.ERROR_COLOR || '').startsWith('#') ? cfgData.robot.ERROR_COLOR : '#f85149'"
+                            @input="cfgData.robot.ERROR_COLOR = $event.target.value"
+                            style="width:36px; height:36px; border:none; background:none; cursor:pointer;">
+                        <input type="text" x-model="cfgData.robot.ERROR_COLOR"
+                            style="flex:1; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:8px 12px; border-radius:6px; font-size:12px; font-family:monospace; outline:none;">
+                    </div>
+                </div>
+                <!-- Charging Color -->
+                <div class="input-group">
+                    <label style="font-size:10px; color:#6e7681; font-weight:700;">CHARGING COLOR</label>
+                    <div style="display:flex; align-items:center; gap:0.75rem; margin-top:0.6rem;">
+                        <input type="color"
+                            :value="(cfgData.robot.CHARGING_COLOR || '').startsWith('#') ? cfgData.robot.CHARGING_COLOR : '#f1c40f'"
+                            @input="cfgData.robot.CHARGING_COLOR = $event.target.value"
+                            style="width:36px; height:36px; border:none; background:none; cursor:pointer;">
+                        <input type="text" x-model="cfgData.robot.CHARGING_COLOR"
+                            style="flex:1; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:8px 12px; border-radius:6px; font-size:12px; font-family:monospace; outline:none;">
+                    </div>
+                </div>
+                <!-- Offline Color -->
+                <div class="input-group">
+                    <label style="font-size:10px; color:#6e7681; font-weight:700;">OFFLINE COLOR</label>
+                    <div style="display:flex; align-items:center; gap:0.75rem; margin-top:0.6rem;">
+                        <input type="color"
+                            :value="(cfgData.robot.OFFLINE_COLOR || '').startsWith('#') ? cfgData.robot.OFFLINE_COLOR : '#30363d'"
+                            @input="cfgData.robot.OFFLINE_COLOR = $event.target.value"
+                            style="width:36px; height:36px; border:none; background:none; cursor:pointer;">
+                        <input type="text" x-model="cfgData.robot.OFFLINE_COLOR"
+                            style="flex:1; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:8px 12px; border-radius:6px; font-size:12px; font-family:monospace; outline:none;">
+                    </div>
+                </div>
+                <!-- Label BG -->
+                <div class="input-group">
+                    <label style="font-size:10px; color:#6e7681; font-weight:700;">LABEL BG</label>
+                    <div style="display:flex; align-items:center; gap:0.75rem; margin-top:0.6rem;">
+                        <input type="color"
+                            :value="(cfgData.robot.ID_LABEL_BG || '').startsWith('#') ? cfgData.robot.ID_LABEL_BG : '#161b22'"
+                            @input="cfgData.robot.ID_LABEL_BG = $event.target.value"
+                            style="width:36px; height:36px; border:none; background:none; cursor:pointer;">
+                        <input type="text" x-model="cfgData.robot.ID_LABEL_BG"
+                            style="flex:1; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:8px 12px; border-radius:6px; font-size:12px; font-family:monospace; outline:none;">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SYSTEM COLORS -->
+        <div
+            style="background:rgba(22,27,34,.85); border:1px solid rgba(0,229,255,.2); border-radius:16px; padding:1.5rem; margin-bottom:1.5rem; backdrop-filter:blur(20px);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
+                <h3 style="font-size:12px; font-weight:800; color:#00e5ff; text-transform:uppercase;">🎨
+                    System Colors</h3>
+                <button class="btn btn-primary" style="padding:4px 16px; font-size:10px; background:#238636;"
+                    @click="saveColorsConfig()">
+                    SAVE COLORS
+                </button>
+            </div>
+            <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:1.25rem;">
+                <template x-for="[key, val] in Object.entries(cfgData.colors || {})" :key="key">
+                    <div class="input-group">
+                        <label style="font-size:9px; color:#6e7681; font-weight:700; display:block; margin-bottom:4px;"
+                            x-text="key"></label>
+                        <div style="display:flex; align-items:center; gap:0.5rem;">
+                            <div
+                                style="position:relative; width:28px; height:28px; border-radius:6px; overflow:hidden; border:1px solid #30363d;">
+                                <input type="color"
+                                    :value="(cfgData.colors[key] || '').startsWith('#') ? cfgData.colors[key] : '#58a6ff'"
+                                    @input="cfgData.colors[key] = $event.target.value"
+                                    style="position:absolute; top:-4px; left:-4px; width:150%; height:150%; cursor:pointer; border:none; background:none; padding:0;">
+                            </div>
+                            <input type="text" x-model="cfgData.colors[key]"
+                                style="flex:1; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:6px 10px; border-radius:6px; font-size:11px; font-family:monospace; outline:none;">
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- STATIONS -->
+        <div
+            style="background:rgba(22,27,34,.7); border:1px solid rgba(255,255,255,.07); border-radius:16px; padding:1.5rem; margin-bottom:1.5rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                <h3 style="font-size:12px; font-weight:800; color:#c9d1d9; text-transform:uppercase;">🚩
+                    Stations (<span x-text="Object.keys(cfgData.stations||{}).length">0</span>)</h3>
+                <button class="btn btn-primary" style="padding:4px 12px;font-size:10px;"
+                    @click="editStationCode='';newStation={code:'',alias:'',angle:90,containerType:''};showAddStation=true">+
+                    ADD</button>
+            </div>
+            <div style="max-height:280px; overflow-y:auto;">
+                <table style="width:100%;border-collapse:collapse;font-size:11px;color:#8b949e;">
+                    <thead>
+                        <tr style="border-bottom:1px solid rgba(255,255,255,.05);color:#6e7681;font-size:10px;">
+                            <th style="padding:.5rem 1rem;text-align:left;">CODE</th>
+                            <th style="padding:.5rem;text-align:left;">ALIAS</th>
+                            <th style="padding:.5rem;text-align:center;">ANGLE</th>
+                            <th style="padding:.5rem;text-align:left;">CONTAINER TYPE</th>
+                            <th style="padding:.5rem;text-align:center;">ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template x-for="[code, st] in Object.entries(cfgData.stations||{})" :key="code">
+                            <tr style="border-bottom:1px solid rgba(255,255,255,.03);">
+                                <td style="padding:.45rem 1rem;color:#c9d1d9;font-weight:700;font-family:monospace;"
+                                    x-text="code"></td>
+                                <td style="padding:.45rem .5rem;" x-text="st.alias"></td>
+                                <td style="padding:.45rem;text-align:center;" x-text="st.angle+'°'"></td>
+                                <td style="padding:.45rem .5rem;font-size:10px;color:#58a6ff;"
+                                    x-text="(st.containerType||[]).join(', ')||'-'"></td>
+                                <td style="padding:.45rem;text-align:center;">
+                                    <button
+                                        style="font-size:9px;padding:2px 8px;background:rgba(88,166,255,.15);color:#58a6ff;border:1px solid rgba(88,166,255,.3);border-radius:4px;cursor:pointer;margin-right:4px;"
+                                        @click="editStationCode=code;newStation={code:code,oldCode:code,alias:st.alias,angle:st.angle,containerType:(st.containerType||[]).join(',')};showAddStation=true">EDIT</button>
+                                    <button
+                                        style="font-size:9px;padding:2px 8px;background:rgba(248,81,73,.1);color:#f85149;border:1px solid rgba(248,81,73,.3);border-radius:4px;cursor:pointer;"
+                                        @click="deleteStation(code)">DEL</button>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+            <!-- Add/Edit Station Modal -->
+            <div x-show="showAddStation" x-cloak @keydown.escape.window="showAddStation=false"
+                style="position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:1000;">
+                <div
+                    style="background:#161b22;border:1px solid #30363d;border-radius:16px;padding:2rem;width:420px;max-width:95vw;">
+                    <h3 style="font-size:13px;font-weight:800;color:#c9d1d9;margin-bottom:1.5rem;"
+                        x-text="editStationCode ? 'EDIT: '+editStationCode : 'ADD STATION'"></h3>
+                    <div style="display:grid;gap:.75rem;">
+                        <div>
+                            <label style="font-size:10px;color:#6e7681;font-weight:700;">STATION CODE
+                                *</label>
+                            <input x-model="newStation.code" placeholder="e.g. B3F1_3_IN"
+                                style="width:100%;background:rgba(0,0,0,.3);border:1px solid #30363d;color:#c9d1d9;padding:8px 12px;border-radius:6px;font-size:12px;font-family:monospace;outline:none;margin-top:4px;">
+                        </div>
+                        <div>
+                            <label style="font-size:10px;color:#6e7681;font-weight:700;">ALIAS *</label>
+                            <input x-model="newStation.alias" placeholder="e.g. B3F1"
+                                style="width:100%;background:rgba(0,0,0,.3);border:1px solid #30363d;color:#c9d1d9;padding:8px 12px;border-radius:6px;font-size:12px;outline:none;margin-top:4px;">
+                        </div>
+                        <div>
+                            <label style="font-size:10px;color:#6e7681;font-weight:700;">ANGLE (degrees)
+                                *</label>
+                            <input type="number" x-model.number="newStation.angle" placeholder="0 or 90"
+                                style="width:100%;background:rgba(0,0,0,.3);border:1px solid #30363d;color:#c9d1d9;padding:8px 12px;border-radius:6px;font-size:12px;outline:none;margin-top:4px;">
+                        </div>
+                        <div>
+                            <label style="font-size:10px;color:#6e7681;font-weight:700;">CONTAINER TYPES
+                                (comma-separated)</label>
+                            <input x-model="newStation.containerType" placeholder="T2000001,T0000006"
+                                style="width:100%;background:rgba(0,0,0,.3);border:1px solid #30363d;color:#c9d1d9;padding:8px 12px;border-radius:6px;font-size:12px;font-family:monospace;outline:none;margin-top:4px;">
+                        </div>
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;gap:.75rem;margin-top:1.5rem;">
+                        <button class="btn btn-outline" style="padding:6px 20px;font-size:11px;"
+                            @click="showAddStation=false">CANCEL</button>
+                        <button class="btn btn-primary" style="padding:6px 20px;font-size:11px;"
+                            @click="saveStation()">SAVE</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FLOORS -->
+        <div
+            style="background:rgba(22,27,34,.7); border:1px solid rgba(255,255,255,.07); border-radius:16px; padding:1.5rem; margin-bottom:1.5rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+                <h3 style="font-size:12px;font-weight:800;color:#c9d1d9;text-transform:uppercase;">🏗️
+                    Floors (<span x-text="(cfgData.floors||[]).length"></span>)</h3>
+                <button class="btn btn-primary" style="padding:4px 12px;font-size:10px;"
+                    @click="editFloorId=null;newFloor={id:'',label:'',image:'',_file:null};showAddFloor=true">+
+                    ADD</button>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:1rem;">
+                <template x-for="f in (cfgData.floors||[])" :key="f.id">
+                    <div @mouseenter="activePreviewImg = f.image; activePreviewName = 'Map: ' + f.label"
+                        style="background:rgba(0,0,0,.3);border:1px solid #30363d;border-radius:10px;padding:1rem; transition: border-color 0.2s; cursor: pointer;"
+                        :style="activePreviewImg === f.image ? 'border-color: #3fb950' : ''">
+                        <div style="font-size:12px;font-weight:700;color:#c9d1d9;" x-text="f.label"></div>
+                        <div style="font-size:10px;color:#6e7681;font-family:monospace;" x-text="'ID: '+f.id"></div>
+                        <img :src="f.image+'?t='+Date.now()"
+                            style="width:100%;height:70px;object-fit:cover;border-radius:6px;opacity:.7;margin-top:.5rem;cursor:zoom-in;"
+                            @click="activePreviewImg=f.image; activePreviewName='Map: '+f.label; showPreviewModal=true; resetZoom();"
+                            onerror="this.style.display='none'">
+                        <div style="display:flex; gap:4px; margin-top:.5rem;">
+                            <button
+                                style="flex:1; font-size:9px;padding:2px 8px;background:rgba(88,166,255,.15);color:#58a6ff;border:1px solid rgba(88,166,255,.3);border-radius:4px;cursor:pointer;"
+                                @click="editFloorId=f.id; newFloor={id:f.id, label:f.label, image:f.image, _file:null}; showAddFloor=true">EDIT</button>
+                            <button
+                                style="flex:1; font-size:9px;padding:2px 8px;background:rgba(248,81,73,.1);color:#f85149;border:1px solid rgba(248,81,73,.3);border-radius:4px;cursor:pointer;"
+                                @click="deleteFloor(f.id)">DEL</button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+            <!-- Add Floor Modal -->
+            <div x-show="showAddFloor" x-cloak @keydown.escape.window="showAddFloor=false"
+                style="position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:1000;">
+                <div
+                    style="background:#161b22;border:1px solid #30363d;border-radius:16px;padding:2rem;width:420px;max-width:95vw;">
+                    <h3 style="font-size:13px;font-weight:800;color:#c9d1d9;margin-bottom:1.5rem;"
+                        x-text="editFloorId !== null ? 'EDIT FLOOR: ' + editFloorId : 'ADD NEW FLOOR'"></h3>
+                    <div style="display:grid;gap:.75rem;">
+                        <div><label style="font-size:10px;color:#6e7681;font-weight:700;">FLOOR ID (Positive
+                                Integer)
+                                *</label>
+                            <input type="number" min="0" step="1" x-model.number="newFloor.id" placeholder="4"
+                                style="width:100%;background:rgba(0,0,0,.3);border:1px solid #30363d;color:#c9d1d9;padding:8px 12px;border-radius:6px;font-size:12px;outline:none;margin-top:4px;">
+                        </div>
+                        <div><label style="font-size:10px;color:#6e7681;font-weight:700;">LABEL *</label>
+                            <input x-model="newFloor.label" placeholder="FLOOR 4"
+                                style="width:100%;background:rgba(0,0,0,.3);border:1px solid #30363d;color:#c9d1d9;padding:8px 12px;border-radius:6px;font-size:12px;outline:none;margin-top:4px;">
+                        </div>
+                        <div><label style="font-size:10px;color:#6e7681;font-weight:700;">FLOOR IMAGE
+                                (.webp/.png) *</label>
+                            <input type="file" accept=".webp,.png,.jpg,.jpeg"
+                                @change="newFloor._file=$event.target.files[0];newFloor._filename=$event.target.files[0]?.name"
+                                style="width:100%;color:#c9d1d9;font-size:11px;margin-top:4px;">
+
+                            <!-- Image Preview -->
+                            <div
+                                style="margin-top:10px; border:1px solid #30363d; border-radius:8px; overflow:hidden; background:rgba(0,0,0,0.2); height:100px; display:flex; align-items:center; justify-content:center;">
+                                <template x-if="newFloor.image || newFloor._file">
+                                    <img :src="newFloor._file ? URL.createObjectURL(newFloor._file) : (newFloor.image + '?t=' + Date.now())"
+                                        style="max-width:100%; max-height:100%; object-fit:contain;">
+                                </template>
+                                <template x-if="!newFloor.image && !newFloor._file">
+                                    <div style="color:#484f58; font-size:10px;">NO IMAGE SELECTED</div>
+                                </template>
+                            </div>
+
+                            <div x-show="newFloor._filename" x-text="'✅ New file: '+newFloor._filename"
+                                style="font-size:10px;color:#3fb950;margin-top:4px;"></div>
+                        </div>
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;gap:.75rem;margin-top:1.5rem;">
+                        <button class="btn btn-outline" style="padding:6px 20px;font-size:11px;"
+                            @click="showAddFloor=false">CANCEL</button>
+                        <button class="btn btn-primary" style="padding:6px 20px;font-size:11px;"
+                            @click="saveFloor()">SAVE</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONTAINER TYPES -->
+        <div
+            style="background:rgba(22,27,34,.7); border:1px solid rgba(255,255,255,.07); border-radius:16px; padding:1.5rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+                <h3 style="font-size:12px;font-weight:800;color:#c9d1d9;text-transform:uppercase;">📦
+                    Container Types (<span x-text="(cfgData.containerTypes||[]).length"></span>)</h3>
+                <button class="btn btn-primary" style="padding:4px 12px;font-size:10px;"
+                    @click="editContainerId=null;newContainer={id:'',name:'',width:'',length:'',color:'#2ecc71',_file:null};showAddContainer=true">+
+                    ADD</button>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;">
+                <template x-for="ct in (cfgData.containerTypes||[])" :key="ct.id">
+                    <div @mouseenter="activePreviewImg = ct.image; activePreviewName = 'Icon: ' + ct.name"
+                        style="background:rgba(0,0,0,.3);border:1px solid #30363d;border-radius:10px;padding:1rem; transition: border-color 0.2s; cursor: pointer;"
+                        :style="activePreviewImg === ct.image ? 'border-color: #58a6ff' : ''">
+                        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem;">
+                            <div :style="'width:10px;height:10px;border-radius:50%;background:'+ct.color">
+                            </div>
+                            <span style="font-size:11px;font-weight:700;color:#c9d1d9;" x-text="ct.name"></span>
+                        </div>
+                        <div style="font-size:10px;color:#6e7681;font-family:monospace;" x-text="ct.id">
+                        </div>
+                        <div style="font-size:10px;color:#6e7681;" x-text="ct.width+'m × '+ct.length+'m'">
+                        </div>
+                        <img :src="ct.image+'?t='+Date.now()"
+                            style="width:100%;height:60px;object-fit:contain;margin-top:.5rem;cursor:zoom-in;"
+                            @click="activePreviewImg=ct.image; activePreviewName='Icon: '+ct.name; showPreviewModal=true; resetZoom();"
+                            onerror="this.style.display='none'">
+                        <div style="display:flex; gap:4px; margin-top:.5rem;">
+                            <button
+                                style="flex:1; font-size:9px;padding:2px 8px;background:rgba(88,166,255,.15);color:#58a6ff;border:1px solid rgba(88,166,255,.3);border-radius:4px;cursor:pointer;"
+                                @click="editContainerId=ct.id; newContainer={id:ct.id, name:ct.name, width:ct.width, length:ct.length, color:ct.color, image:ct.image, _file:null}; showAddContainer=true">EDIT</button>
+                            <button
+                                style="flex:1; font-size:9px;padding:2px 8px;background:rgba(248,81,73,.1);color:#f85149;border:1px solid rgba(248,81,73,.3);border-radius:4px;cursor:pointer;"
+                                @click="deleteContainerType(ct.id)">DEL</button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+            <!-- Add Container Type Modal -->
+            <div x-show="showAddContainer" x-cloak @keydown.escape.window="showAddContainer=false"
+                style="position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:1000;">
+                <div
+                    style="background:#161b22;border:1px solid #30363d;border-radius:16px;padding:2rem;width:420px;max-width:95vw;">
+                    <h3 style="font-size:13px;font-weight:800;color:#c9d1d9;margin-bottom:1.5rem;"
+                        x-text="editContainerId !== null ? 'EDIT TYPE: ' + editContainerId : 'ADD CONTAINER TYPE'">
+                    </h3>
+                    <div style="display:grid;gap:.75rem;">
+                        <div><label style="font-size:10px;color:#6e7681;font-weight:700;">TYPE ID *</label>
+                            <input x-model="newContainer.id" placeholder="T9999999"
+                                style="width:100%;background:rgba(0,0,0,.3);border:1px solid #30363d;color:#c9d1d9;padding:8px 12px;border-radius:6px;font-size:12px;font-family:monospace;outline:none;margin-top:4px;">
+                        </div>
+                        <div><label style="font-size:10px;color:#6e7681;font-weight:700;">DISPLAY NAME
+                                *</label>
+                            <input x-model="newContainer.name" placeholder="My Trolley (800x1000)"
+                                style="width:100%;background:rgba(0,0,0,.3);border:1px solid #30363d;color:#c9d1d9;padding:8px 12px;border-radius:6px;font-size:12px;outline:none;margin-top:4px;">
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
+                            <div><label style="font-size:10px;color:#6e7681;font-weight:700;">WIDTH (m)
+                                    *</label>
+                                <input type="number" x-model.number="newContainer.width" placeholder="0.8"
+                                    style="width:100%;background:rgba(0,0,0,.3);border:1px solid #30363d;color:#c9d1d9;padding:8px 12px;border-radius:6px;font-size:12px;outline:none;margin-top:4px;">
+                            </div>
+                            <div><label style="font-size:10px;color:#6e7681;font-weight:700;">LENGTH (m)
+                                    *</label>
+                                <input type="number" x-model.number="newContainer.length" placeholder="1.12"
+                                    style="width:100%;background:rgba(0,0,0,.3);border:1px solid #30363d;color:#c9d1d9;padding:8px 12px;border-radius:6px;font-size:12px;outline:none;margin-top:4px;">
+                            </div>
+                        </div>
+                        <div><label style="font-size:10px;color:#6e7681;font-weight:700;">COLOR</label>
+                            <div style="display:flex;align-items:center;gap:.5rem;margin-top:4px;">
+                                <input type="color" x-model="newContainer.color"
+                                    style="width:36px;height:36px;border:none;background:none;cursor:pointer;">
+                                <span x-text="newContainer.color"
+                                    style="font-family:monospace;font-size:11px;color:#c9d1d9;"></span>
+                            </div>
+                        </div>
+                        <div><label style="font-size:10px;color:#6e7681;font-weight:700;">ICON IMAGE
+                                (.webp/.png) *</label>
+                            <input type="file" accept=".webp,.png,.jpg,.jpeg"
+                                @change="newContainer._file=$event.target.files[0];newContainer._filename=$event.target.files[0]?.name"
+                                style="width:100%;color:#c9d1d9;font-size:11px;margin-top:4px;">
+
+                            <!-- Icon Preview -->
+                            <div
+                                style="margin-top:10px; border:1px solid #30363d; border-radius:8px; overflow:hidden; background:rgba(0,0,0,0.2); height:80px; display:flex; align-items:center; justify-content:center;">
+                                <template x-if="newContainer.image || newContainer._file">
+                                    <img :src="newContainer._file ? URL.createObjectURL(newContainer._file) : (newContainer.image + '?t=' + Date.now())"
+                                        style="max-width:80%; max-height:80%; object-fit:contain;">
+                                </template>
+                                <template x-if="!newContainer.image && !newContainer._file">
+                                    <div style="color:#484f58; font-size:10px;">NO ICON SELECTED</div>
+                                </template>
+                            </div>
+
+                            <div x-show="newContainer._filename" x-text="'✅ New file: '+newContainer._filename"
+                                style="font-size:10px;color:#3fb950;margin-top:4px;"></div>
+                        </div>
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;gap:.75rem;margin-top:1.5rem;">
+                        <button class="btn btn-outline" style="padding:6px 20px;font-size:11px;"
+                            @click="showAddContainer=false">CANCEL</button>
+                        <button class="btn btn-primary" style="padding:6px 20px;font-size:11px;"
+                            @click="saveContainerType()">SAVE</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> <!-- 🚨 Close LEFT SIDE: SCROLLABLE EDITOR -->
+
+<!-- FULLSCREEN PREVIEW MODAL -->
+<div x-show="showPreviewModal" x-cloak @keydown.escape.window="showPreviewModal=false; resetZoom()"
+    style="position:fixed; inset:0; background:rgba(0,0,0,0.9); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:9999; backdrop-filter:blur(10px);">
+
+    <div style="position:absolute; top:20px; right:30px; display:flex; gap:1rem; align-items:center; z-index:10001;">
+        <span
+            style="color:#c9d1d9; font-weight:800; font-size:14px; background:rgba(0,0,0,0.5); padding:4px 12px; border-radius:12px; backdrop-filter:blur(4px); border:1px solid rgba(255,255,255,0.1);"
+            x-text="activePreviewName"></span>
+        <button @click="showPreviewModal=false; resetZoom()"
+            style="background:#f85149; color:white; border:none; width:40px; height:40px; border-radius:50%; font-size:24px; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 0 15px rgba(248,81,73,0.4); z-index:10002;">&times;</button>
+    </div>
+
+    <!-- ZOOM CONTROLS -->
+    <div
+        style="position:absolute; bottom:40px; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:1rem; background:rgba(22,27,34,0.8); padding:8px 20px; border-radius:40px; border:1px solid rgba(255,255,255,0.1); z-index:10001; backdrop-filter:blur(8px); box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+        <button @click="zoomOut()"
+            style="background:none; border:none; color:white; font-size:20px; cursor:pointer; width:30px;">−</button>
+        <div style="color:white; font-family:monospace; font-size:14px; min-width:60px; text-align:center; font-weight:bold;"
+            x-text="Math.round(zoomLevel * 100) + '%'"></div>
+        <button @click="zoomIn()"
+            style="background:none; border:none; color:white; font-size:20px; cursor:pointer; width:30px;">+</button>
+        <div style="width:1px; height:20px; background:rgba(255,255,255,0.1); margin:0 5px;"></div>
+        <button @click="resetZoom()"
+            style="background:none; border:none; color:#58a6ff; font-size:12px; font-weight:bold; cursor:pointer; text-transform:uppercase;">Reset</button>
+    </div>
+
+    <!-- PANNING CONTAINER -->
+    <div style="width:100vw; height:100vh; display:flex; align-items:center; justify-content:center; overflow:hidden; z-index:10000; cursor: default; background:transparent;"
+        @mousedown.self="showPreviewModal=false; resetZoom()" @mousemove.window="doPan($event)"
+        @mouseup.window="endPan()" @mouseleave.window="endPan()" @touchstart.self="showPreviewModal=false; resetZoom()"
+        @touchmove.window="doPan($event)" @touchend.window="endPan()"
+        @wheel.prevent="if($event.deltaY < 0) zoomIn(); else zoomOut();">
+        <img :src="activePreviewImg + '?t=' + Date.now()"
+            :style="'transform: translate(' + pan.offX + 'px, ' + pan.offY + 'px) scale(' + zoomLevel + '); transition: ' + (pan.active ? 'none' : 'transform 0.2s cubic-bezier(0.1, 0.7, 0.1, 1)') + '; max-width:90%; max-height:90%; object-fit:contain; border-radius:4px; box-shadow:0 20px 60px rgba(0,0,0,0.8); cursor: ' + (zoomLevel > 1 ? (pan.active ? 'grabbing' : 'grab') : 'default') + '; transform-origin: center;'"
+            @mousedown.prevent="startPan($event)" @touchstart.prevent="startPan($event)" @click.stop draggable="false">
+    </div>
+</div>

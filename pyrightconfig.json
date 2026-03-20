@@ -1,0 +1,10 @@
+{
+  "pythonVersion": "3.11",
+  "pythonPlatform": "Windows",
+  "venvPath": ".",
+  "useLibraryCodeForTypes": true,
+  "reportMissingModuleSource": false,
+  "reportMissingImports": false,
+  "reportUnknownMemberType": false,
+  "typeCheckingMode": "basic"
+}

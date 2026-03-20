@@ -144,11 +144,17 @@ begin
   SysPage.Add('GMS Socket IP:', False);
   SysPage.Add('GMS Socket Port:', False);
   SysPage.Add('UI Admin Password:', True); // True = Mask password
+  SysPage.Add('GMS Client Code:', False);
+  SysPage.Add('GMS Channel ID:', False);
+  SysPage.Add('GMS HTTP API URL:', False);
 
   // Set default values for Sys
   SysPage.Values[0] := '10.80.227.230';
   SysPage.Values[1] := '24245';
   SysPage.Values[2] := 'admin1234';
+  SysPage.Values[3] := 'MEKTEC';
+  SysPage.Values[4] := 'MEKTEC';
+  SysPage.Values[5] := 'http://10.80.227.230:24249';
 end;
 
 function InitializeSetup(): Boolean;
@@ -175,7 +181,7 @@ begin
   if CurStep = ssPostInstall then
   begin
     EnvPath := ExpandConstant('{app}\.env');
-    SetArrayLength(EnvLines, 28);
+    SetArrayLength(EnvLines, 29);
 
     EnvLines[0] := '# --- BFF Server Configuration ---';
     EnvLines[1] := 'BFF_HOST=' + BffPage.Values[0];
@@ -197,14 +203,15 @@ begin
     EnvLines[17] := '# --- GMS Socket Configuration ---';
     EnvLines[18] := 'GMS_IP=' + SysPage.Values[0];
     EnvLines[19] := 'GMS_PORT=' + SysPage.Values[1];
-    EnvLines[20] := 'GMS_CLIENT_CODE=MEKTEC';
-    EnvLines[21] := 'GMS_CHANNEL_ID=MEKTEC';
-    EnvLines[22] := '';
-    EnvLines[23] := '# Polling and Reconnection Behavioral Settings';
-    EnvLines[24] := 'QUERY_INTERVAL_FAST=0.7';
-    EnvLines[25] := 'QUERY_INTERVAL_SLOW=30.0';
-    EnvLines[26] := 'GMS_RECONNECT_INITIAL_DELAY=5';
-    EnvLines[27] := 'GMS_RECONNECT_MAX_DELAY=60';
+    EnvLines[20] := 'GMS_CLIENT_CODE=' + SysPage.Values[3];
+    EnvLines[21] := 'GMS_CHANNEL_ID=' + SysPage.Values[4];
+    EnvLines[22] := 'GMS_HTTP_URL=' + SysPage.Values[5];
+    EnvLines[23] := '';
+    EnvLines[24] := '# Polling and Reconnection Behavioral Settings';
+    EnvLines[25] := 'QUERY_INTERVAL_FAST=0.7';
+    EnvLines[26] := 'QUERY_INTERVAL_SLOW=30.0';
+    EnvLines[27] := 'GMS_RECONNECT_INITIAL_DELAY=5';
+    EnvLines[28] := 'GMS_RECONNECT_MAX_DELAY=60';
 
     // Write array to .env file
     SaveStringsToFile(EnvPath, EnvLines, False);

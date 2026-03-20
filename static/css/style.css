@@ -12,6 +12,10 @@
     --radius: 8px;
 }
 
+[x-cloak] {
+    display: none !important;
+}
+
 * {
     box-sizing: border-box;
     margin: 0;
@@ -480,3 +484,178 @@ input:focus {
     height: 40px;
     width: auto;
 }
+
+/* --- Extracted from index.html --- */
+/* Hotfix for Logo Size - Tailwind Backup */
+        .sidebar-header img,
+        .mobile-header img {
+            height: 48px !important;
+            width: auto !important;
+        }
+
+        [x-cloak] {
+            display: none !important;
+        }
+
+        /* Responsive Grid Hub */
+        .health-main-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        @media (min-width: 1280px) {
+            .health-main-grid {
+                grid-template-columns: 1.2fr 1fr;
+            }
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.25rem;
+        }
+
+        @media (min-width: 640px) {
+            .kpi-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .diagnostic-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+            margin-top: 1.25rem;
+        }
+
+        @media (min-width: 640px) {
+            .diagnostic-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .mysql-grid,
+        .gms-details-grid,
+        .gms-control-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        .config-preview-panel {
+            background: rgba(22, 27, 34, 0.4);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            position: relative;
+            overflow-y: auto;
+        }
+
+        @media (min-width: 1024px) {
+
+            .mysql-grid,
+            .gms-details-grid,
+            .gms-control-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .config-preview-panel {
+                width: 380px;
+                border-top: 0;
+                border-left: 1px solid rgba(255, 255, 255, 0.05);
+            }
+        }
+
+
+        .pending-tag {
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            color: #60a5fa;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            animation: pulse-blue 2s infinite;
+        }
+
+        @keyframes pulse-blue {
+            0% {
+                opacity: 0.6;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.6;
+            }
+        }
+
+        .health-card {
+            background: rgba(22, 27, 34, 0.4) !important;
+            backdrop-filter: blur(12px) !important;
+            -webkit-backdrop-filter: blur(12px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3) !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .health-card:hover {
+            border-color: rgba(88, 166, 255, 0.3) !important;
+            transform: translateY(-4px);
+            background: rgba(22, 27, 34, 0.6) !important;
+        }
+
+        .health-card-header {
+            background: rgba(255, 255, 255, 0.02) !important;
+            color: var(--accent-blue) !important;
+            text-shadow: 0 0 10px rgba(88, 166, 255, 0.3);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 120px;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        @keyframes pulse-glow {
+            0% {
+                box-shadow: 0 0 0 0 rgba(63, 185, 80, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(63, 185, 80, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(63, 185, 80, 0);
+            }
+        }
+
+        .pulse-active {
+            animation: pulse-glow 2s infinite;
+        }
+
+        /* Improved Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(88, 166, 255, 0.2);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(88, 166, 255, 0.4);
+        }

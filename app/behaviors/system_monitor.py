@@ -1,41 +1,42 @@
-import psutil
+import psutil  # type: ignore[import]
 import threading
 import time
 import asyncio
-import pymysql
-import pymysql.cursors
-from loguru import logger
-from app.core.config import settings
-from app.services.log_service import write_daily_log as _log_daily
+from typing import Any, Dict, List, Optional
+import pymysql  # type: ignore[import]
+import pymysql.cursors  # type: ignore[import]
+from loguru import logger  # type: ignore[import]
+from app.core.config import settings  # type: ignore[import]
+from app.services.log_service import write_daily_log as _log_daily  # type: ignore[import]
 
 
 class SystemMonitor:
     """[BEHAVIOR] Monitors server (CPU, RAM) and MySQL performance/health"""
 
-    def __init__(self, sio, gms_client=None):
+    def __init__(self, sio: Any, gms_client: Any = None) -> None:
         self._sio = sio
         self._gms_client = gms_client
-        self._loop = None
-        self._running = False
-        self._thread = None
+        self._loop: Optional[asyncio.AbstractEventLoop] = None
+        self._running: bool = False
+        self._thread: Optional[threading.Thread] = None
         self._stop_event = threading.Event()
-        self._last_queries = 0
-        self._last_check_time = time.time()
-        self._is_busy = False  # Guard against overlapping health checks
-        self.clients = {}  # {sid: {ip: str, connected_at: str}}
-        self._daily = self._blank_daily()
-        self._last_log_date = None  # เขียน daily summary 1 ครั้งต่อวัน
+        self._last_queries: int = 0
+        self._last_check_time: float = time.time()
+        self._is_busy: bool = False  # Guard against overlapping health checks
+        self.clients: Dict[str, Dict[str, str]] = {}  # {sid: {ip, hostname, connected_at}}
+        self._daily: Dict[str, Any] = self._blank_daily()
+        self._last_log_date: Optional[str] = None  # เขียน daily summary 1 ครั้งต่อวัน
 
     @staticmethod
-    def _blank_daily():
+    def _blank_daily() -> Dict[str, Any]:
         """Return a fresh min/max/sum/count tracking dict."""
         return {
             "cpu_min": None,
             "cpu_max": None,
-            "cpu_sum": 0,
+            "cpu_sum": 0.0,
             "ram_min": None,
             "ram_max": None,
-            "ram_sum": 0,
+            "ram_sum": 0.0,
             "db_latency_min": None,
             "db_latency_max": None,
             "qps_max": None,
@@ -76,24 +77,43 @@ class SystemMonitor:
     def set_loop(self, loop):
         self._loop = loop
 
-    def start(self):
+    def start(self) -> None:
         if self._running:
             return
         self._running = True
         self._stop_event.clear()
-        self._thread = threading.Thread(target=self._run, daemon=True)
-        self._thread.start()
+        t = threading.Thread(target=self._run, daemon=True)
+        self._thread = t
+        t.start()
         logger.info("Health Monitor (System + MySQL) started.")
 
     def add_client(self, sid, ip):
+        # Initialize with 'Resolving...' and then use a thread to get the actual hostname
+        # to avoid blocking the main Socket.IO event loop.
         self.clients[sid] = {
             "ip": ip,
+            "hostname": "Resolving...",
             "connected_at": time.strftime("%H:%M:%S"),
         }
 
-    def remove_client(self, sid):
+        def _resolve_hostname():
+            try:
+                import socket as _socket
+
+                # Standard reverse lookup
+                h = _socket.gethostbyaddr(ip)[0]
+                if sid in self.clients:
+                    self.clients[sid]["hostname"] = h
+            except Exception:
+                # If resolution fails, fallback to IP
+                if sid in self.clients:
+                    self.clients[sid]["hostname"] = ip
+
+        threading.Thread(target=_resolve_hostname, daemon=True).start()
+
+    def remove_client(self, sid: str) -> None:
         if sid in self.clients:
-            del self.clients[sid]
+            self.clients.pop(sid)  # use pop() to avoid Pyre2 del-on-typed-dict error
 
     def stop(self):
         self._running = False
@@ -140,7 +160,7 @@ class SystemMonitor:
                 connect_timeout=2,
                 cursorclass=pymysql.cursors.DictCursor,
             )
-            stats["latency_ms"] = round((time.time() - start_time) * 1000, 2)
+            stats["latency_ms"] = round((time.time() - start_time) * 1000, 2)  # type: ignore[call-overload]
             stats["status"] = "up"
 
             cursor = conn.cursor()
@@ -161,7 +181,7 @@ class SystemMonitor:
             now = time.time()
             time_diff = now - self._last_check_time
             if time_diff > 0:
-                stats["qps"] = round(
+                stats["qps"] = round(  # type: ignore[call-overload]
                     (current_queries - self._last_queries) / time_diff, 2
                 )
             self._last_queries = current_queries
@@ -188,13 +208,13 @@ class SystemMonitor:
             )
             size_row = cursor.fetchone()
             if size_row and size_row["size_mb"]:
-                stats["db_size_mb"] = round(float(size_row["size_mb"]), 2)
+                stats["db_size_mb"] = round(float(size_row["size_mb"]), 2)  # type: ignore[call-overload]
 
             # 4. Buffer Pool Usage
             btn = int(status_map.get("Innodb_buffer_pool_pages_total", 0))
             bfn = int(status_map.get("Innodb_buffer_pool_pages_free", 0))
             if btn > 0:
-                stats["buffer_pool_usage"] = round(((btn - bfn) / btn) * 100, 2)
+                stats["buffer_pool_usage"] = round(((btn - bfn) / btn) * 100, 2)  # type: ignore[call-overload]
 
             cursor.close()
         except Exception as e:
@@ -223,7 +243,21 @@ class SystemMonitor:
 
                     cpu_usage = psutil.cpu_percent(interval=None)
                     ram = psutil.virtual_memory()
-                    disk = psutil.disk_usage("/")
+
+                    # Windows uses C:\ not /, use abspath to get correct drive root
+                    disk_path = _os.path.abspath("/")
+                    disk = psutil.disk_usage(disk_path)
+
+                    # cpu_temp: supported on Linux only (returns 0 on Windows)
+                    cpu_temp = 0
+                    try:
+                        temps = psutil.sensors_temperatures()
+                        if temps:
+                            all_temps = [t.current for group in temps.values() for t in group]
+                            if all_temps:
+                                cpu_temp = round(max(all_temps), 1)
+                    except (AttributeError, OSError):
+                        pass  # Not supported on Windows
 
                     sys_stats = {
                         "cpu": cpu_usage,
@@ -235,6 +269,7 @@ class SystemMonitor:
                         "disk_used_gb": round(disk.used / (1024**3), 2),
                         "disk_total_gb": round(disk.total / (1024**3), 2),
                         "hostname": _socket.gethostname(),
+                        "cpu_temp": cpu_temp,
                         "client_count": len(self.clients),
                         "clients": [
                             {"sid": sid, **info} for sid, info in self.clients.items()
@@ -299,9 +334,11 @@ class SystemMonitor:
                         "gms": self._gms_client.gms_stats if self._gms_client else {},
                     }
 
-                    if self._loop:
+                    loop = self._loop
+                    if loop:
+                        logger.debug(f"[Health] Emitting health_stats packet: {health_packet}")
                         asyncio.run_coroutine_threadsafe(
-                            self._sio.emit("health_stats", health_packet), self._loop
+                            self._sio.emit("health_stats", health_packet), loop
                         )
 
                     # 📋 เขียน Daily Summary 1 ครั้งต่อวัน (เมื่อวันเปลี่ยน = ตีหนึ่ง/เที่ยงคืน)

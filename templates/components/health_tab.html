@@ -1,0 +1,342 @@
+<div class="health-main-grid">
+
+    <!-- ── LEFT COLUMN: BFF SERVER (LOCAL) ── -->
+    <div style="display:flex; flex-direction:column; gap:1.25rem;">
+        <div style="display:flex; align-items:center; gap:0.75rem; color:#3fb950; margin-bottom:0.5rem;">
+            <div
+                style="width:12px; height:12px; border-radius:3px; background:#3fb950; box-shadow: 0 0 10px rgba(63,185,80,0.5);">
+            </div>
+            <h2 style="font-size:14px; font-weight:800; letter-spacing:0.1rem; text-transform:uppercase;">
+                BFF Server (Middleware Host)</h2>
+        </div>
+
+        <!-- Hostname Strip -->
+        <div style="display:grid; grid-template-columns:1fr; gap:1rem;">
+            <div
+                style="background:rgba(22,27,34,0.7); border:1px solid rgba(255,255,255,0.05); border-radius:12px; padding:1.25rem;">
+                <div
+                    style="font-size:10px; color:#6e7681; text-transform:uppercase; font-weight:700; margin-bottom:0.5rem;">
+                    Local Hostname</div>
+                <div style="font-size:1.25rem; font-weight:800; color:#c9d1d9; font-family:monospace;"
+                    x-text="sys.hostname">BFF-NODE-01</div>
+            </div>
+        </div>
+
+        <!-- Primary KPI Row (CPU/RAM) -->
+        <div class="kpi-grid">
+            <!-- CPU Card -->
+            <div
+                style="background:rgba(22,27,34,0.7); border:1px solid rgba(63,185,80,0.2); border-radius:16px; padding:1.5rem; position:relative; overflow:hidden;">
+                <div
+                    style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.5rem; position:relative; z-index:1;">
+                    <div>
+                        <div style="font-size:10px; color:#6e7681; font-weight:700; text-transform:uppercase;">
+                            CPU Load</div>
+                        <div style="font-size:2.5rem; font-weight:900; font-family:monospace; color:#3fb950;"
+                            x-text="sys.cpu + '%'">0%</div>
+                    </div>
+                </div>
+                <div
+                    style="height:60px; margin-top:0.5rem; margin-left:-1.5rem; margin-right:-1.5rem; margin-bottom:-1.5rem;">
+                    <svg id="cpuChartSvg" width="100%" height="60" preserveAspectRatio="none"></svg>
+                </div>
+            </div>
+
+            <!-- RAM Card -->
+            <div
+                style="background:rgba(22,27,34,0.7); border:1px solid rgba(88,166,255,0.2); border-radius:16px; padding:1.5rem; position:relative; overflow:hidden;">
+                <div
+                    style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.5rem; position:relative; z-index:1;">
+                    <div>
+                        <div style="font-size:10px; color:#6e7681; font-weight:700; text-transform:uppercase;">
+                            Memory</div>
+                        <div style="font-size:2.5rem; font-weight:900; font-family:monospace; color:#58a6ff;"
+                            x-text="sys.ram_p + '%'">0%</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-size:10px; color:#6e7681; font-weight:700; text-transform:uppercase;">
+                            Free</div>
+                        <div style="font-size:1.2rem; font-weight:800; color:#58a6ff;" x-text="sys.ram_free + 'GB'">0GB
+                        </div>
+                    </div>
+                </div>
+                <div
+                    style="height:60px; margin-top:0.5rem; margin-left:-1.5rem; margin-right:-1.5rem; margin-bottom:-1.5rem;">
+                    <svg id="ramChartSvg" width="100%" height="60" preserveAspectRatio="none"></svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Disk Usage Strip -->
+        <div
+            style="background:rgba(22,27,34,0.7); border:1px solid rgba(255,255,255,0.05); border-radius:12px; padding:1.25rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+                <div style="font-size:10px; color:#6e7681; text-transform:uppercase; font-weight:700;">
+                    Storage (Root Path)</div>
+                <div style="font-size:12px; color:#c9d1d9; font-weight:700;" x-text="sys.disk_percent + '% USED'">0%
+                </div>
+            </div>
+            <div style="background:rgba(255,255,255,0.05); border-radius:4px; height:8px; overflow:hidden;">
+                <div style="height:100%; transition:width 1s ease; background:#58a6ff;"
+                    :style="'width:' + sys.disk_percent + '%'"></div>
+            </div>
+            <div style="font-size:10px; color:#6e7681; margin-top:0.6rem;"
+                x-text="sys.disk_used_gb + ' GB used of ' + sys.disk_total_gb + ' GB total'">-
+            </div>
+        </div>
+
+        <!-- MySQL Card (Moved for balance) -->
+        <div
+            style="background:rgba(22,27,34,0.7); border:1px solid rgba(255,255,255,0.05); border-radius:16px; overflow:hidden;">
+            <div
+                style="display:flex; align-items:center; gap:0.75rem; padding: 1rem 1.25rem; border-bottom:1px solid rgba(255,255,255,0.05);">
+                <div style="width:8px; height:8px; border-radius:50%;"
+                    :style="mysql.status === 'up' ? 'background:#3fb950' : 'background:#f85149'">
+                </div>
+                <h2
+                    style="font-size:11px; font-weight:800; letter-spacing:0.05rem; text-transform:uppercase; color:#c9d1d9;">
+                    Database Instance (MySQL)</h2>
+                <span style="font-size:9px; color:#6e7681; margin-left:auto;" x-text="mysql.version"></span>
+            </div>
+            <div style="padding:1.25rem; border-top:1px solid rgba(255,255,255,0.05);" class="mysql-grid">
+                <div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+                        <span style="font-size:10px; color:#6e7681;">Latency</span>
+                        <span style="font-size:11px; font-weight:800; color:#e3b341;"
+                            x-text="mysql.latency_ms + ' ms'">0 ms</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+                        <span style="font-size:10px; color:#6e7681;">Throughput</span>
+                        <span style="font-size:11px; font-weight:800; color:#58a6ff;" x-text="mysql.qps">0</span>
+                    </div>
+                </div>
+                <div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+                        <span style="font-size:10px; color:#6e7681;">Threads</span>
+                        <span style="font-size:11px; font-weight:800; color:#c9d1d9;"
+                            x-text="mysql.threads_connected">0</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between;">
+                        <span style="font-size:10px; color:#6e7681;">Size</span>
+                        <span style="font-size:11px; font-weight:800; color:#c9d1d9;"
+                            x-text="mysql.db_size_mb + ' MB'">0 MB</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── RIGHT COLUMN: GMS SERVER (REMOTE) ── -->
+    <div style="display:flex; flex-direction:column; gap:1.25rem;">
+        <div style="display:flex; align-items:center; gap:0.75rem; color:#bc8cff; margin-bottom:0.5rem;">
+            <div
+                style="width:12px; height:12px; border-radius:3px; background:#bc8cff; box-shadow: 0 0 10px rgba(188,140,255,0.5);">
+            </div>
+            <h2 style="font-size:14px; font-weight:800; letter-spacing:0.1rem; text-transform:uppercase;">
+                GMS Server (Direct Socket)</h2>
+        </div>
+
+        <!-- GMS Connection Details -->
+        <div
+            style="background:rgba(188,140,255,0.05); border:1px solid rgba(188,140,255,0.2); border-radius:16px; padding:1.25rem;">
+            <div class="gms-details-grid">
+                <div>
+                    <div style="font-size:10px; color:#6e7681; text-transform:uppercase; font-weight:700;">
+                        Endpoint</div>
+                    <div style="font-size:1.1rem; font-weight:800; color:#c9d1d9;"
+                        x-text="config.gms_ip + ':' + (config.gms_port || '24245')">0.0.0.0:0
+                    </div>
+                    <div style="font-size:10px; color:#6e7681; margin-top:0.25rem;"
+                        x-text="'CLIENT: ' + config.client_code">MEKTEC</div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-size:10px; color:#6e7681; text-transform:uppercase; font-weight:700;">
+                        Response Time</div>
+                    <div style="font-size:1.75rem; font-weight:900; color:#bc8cff; font-family:monospace;"
+                        x-text="gms.latency_ms + ' ms'">0 ms</div>
+                </div>
+            </div>
+            <div
+                style="height:35px; margin-top:0.75rem; border-top: 1px solid rgba(188,140,255,0.1); padding-top:0.75rem;">
+                <svg id="gmsLatencyChartSvg" width="100%" height="35"></svg>
+            </div>
+
+            <!-- Diagnostic Blocks -->
+            <div class="diagnostic-grid">
+                <div style="background:rgba(255,255,255,0.03); padding:0.75rem; border-radius:10px; text-align:center;">
+                    <div style="font-size:9px; color:#6e7681; text-transform:uppercase;">Last
+                        Activity</div>
+                    <div style="font-size:12px; font-weight:700; color:#c9d1d9; margin-top:2px;"
+                        x-text="gms.last_activity || 'IDLE'">-</div>
+                </div>
+                <div style="background:rgba(255,255,255,0.03); padding:0.75rem; border-radius:10px; text-align:center;">
+                    <div style="font-size:9px; color:#6e7681; text-transform:uppercase;">Errors
+                    </div>
+                    <div style="font-size:12px; font-weight:700; margin-top:2px;"
+                        :style="gms.total_errors > 0 ? 'color:#f85149' : 'color:#6e7681'" x-text="gms.total_errors">0
+                    </div>
+                </div>
+                <div style="background:rgba(255,255,255,0.03); padding:0.75rem; border-radius:10px; text-align:center;">
+                    <div style="font-size:9px; color:#6e7681; text-transform:uppercase;">RX
+                        Packets</div>
+                    <div style="font-size:12px; font-weight:700; color:#3fb950; margin-top:2px;" x-text="stats.rx">0
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- GMS CONFIG & TOOLS -->
+        <div
+            style="background:rgba(22,27,34,0.7); border:1px solid rgba(255,255,255,0.05); border-radius:16px; padding:1.5rem;">
+            <h3
+                style="font-size:11px; font-weight:800; color:#c9d1d9; margin-bottom:1rem; text-transform:uppercase; letter-spacing:0.05rem;">
+                GMS Control Panel</h3>
+
+            <div class="gms-control-grid mb-5">
+                <div class="input-group">
+                    <label style="font-size:10px; color:#6e7681; font-weight:700;">POLL INTERVAL
+                        (MS)</label>
+                    <input type="number" x-model="config.interval_ms" @change="saveConfig()"
+                        style="background:rgba(0,0,0,0.2); border:1px solid #30363d; color:#c9d1d9; padding:8px 12px; border-radius:6px; width:100%; outline:none;">
+                </div>
+                <div style="display:flex; align-items:center; gap:0.75rem; padding-top:1.5rem;">
+                    <input type="checkbox" x-model="config.auto_query" @change="saveConfig()" id="chk_auto_health"
+                        style="width:18px; height:18px; accent-color:#3fb950; cursor:pointer;">
+                    <label for="chk_auto_health"
+                        style="font-size:11px; color:#c9d1d9; cursor:pointer; font-weight:600;">Enable
+                        Automatic Polling</label>
+                </div>
+            </div>
+
+            <!-- Enhanced Manual Request -->
+            <div style="border-top:1px solid rgba(255,255,255,0.05); padding-top:1.25rem;">
+                <!-- Send Method Selection -->
+                <div
+                    style="display:flex; align-items:center; gap:1.5rem; margin-bottom:1rem; background:rgba(0,0,0,0.2); padding:10px 15px; border-radius:10px; border:1px solid rgba(255,255,255,0.05);">
+                    <span
+                        style="font-size:9px; color:#6e7681; font-weight:800; text-transform:uppercase; letter-spacing:0.05rem;">SEND
+                        METHOD:</span>
+                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; user-select:none;">
+                        <input type="radio" x-model="manual.method" value="socket"
+                            style="width:14px; height:14px; accent-color:#58a6ff; cursor:pointer;">
+                        <span style="font-size:11px; font-weight:600;"
+                            :style="manual.method === 'socket' ? 'color:#58a6ff' : 'color:#8b949e'">SOCKET
+                            (Queued)</span>
+                    </label>
+                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; user-select:none;">
+                        <input type="radio" x-model="manual.method" value="http"
+                            style="width:14px; height:14px; accent-color:#3fb950; cursor:pointer;">
+                        <span style="font-size:11px; font-weight:600;"
+                            :style="manual.method === 'http' ? 'color:#3fb950' : 'color:#8b949e'">HTTP (Direct
+                            API)</span>
+                    </label>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+                    <div style="font-size:10px; color:#6e7681; font-weight:700; text-transform:uppercase;">
+                        🚀 Direct Message Injection</div>
+                    <div style="display:flex; gap:0.4rem;">
+                        <template x-for="t in ['Location', 'Station', 'Container']">
+                            <button @click="manual.msg_type = t + 'ListMsg'; manual.body = '{}'"
+                                style="font-size:8px; padding:2px 6px; background:rgba(88,166,255,0.1); color:#58a6ff; border:1px solid rgba(88,166,255,0.2); border-radius:4px; cursor:pointer;"
+                                x-text="t"></button>
+                        </template>
+                        <button
+                            @click="manual.msg_type = 'RobotInfoMsg'; manual.body = '{ &quot;robotCode&quot;: &quot;&quot; }'"
+                            style="font-size:8px; padding:2px 6px; background:rgba(255,164,38,0.1); color:#ffa426; border:1px solid rgba(255,164,38,0.2); border-radius:4px; cursor:pointer;">RobotInfo</button>
+                    </div>
+                </div>
+
+                <!-- 1. Message Type Row -->
+                <div style="margin-bottom:1rem;">
+                    <label
+                        style="font-size:9px; color:#6e7681; font-weight:700; text-transform:uppercase; display:block; margin-bottom:5px;">Message
+                        Type (e.g. RobotInfoMsg)</label>
+                    <input type="text" x-model="manual.msg_type" placeholder="RobotInfoMsg"
+                        style="width:100%; background:rgba(0,0,0,0.5); border:1px solid #30363d; color:#c9d1d9; padding:10px 15px; border-radius:8px; font-size:13px; outline:none; transition:all 0.2s;"
+                        onfocus="this.style.border='1px solid #58a6ff'; this.style.boxShadow='0 0 0 3px rgba(88,166,255,0.1)'"
+                        onblur="this.style.border='1px solid #30363d'; this.style.boxShadow='none'">
+                </div>
+
+                <!-- 2. Payload Row -->
+                <div style="margin-bottom:1rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                        <label style="font-size:9px; color:#6e7681; font-weight:700; text-transform:uppercase;">
+                            Message Payload (JSON Body)
+                            <span x-show="manual.body.trim().length > 0"
+                                :style="manual.isValid ? 'color:#3fb950' : 'color:#f85149'"
+                                style="margin-left:8px; font-weight:800;"
+                                x-text="manual.isValid ? '[ VALID ]' : '[ INVALID ]'"></span>
+                        </label>
+                        <div style="display:flex; gap:0.5rem;">
+                            <button @click="formatJson()"
+                                style="font-size:9px; color:#58a6ff; background:none; border:none; cursor:pointer; font-weight:bold;">✨
+                                FORMAT</button>
+                            <button @click="manual.body = '{}'"
+                                style="font-size:9px; color:#f85149; background:none; border:none; cursor:pointer; font-weight:bold;">🗑️
+                                CLEAR</button>
+                        </div>
+                    </div>
+                    <textarea x-model="manual.body" placeholder='{ "id": 123 }' rows="8"
+                        style="width:100%; background:rgba(0,0,0,0.5); border:1px solid #30363d; color:#7ee787; padding:15px; border-radius:10px; font-family:'Fira Code', 'Cascadia Code', monospace; font-size:12px; resize:vertical; outline:none; transition:all 0.2s; line-height:1.5; border-left: 3px solid #3fb950;"
+                        onfocus="this.style.border='1px solid #3fb950'; this.style.borderLeft='3px solid #3fb950'; this.style.boxShadow='0 0 0 3px rgba(63,185,80,0.1)'"
+                        onblur="this.style.border='1px solid #30363d'; this.style.borderLeft='3px solid #3fb950'; this.style.boxShadow='none'"></textarea>
+                </div>
+
+                <!-- 3. Action Row -->
+                <div
+                    style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem; padding-top:0.5rem; border-top:1px solid rgba(255,255,255,0.02);">
+                    <div style="font-size:9px; color:#6e7681; font-family:monospace;"
+                        x-text="manual.method === 'http' ? '⚡ HTTP DIRECT' : '🔗 SOCKET ROUTED'"></div>
+                    <button @click="sendManualRequest()" class="btn btn-primary"
+                        style="padding:10px 40px; border-radius:8px; font-size:13px; display:flex; align-items:center; gap:10px; box-shadow:0 10px 30px rgba(35,134,54,0.3); border:1px solid rgba(255,255,255,0.1);">
+                        <span style="font-weight:800;">SEND MESSAGE</span>
+                        <svg style="width:16px; height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── BOTTOM ROW: CLIENTS ── -->
+<div style="margin-top:2rem;">
+    <!-- Sessions Table -->
+    <div
+        style="background:rgba(22,27,34,0.7); border:1px solid rgba(255,255,255,0.05); border-radius:16px; overflow:hidden; display:flex; flex-direction:column;">
+        <div
+            style="padding: 1rem 1.5rem; border-bottom:1px solid rgba(255,255,255,0.05); display:flex; justify-content:space-between; align-items:center;">
+            <h2
+                style="font-size:12px; font-weight:800; letter-spacing:0.05rem; text-transform:uppercase; color:#c9d1d9;">
+                Connected Web Clients</h2>
+            <span
+                style="font-size:11px; background:rgba(227,179,65,0.1); color:#e3b341; padding:2px 8px; border-radius:10px; font-weight:700;"
+                x-text="sys.client_count">0</span>
+        </div>
+        <div style="max-height:160px; overflow-y:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:11px;">
+                <tbody style="color:#8b949e;">
+                    <template x-for="client in sys.clients" :key="client.sid">
+                        <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
+                            <td class="px-4 py-2 md:px-6 md:py-3 font-bold text-[#c9d1d9]">
+                                <div x-text="client.hostname || client.ip" class="truncate max-w-[150px] md:max-w-none">
+                                </div>
+                                <div class="text-[9px] text-gray-500 font-normal" x-text="client.ip"
+                                    x-show="client.hostname && client.hostname !== client.ip"></div>
+                            </td>
+                            <td class="px-4 py-2 md:px-6 md:py-3 hidden sm:table-cell text-gray-500"
+                                x-text="client.sid.substring(0,8)">
+                            </td>
+                            <td class="px-4 py-2 md:px-6 md:py-3 text-right text-gray-400"
+                                x-text="'Joined ' + client.connected_at"></td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

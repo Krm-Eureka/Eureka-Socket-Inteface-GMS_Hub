@@ -14,8 +14,9 @@ class Settings:
     # GMS Legacy Socket (SERVICE)
     GMS_IP: str = os.getenv("GMS_IP", "10.80.227.230")
     GMS_PORT: int = int(os.getenv("GMS_PORT", "24245"))
-    GMS_CLIENT_CODE: str = os.getenv("GMS_CLIENT_CODE", "MEKTEC")
+    GMS_CLIENT_CODE: str = os.getenv("GMS_CLIENT_CODE", "EA")
     GMS_CHANNEL_ID: str = os.getenv("GMS_CHANNEL_ID", "11111")
+    GMS_HTTP_URL: str = os.getenv("GMS_HTTP_URL", "http://10.80.227.230:24249")
 
     # Mock Mode
     MOCK_MODE: bool = os.getenv("MOCK_MODE", "false").lower() == "true"

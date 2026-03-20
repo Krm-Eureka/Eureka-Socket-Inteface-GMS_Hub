@@ -72,6 +72,16 @@ async def _notify_ui_update(request: Request) -> None:
 # ─── Endpoints ─────────────────────────────────────────────────────────────────
 
 
+@router.post("/verify-password")
+async def verify_password(x_admin_password: str | None = Header(default=None)):
+    """
+    POST /api/v1/ui/verify-password
+    Simple endpoint to check if the provided password is correct.
+    """
+    _check_password(x_admin_password)
+    return {"success": True, "message": "Password verified."}
+
+
 @router.get("/config")
 async def get_ui_config():
     """
@@ -551,6 +561,7 @@ async def update_container_type(
 
 @router.post("/assets/upload")
 async def upload_asset(
+    request: Request,
     file: UploadFile = File(...),
     subfolder: str = "",
     x_admin_password: str | None = Header(default=None),

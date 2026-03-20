@@ -17,8 +17,7 @@ class GMSRequest(BaseModel):
 
 
 class ManualRequestParams(BaseModel):
-    msgType: str
-    body: Dict
+    body: Dict[str, Any]
 
 
 class ConfigUpdateParams(BaseModel):
