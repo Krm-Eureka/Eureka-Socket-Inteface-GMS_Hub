@@ -351,6 +351,8 @@ class PollingManager:
                 start_time = time.time()
                 try:
                     now = time.time()
+                    # Trigger UI refresh for pending message timers
+                    self._gms.refresh_pending_ui()
 
                     # Today at 00:00:00 for shared use
                     today_dt = datetime.datetime.now().replace(

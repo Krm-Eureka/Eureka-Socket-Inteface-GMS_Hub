@@ -392,6 +392,37 @@ class GMSClient:
         except Exception as e:
             logger.error(f"Socket Emit Failed ({event}): {e}")
 
+    def refresh_pending_ui(self):
+        """Force a refresh of the pending requests UI (used by PollingManager)"""
+        self._emit_pending()
+
     def _emit_pending(self):
-        """Broadcast in-flight requests to UI"""
-        self.emit_socket("gms:pending", list(self.pending_requests))
+        """Broadcast in-flight requests to UI with high-resolution wait timers"""
+        now = time.time()
+        formatted = []
+        for msg_type in list(self.pending_requests):
+            sent_at = self._pending_times.get(msg_type, now)
+            elapsed = now - sent_at
+
+            # Format: RobotInfoMsg__1.2s or RobotInfoMsg__450ms
+            if elapsed < 1.0:
+                ms = int(elapsed * 1000)
+                formatted.append(f"{msg_type}__{ms}ms")
+            else:
+                s = round(elapsed, 1)
+                formatted.append(f"{msg_type}__{s}s")
+
+        # Sort by duration - longest wait times first
+        def get_seconds(s):
+            try:
+                val_str = s.split("__")[-1]
+                if val_str.endswith("ms"):
+                    return float(val_str[:-2]) / 1000
+                if val_str.endswith("s"):
+                    return float(val_str[:-1])
+            except:
+                pass
+            return 0
+
+        formatted.sort(key=get_seconds, reverse=True)
+        self.emit_socket("gms:pending", formatted)
