@@ -20,17 +20,20 @@ class MockGMSClient(GMSClient):
         self._connected = False
         self._mock_sock = object()  # Dummy object to represent a socket
         self._stop_event = threading.Event()
+        self._lock: Optional[asyncio.Lock] = None
 
-    def connect(self):
+    async def connect(self):
         """Simulate successful connection"""
+        if self._lock is None:
+            self._lock = asyncio.Lock()
+
         logger.info("MOCK: Attempting to connect...")
-        self.emit_log("SYS", "CONNECTING", "Attempting to connect to MOCK SERVER...")
-        self._stop_event.wait(1.0)
+        await self.emit_log("SYS", "CONNECTING", "Attempting to connect to MOCK SERVER...")
+        await asyncio.sleep(1.0)
         self._connected = True
         logger.success("MOCK: Connected to Virtual GMS")
-        self._broadcast_status(AppStatus.CONNECTED, "Connected (Mock)")
-        self.emit_log("SYS", "CONNECTED", "Connected to MOCK SERVER")
-        self._sock = self._mock_sock
+        await self._broadcast_status(AppStatus.CONNECTED, "Connected (Mock)")
+        await self.emit_log("SYS", "CONNECTED", "Connected to MOCK SERVER")
         return self._mock_sock
 
     def disconnect(self):
@@ -43,7 +46,7 @@ class MockGMSClient(GMSClient):
     def is_connected(self):
         return self._connected
 
-    def send_request(
+    async def send_request(
         self, msg_type: str, client_code: str, channel_id: str, body: Dict
     ):
         """Simulate sending a request (Tx)"""
@@ -63,20 +66,20 @@ class MockGMSClient(GMSClient):
         }
 
         # Simulate Tx increment
-        with self._lock:
+        async with self._lock:
             self.stats["tx"] += 1
 
         # Emit log to frontend for TX visibility
-        self.emit_log("TX", msg_type, req_data)
+        await self.emit_log("TX", msg_type, req_data)
 
         # Log to server console
         logger.debug(f"📤 [MOCK SEND] {msg_type} -> ID: {req_id}")
 
-    def send_raw(self, data: bytes):
+    async def send_raw(self, data: bytes):
         """Simulate raw send"""
         if not self._connected:
             raise OSError("Mock Socket not connected")
-        with self._lock:
+        async with self._lock:
             self.stats["tx"] += 1
 
     def read_loop(self, is_running: Callable[[], bool]):

@@ -87,10 +87,63 @@ begin
   SaveStringsToFile(LogPath, LogLines, True);
 end;
 
+// Utility to split IP:Port string
+procedure SplitIPPort(FullAddr: string; DefaultPort: string; var IP: string; var Port: string);
 var
+  ColonPos: Integer;
+begin
+  ColonPos := Pos(':', FullAddr);
+  if ColonPos > 0 then
+  begin
+    IP := Trim(Copy(FullAddr, 1, ColonPos - 1));
+    Port := Trim(Copy(FullAddr, ColonPos + 1, Length(FullAddr) - ColonPos));
+  end
+  else
+  begin
+    IP := Trim(FullAddr);
+    Port := DefaultPort;
+  end;
+end;
+
+// Utility to get the primary local IP address via WMI
+function GetLocalIP(): string;
+var
+  WbemLocator, WbemServices, NetworkConfigs, Config: Variant;
+  i: Integer;
+begin
+  Result := '127.0.0.1'; // Fallback
+  try
+    WbemLocator := CreateOleObject('WbemScripting.SWbemLocator');
+    WbemServices := WbemLocator.ConnectServer('', 'root\CIMV2');
+    // Get enabled IP configurations with IP addresses
+    NetworkConfigs := WbemServices.ExecQuery('SELECT IPAddress FROM Win32_NetworkAdapterConfiguration WHERE IPEnabled = True');
+    
+    if NetworkConfigs.Count > 0 then
+    begin
+      for i := 0 to NetworkConfigs.Count - 1 do
+      begin
+        Config := NetworkConfigs.ItemIndex(i);
+        if not VarIsNull(Config.IPAddress) then
+        begin
+          // IPAddress is an array of strings (IPv4, IPv6)
+          Result := Config.IPAddress[0];
+          // We prefer a non-loopback IP
+          if (Result <> '127.0.0.1') and (Result <> '0.0.0.0') then
+            Exit;
+        end;
+      end;
+    end;
+  except
+    // Keep fallback
+  end;
+end;
+
+var
+  GlobalPage: TInputQueryWizardPage;
   BffPage: TInputQueryWizardPage;
   DbPage: TInputQueryWizardPage;
   SysPage: TInputQueryWizardPage;
+  GmsIdPage: TInputQueryWizardPage;
 
 function IsAppRunning(AppExeName: string): Boolean;
 var
@@ -110,51 +163,76 @@ begin
 end;
 
 procedure InitializeWizard;
+var
+  LocalIP: string;
 begin
-  // 1. Create BFF Server Configuration page
-  BffPage := CreateInputQueryPage(wpSelectDir,
+  LocalIP := GetLocalIP();
+
+  // 0. Global Server IP (GMS/DB only)
+  GlobalPage := CreateInputQueryPage(wpSelectDir,
+    'Global Network Configuration', 'Universal Server IP Address',
+    'Please specify the main IP address for the Geek+ Server environment.');
+  GlobalPage.Add('Geek+ Server IP Address:', False);
+  GlobalPage.Values[0] := '10.80.227.230';
+
+  // 1. Create BFF Server Configuration page (Local machine)
+  BffPage := CreateInputQueryPage(GlobalPage.ID,
     'BFF Server Configuration', 'Backend For Frontend (FastAPI) Settings',
-    'Please specify the IP and Port for the ESIG Backend API.');
-  BffPage.Add('BFF Host IP:', False);
-  BffPage.Add('BFF Port:', False);
-  BffPage.Values[0] := '10.80.238.178';
-  BffPage.Values[1] := '1244';
+    'Please specify the IP and Port (IP:Port) for the ESIG Backend API (This Local Machine).');
+  BffPage.Add('BFF Address (IP:Port):', False);
+  // Default to Local IP as requested
+  BffPage.Values[0] := LocalIP + ':1244';
 
   // 2. Create Database settings page
   DbPage := CreateInputQueryPage(BffPage.ID,
     'Database Configuration', 'MySQL Database Connection Settings',
     'Please specify your MySQL database connection details.');
-  DbPage.Add('Host IP:', False);
-  DbPage.Add('Port:', False);
+  DbPage.Add('DB Address (IP:Port):', False);
   DbPage.Add('Username:', False);
-  DbPage.Add('Password:', True);  // True = Mask password
+  DbPage.Add('Password:', True);
   DbPage.Add('Database Name:', False);
 
-  // Set default values for DB
-  DbPage.Values[0] := '127.0.0.1';
-  DbPage.Values[1] := '3306';
-  DbPage.Values[2] := 'root';
-  DbPage.Values[3] := '';
-  DbPage.Values[4] := 'ark';
+  // Set default values for DB (Follows Global IP)
+  DbPage.Values[0] := GlobalPage.Values[0] + ':3306';
+  DbPage.Values[1] := 'ss';
+  DbPage.Values[2] := '';
+  DbPage.Values[3] := 'ark';
 
-  // 3. Create System & GMS settings page
+  // 3. Create System & GMS Connection page
   SysPage := CreateInputQueryPage(DbPage.ID,
-    'System Configuration', 'GMS Socket and Application Settings',
-    'Please specify the GMS IP address, Port, and Administrator password.');
-  SysPage.Add('GMS Socket IP:', False);
-  SysPage.Add('GMS Socket Port:', False);
-  SysPage.Add('UI Admin Password:', True); // True = Mask password
-  SysPage.Add('GMS Client Code:', False);
-  SysPage.Add('GMS Channel ID:', False);
-  SysPage.Add('GMS HTTP API URL:', False);
+    'System Configuration (1/2)', 'GMS Connection and Security',
+    'Please specify the GMS socket address and administrator password.');
+  SysPage.Add('GMS Address (IP:Port):', False);
+  SysPage.Add('UI Admin Password:', True);
 
-  // Set default values for Sys
-  SysPage.Values[0] := '10.80.227.230';
-  SysPage.Values[1] := '24245';
-  SysPage.Values[2] := 'admin1234';
-  SysPage.Values[3] := 'MEKTEC';
-  SysPage.Values[4] := 'MEKTEC';
-  SysPage.Values[5] := 'http://10.80.227.230:24249';
+  // Set default values (Follows Global IP)
+  SysPage.Values[0] := GlobalPage.Values[0] + ':24245';
+  SysPage.Values[1] := 'Ea450+6';
+
+  // 4. Create GMS Identity page
+  GmsIdPage := CreateInputQueryPage(SysPage.ID,
+    'System Configuration (2/2)', 'GMS Identity and API',
+    'Please specify the GMS client identification and HTTP API URL.');
+  GmsIdPage.Add('GMS Client Code:', False);
+  GmsIdPage.Add('GMS Channel ID:', False);
+  GmsIdPage.Add('GMS HTTP API URL:', False);
+
+  // Set default values (Follows Global IP)
+  GmsIdPage.Values[0] := 'MEKTEC';
+  GmsIdPage.Values[1] := '11111';
+  GmsIdPage.Values[2] := GlobalPage.Values[0] + ':24249';
+end;
+
+function NextButtonClick(CurPageID: Integer): Boolean;
+begin
+  Result := True;
+  // If moving past GlobalPage, propagate IP to central services only (not BFF)
+  if CurPageID = GlobalPage.ID then
+  begin
+    DbPage.Values[0] := GlobalPage.Values[0] + ':3306';
+    SysPage.Values[0] := GlobalPage.Values[0] + ':24245';
+    GmsIdPage.Values[2] := GlobalPage.Values[0] + ':24249';
+  end;
 end;
 
 function InitializeSetup(): Boolean;
@@ -176,36 +254,39 @@ procedure CurStepChanged(CurStep: TSetupStep);
 var
   EnvPath: string;
   EnvLines: TArrayOfString;
+  tmpIP, tmpPort: string;
 begin
-  // Trigger after actual installation is done, right before "Finish"
   if CurStep = ssPostInstall then
   begin
     EnvPath := ExpandConstant('{app}\.env');
     SetArrayLength(EnvLines, 29);
 
     EnvLines[0] := '# --- BFF Server Configuration ---';
-    EnvLines[1] := 'BFF_HOST=' + BffPage.Values[0];
-    EnvLines[2] := 'BFF_PORT=' + BffPage.Values[1];
+    SplitIPPort(BffPage.Values[0], '1244', tmpIP, tmpPort);
+    EnvLines[1] := 'BFF_HOST=' + tmpIP;
+    EnvLines[2] := 'BFF_PORT=' + tmpPort;
     EnvLines[3] := 'BFF_RELOAD=false';
     EnvLines[4] := '';
     EnvLines[5] := '# --- SYSTEM ---';
     EnvLines[6] := 'ESIG_BASE_DIR=' + ExpandConstant('{app}');
-    EnvLines[7] := 'UI_CONFIG_PASSWORD=' + SysPage.Values[2];
+    EnvLines[7] := 'UI_CONFIG_PASSWORD=' + SysPage.Values[1];
     EnvLines[8] := 'LOG_LEVEL=INFO';
     EnvLines[9] := '';
     EnvLines[10] := '# --- MYSQL ---';
-    EnvLines[11] := 'DB_HOST=' + DbPage.Values[0];
-    EnvLines[12] := 'DB_PORT=' + DbPage.Values[1];
-    EnvLines[13] := 'DB_USER=' + DbPage.Values[2];
-    EnvLines[14] := 'DB_PASS=' + DbPage.Values[3];
-    EnvLines[15] := 'DB_NAME=' + DbPage.Values[4];
+    SplitIPPort(DbPage.Values[0], '3306', tmpIP, tmpPort);
+    EnvLines[11] := 'DB_HOST=' + tmpIP;
+    EnvLines[12] := 'DB_PORT=' + tmpPort;
+    EnvLines[13] := 'DB_USER=' + DbPage.Values[1];
+    EnvLines[14] := 'DB_PASS=' + DbPage.Values[2];
+    EnvLines[15] := 'DB_NAME=' + DbPage.Values[3];
     EnvLines[16] := '';
     EnvLines[17] := '# --- GMS Socket Configuration ---';
-    EnvLines[18] := 'GMS_IP=' + SysPage.Values[0];
-    EnvLines[19] := 'GMS_PORT=' + SysPage.Values[1];
-    EnvLines[20] := 'GMS_CLIENT_CODE=' + SysPage.Values[3];
-    EnvLines[21] := 'GMS_CHANNEL_ID=' + SysPage.Values[4];
-    EnvLines[22] := 'GMS_HTTP_URL=' + SysPage.Values[5];
+    SplitIPPort(SysPage.Values[0], '24245', tmpIP, tmpPort);
+    EnvLines[18] := 'GMS_IP=' + tmpIP;
+    EnvLines[19] := 'GMS_PORT=' + tmpPort;
+    EnvLines[20] := 'GMS_CLIENT_CODE=' + GmsIdPage.Values[0];
+    EnvLines[21] := 'GMS_CHANNEL_ID=' + GmsIdPage.Values[1];
+    EnvLines[22] := 'GMS_HTTP_URL=' + GmsIdPage.Values[2];
     EnvLines[23] := '';
     EnvLines[24] := '# Polling and Reconnection Behavioral Settings';
     EnvLines[25] := 'QUERY_INTERVAL_FAST=0.7';
@@ -213,30 +294,23 @@ begin
     EnvLines[27] := 'GMS_RECONNECT_INITIAL_DELAY=5';
     EnvLines[28] := 'GMS_RECONNECT_MAX_DELAY=60';
 
-    // Write array to .env file
     SaveStringsToFile(EnvPath, EnvLines, False);
-
-    // NEW: Log Installation
     LogToFile('Application Installed - Version {#MyAppVersion}');
   end;
 
-  // NEW: Clean Install - Delete old folders (except logs) before files are copied
   if CurStep = ssInstall then
   begin
-    // Delete folders that might contain stale/old version files
     DelTree(ExpandConstant('{app}\internal\app'), True, True, True);
     DelTree(ExpandConstant('{app}\internal\static'), True, True, True);
     DelTree(ExpandConstant('{app}\internal\templates'), True, True, True);
     DelTree(ExpandConstant('{app}\internal\ui_assets'), True, True, True);
     DelTree(ExpandConstant('{app}\static'), True, True, True);
     DelTree(ExpandConstant('{app}\templates'), True, True, True);
-    // Note: We deliberately do NOT delete {app}\logs
   end;
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 begin
-  // After uninstallation is complete
   if CurUninstallStep = usPostUninstall then
   begin
     LogToFile('Application Uninstalled - Version {#MyAppVersion}');

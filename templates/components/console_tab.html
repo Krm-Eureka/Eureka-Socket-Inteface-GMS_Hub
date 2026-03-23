@@ -17,7 +17,7 @@
                         @click="allLogs = []">CLEAR LOG</button>
                 </div>
 
-                <div class="console-view flex-1" id="console-stream" style="overflow-y: auto;">
+                <div class="console-view flex-1" id="console-stream" style="overflow-y: auto; padding-bottom: 5rem;">
                     <template x-for="(log, index) in allLogs" :key="index">
                         <div class="log-line">
                             <div class="log-time" x-text="log.time"></div>

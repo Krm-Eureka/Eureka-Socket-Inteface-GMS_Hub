@@ -66,26 +66,6 @@ def init_logging():
         enqueue=True,  # Thread-safe
     )
 
-    # 2. Fast Polling File (1 Sec)
-    logger.add(
-        os.path.join(_log_dir, "polling_fast_{time:YYYY-MM-DD}.log"),
-        rotation="30 minutes",
-        retention="1 week",
-        level=settings.LOG_LEVEL,
-        filter=lambda record: "Polling Fast" in record["message"],
-        format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}",
-    )
-
-    # 3. Slow Polling File (30 Sec)
-    logger.add(
-        os.path.join(_log_dir, "polling_slow_{time:YYYY-MM-DD}.log"),
-        rotation="30 minutes",
-        retention="1 week",
-        level=settings.LOG_LEVEL,
-        filter=lambda record: "Polling Slow" in record["message"],
-        format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}",
-    )
-
     # 4. Service Log (Only GMS Client & Polling)
     logger.add(
         os.path.join(_log_dir, "service_{time:YYYY-MM-DD}.log"),
@@ -163,25 +143,24 @@ async def startup_diagnostics(app):
 async def lifespan(app: FastAPI):
     # Standard Startup Behavior
     init_logging()
-    loop = asyncio.get_running_loop()
-    gms_client.set_loop(loop)
-    system_monitor.set_loop(loop)
     gms_client.set_monitor(system_monitor)  # Wire monitor for daily reset summary
 
     await startup_diagnostics(app)
 
     logger.info("ESIG HUB Initializing: Establishing GMS Polling Behavior...")
     gms_client.set_callbacks(on_message=polling_manager.handle_gms_message)
-    polling_manager.start_service()
-    system_monitor.start()
+    
+    # Async Start
+    await polling_manager.start_service()
+    await system_monitor.start()
 
     try:
         yield
     finally:
-        # Standard Shutdown Behavior (runs even on CancelledError / forced shutdown)
+        # Async Stop
         logger.info("ESIG HUB Shutting Down: Cleaning up sessions...")
-        polling_manager.stop_service()
-        system_monitor.stop()
+        await polling_manager.stop_service()
+        await system_monitor.stop()
 
 
 # --- FastAPI Initialization ---
@@ -273,7 +252,7 @@ async def connect(sid, environ):
         if client:
             client_ip = client[0]
 
-    system_monitor.add_client(sid, client_ip)
+    await system_monitor.add_client(sid, client_ip)
     # Default room: map (matches the app's default page)
     # set_active_page will move the client to the correct room once FE signals
     await sio.enter_room(sid, "page:map")
@@ -291,7 +270,7 @@ async def connect(sid, environ):
 async def disconnect(sid):
     logger.info(f"Socket Client Disconnected: {sid}")
     system_monitor.remove_client(sid)
-    polling_manager.remove_client(sid)  # Clean up page watchers on disconnect
+    await polling_manager.remove_client(sid)  # Clean up page watchers on disconnect
 
 
 @sio.event
@@ -319,7 +298,7 @@ async def client_command(sid, data):
             return
 
         # Forward to GMS
-        success = gms_client.send_request(msg_type, client_code, channel_id, body)
+        success = await gms_client.send_request(msg_type, client_code, channel_id, body)
 
         # Ack back to requester
         await sio.emit(
@@ -358,7 +337,7 @@ async def handle_get_tasks_page(sid, data):
         start_time = data.get("startTime")
         end_time = data.get("endTime")
 
-        result = polling_manager.get_paginated_tasks(
+        result = await polling_manager.get_paginated_tasks(
             page, page_size, start_time, end_time
         )
 
@@ -390,7 +369,7 @@ async def handle_refresh_data(sid, data):
             return
 
         # Forward to GMS with potential dates/filters from UI
-        gms_client.send_request(
+        await gms_client.send_request(
             msg_type, settings.GMS_CLIENT_CODE, settings.GMS_CHANNEL_ID, body
         )
     except Exception as e:
@@ -411,9 +390,29 @@ async def handle_set_active_page(sid, data):
         if page in PAGE_ROOMS:
             await sio.enter_room(sid, f"page:{page}")
 
-        polling_manager.set_client_page(sid, page)
+        await polling_manager.set_client_page(sid, page)
     except Exception as e:
         logger.error(f"Set Active Page Error: {e}")
+
+
+# Unified ASGI App
+socket_app = socketio.ASGIApp(sio, app)
+
+if __name__ == "__main__":
+    logger.info(
+        f"Launching Enterprise Server on {settings.BFF_HOST}:{settings.BFF_PORT}"
+    )
+    # Diagnostic: Print all registered routes
+    logger.info("Registered Routes:")
+    for route in app.routes:
+        logger.info(f" -> {route.path} {getattr(route, 'methods', None)}")
+
+    uvicorn.run(
+        "main:socket_app",
+        host=settings.BFF_HOST,
+        port=settings.BFF_PORT,
+        reload=settings.BFF_RELOAD,
+    )
 
 
 # Unified ASGI App

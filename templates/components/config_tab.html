@@ -35,76 +35,63 @@
             ⚡ UI CONFIG EDITOR</h2>
 
         <!-- Password Row -->
-        <div
-            style="background:rgba(22,27,34,.8); border:1px solid rgba(241,196,15,.3); border-radius:12px; padding:1rem 1.5rem; margin-bottom:1.5rem; display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+        <div class="status-box-banner">
             <span style="font-size:11px; color:#e3b341; font-weight:700;">🔒 ADMIN PASSWORD</span>
             <input type="password" x-model="cfgPwd" placeholder="Enter admin password before saving..."
-                style="flex:1; min-width:200px; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:8px 12px; border-radius:6px; font-size:12px; outline:none;">
+                class="config-input-modern" style="flex:1; min-width:200px;">
             <span x-show="cfgMsg" x-text="cfgMsg" :style="cfgMsgOk ? 'color:#3fb950' : 'color:#f85149'"
                 style="font-size:11px; font-weight:600; min-width:120px;"></span>
         </div>
 
         <!-- SITE SETTINGS -->
-        <div
-            style="background:rgba(22,27,34,.85); border:1px solid rgba(63,185,80,.2); border-radius:16px; padding:1.5rem; margin-bottom:1.5rem; backdrop-filter:blur(20px);">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
-                <h3 style="font-size:12px; font-weight:800; color:#3fb950; text-transform:uppercase;">🏢
-                    Site Settings</h3>
-                <button class="btn btn-primary" style="padding:4px 16px; font-size:10px; background:#238636;"
-                    @click="saveSiteConfig()">
+        <div class="glass-card glass-card-green">
+            <div class="glass-card-header">
+                <h3 class="glass-card-title green">🏢 Site Settings</h3>
+                <button class="config-btn-action btn-primary" @click="saveSiteConfig()">
                     SAVE SITE
                 </button>
             </div>
-            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1.5rem;">
+            <div class="config-grid-2">
                 <div class="input-group">
-                    <label style="font-size:10px; color:#6e7681; font-weight:700;">SITE NAME</label>
-                    <input type="text" x-model="cfgData.site.name"
-                        style="width:100%; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:10px 14px; border-radius:8px; font-size:13px; outline:none; margin-top:6px;">
+                    <label class="config-label-modern">SITE NAME</label>
+                    <input type="text" x-model="cfgData.site.name" class="config-input-modern">
                 </div>
                 <div class="input-group">
-                    <label style="font-size:10px; color:#6e7681; font-weight:700;">SHORT NAME</label>
-                    <input type="text" x-model="cfgData.site.shortName"
-                        style="width:100%; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:10px 14px; border-radius:8px; font-size:13px; font-family:monospace; outline:none; margin-top:6px;">
+                    <label class="config-label-modern">SHORT NAME</label>
+                    <input type="text" x-model="cfgData.site.shortName" class="config-input-modern" style="font-family:monospace;">
                 </div>
                 <div class="input-group">
-                    <label style="font-size:10px; color:#6e7681; font-weight:700;">PRIMARY COLOR</label>
+                    <label class="config-label-modern">PRIMARY COLOR</label>
                     <div style="display:flex; align-items:center; gap:0.75rem; margin-top:0.6rem;">
                         <input type="color"
                             :value="(cfgData.site.primaryColor || '').startsWith('#') ? cfgData.site.primaryColor : '#58a6ff'"
                             @input="cfgData.site.primaryColor = $event.target.value"
                             style="width:36px; height:36px; border:none; background:none; cursor:pointer;">
-                        <input type="text" x-model="cfgData.site.primaryColor"
-                            style="flex:1; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:8px 12px; border-radius:6px; font-size:12px; font-family:monospace; outline:none;">
+                        <input type="text" x-model="cfgData.site.primaryColor" class="config-input-modern" style="flex:1; font-family:monospace;">
                     </div>
                 </div>
                 <div class="input-group">
-                    <label style="font-size:10px; color:#6e7681; font-weight:700;">GMS CLIENT CODE</label>
-                    <input type="text" x-model="cfgData.site.gmsClientCode"
-                        style="width:100%; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:10px 14px; border-radius:8px; font-size:13px; font-family:monospace; outline:none; margin-top:6px;">
+                    <label class="config-label-modern">GMS CLIENT CODE</label>
+                    <input type="text" x-model="cfgData.site.gmsClientCode" class="config-input-modern" style="font-family:monospace;">
                 </div>
                 <div class="input-group" style="grid-column: span 2;">
-                    <label style="font-size:10px; color:#6e7681; font-weight:700;">LOGO URL
-                        (OPTIONAL)</label>
-                    <input type="text" x-model="cfgData.site.logoUrl" placeholder="/api/v1/ui/assets/logo.png"
-                        style="width:100%; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:10px 14px; border-radius:8px; font-size:13px; outline:none; margin-top:6px;">
+                    <label class="config-label-modern">LOGO URL (OPTIONAL)</label>
+                    <input type="text" x-model="cfgData.site.logoUrl" placeholder="/api/v1/ui/assets/logo.png" class="config-input-modern">
                 </div>
             </div>
         </div>
 
         <!-- GLOBAL MAP SETTINGS -->
-        <div
-            style="background:rgba(22,27,34,.85); border:1px solid rgba(88,166,255,.2); border-radius:16px; padding:1.5rem; margin-bottom:1.5rem; backdrop-filter:blur(20px);">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
-                <h3 style="font-size:12px; font-weight:800; color:#58a6ff; text-transform:uppercase;">🗺️
-                    Global Map Settings</h3>
-                <button class="btn btn-primary" style="padding:4px 16px; font-size:10px; background:#238636;"
-                    @click="saveMapConfig()">
-                    SAVE SETTINGS
+        <div class="glass-card glass-card-blue">
+            <div class="glass-card-header">
+                <h3 class="glass-card-title blue">🗺️ Global Map Settings</h3>
+                <button class="config-btn-action btn-primary" @click="saveSiteConfig()">
+                    SAVE MAP
                 </button>
             </div>
-            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1.5rem;">
+            <div class="config-grid-2">
                 <div class="input-group">
-                    <label style="font-size:10px; color:#6e7681; font-weight:700;">SOCKET LOGGING</label>
+                    <label class="config-label-modern">SOCKET LOGGING</label>
                     <div style="display:flex; align-items:center; gap:0.75rem; margin-top:0.5rem;">
                         <input type="checkbox" x-model="cfgData.map.ENABLE_SOCKET_LOG" id="chk_socket_log"
                             style="width:20px; height:20px; accent-color:#3fb950; cursor:pointer;">
@@ -114,170 +101,139 @@
                     </div>
                 </div>
                 <div class="input-group">
-                    <label style="font-size:10px; color:#6e7681; font-weight:700;">MULTIPLIER (PX PER
-                        M)</label>
-                    <input type="number" x-model.number="cfgData.map.MULTIPLIER"
-                        style="width:100%; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:10px 14px; border-radius:8px; font-size:13px; font-family:monospace; outline:none; margin-top:6px;">
+                    <label class="config-label-modern">MULTIPLIER (PX PER M)</label>
+                    <input type="number" x-model.number="cfgData.map.MULTIPLIER" class="config-input-modern" style="font-family:monospace;">
                 </div>
                 <div class="input-group">
-                    <label style="font-size:10px; color:#6e7681; font-weight:700;">SNAP DISTANCE
-                        (PX)</label>
-                    <input type="number" x-model.number="cfgData.map.SNAP_DISTANCE"
-                        style="width:100%; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:10px 14px; border-radius:8px; font-size:13px; font-family:monospace; outline:none; margin-top:6px;">
+                    <label class="config-label-modern">SNAP DISTANCE (PX)</label>
+                    <input type="number" x-model.number="cfgData.map.SNAP_DISTANCE" class="config-input-modern" style="font-family:monospace;">
                 </div>
                 <div class="input-group">
-                    <label style="font-size:10px; color:#6e7681; font-weight:700;">ANGLE OFFSET
-                        (DEG)</label>
-                    <input type="number" x-model.number="cfgData.map.ANGLE_OFFSET"
-                        style="width:100%; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:10px 14px; border-radius:8px; font-size:13px; font-family:monospace; outline:none; margin-top:6px;">
+                    <label class="config-label-modern">ANGLE OFFSET (DEG)</label>
+                    <input type="number" x-model.number="cfgData.map.ANGLE_OFFSET" class="config-input-modern" style="font-family:monospace;">
                 </div>
                 <div class="input-group">
-                    <label style="font-size:10px; color:#6e7681; font-weight:700;">ORIGIN OFFSET X</label>
-                    <input type="number" x-model.number="cfgData.map.ORIGIN_OFFSET_X"
-                        style="width:100%; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:10px 14px; border-radius:8px; font-size:13px; font-family:monospace; outline:none; margin-top:6px;">
+                    <label class="config-label-modern">ORIGIN OFFSET X</label>
+                    <input type="number" x-model.number="cfgData.map.ORIGIN_OFFSET_X" class="config-input-modern" style="font-family:monospace;">
                 </div>
                 <div class="input-group">
-                    <label style="font-size:10px; color:#6e7681; font-weight:700;">ORIGIN OFFSET Y</label>
-                    <input type="number" x-model.number="cfgData.map.ORIGIN_OFFSET_Y"
-                        style="width:100%; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:10px 14px; border-radius:8px; font-size:13px; font-family:monospace; outline:none; margin-top:6px;">
+                    <label class="config-label-modern">ORIGIN OFFSET Y</label>
+                    <input type="number" x-model.number="cfgData.map.ORIGIN_OFFSET_Y" class="config-input-modern" style="font-family:monospace;">
                 </div>
                 <div class="input-group">
-                    <label style="font-size:10px; color:#6e7681; font-weight:700;">DEFAULT LOC SIZE</label>
-                    <input type="number" step="0.1" x-model.number="cfgData.map.DEFAULT_LOC_SIZE"
-                        style="width:100%; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:10px 14px; border-radius:8px; font-size:13px; font-family:monospace; outline:none; margin-top:6px;">
+                    <label class="config-label-modern">DEFAULT LOC SIZE</label>
+                    <input type="number" step="0.1" x-model.number="cfgData.map.DEFAULT_LOC_SIZE" class="config-input-modern" style="font-family:monospace;">
                 </div>
                 <div class="input-group">
-                    <label style="font-size:10px; color:#6e7681; font-weight:700;">MAP OPACITY</label>
-                    <input type="number" step="0.1" x-model.number="cfgData.map.OPACITY"
-                        style="width:100%; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:10px 14px; border-radius:8px; font-size:13px; font-family:monospace; outline:none; margin-top:6px;">
+                    <label class="config-label-modern">MAP OPACITY</label>
+                    <input type="number" step="0.1" x-model.number="cfgData.map.OPACITY" class="config-input-modern" style="font-family:monospace;">
                 </div>
             </div>
         </div>
 
         <!-- ROBOT SETTINGS -->
-        <div
-            style="background:rgba(22,27,34,.85); border:1px solid rgba(255,152,0,.2); border-radius:16px; padding:1.5rem; margin-bottom:1.5rem; backdrop-filter:blur(20px);">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
-                <h3 style="font-size:12px; font-weight:800; color:#ff9800; text-transform:uppercase;">🤖
-                    Robot Settings</h3>
-                <button class="btn btn-primary" style="padding:4px 16px; font-size:10px; background:#238636;"
-                    @click="saveRobotConfig()">
+        <div class="glass-card glass-card-orange">
+            <div class="glass-card-header">
+                <h3 class="glass-card-title orange">🤖 Robot Settings</h3>
+                <button class="config-btn-action btn-primary" @click="saveRobotConfig()">
                     SAVE ROBOT
                 </button>
             </div>
-            <div
-                style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1.5rem; margin-bottom:1.5rem;">
+            <div class="config-grid-2" style="margin-bottom:1.5rem;">
                 <div class="input-group">
-                    <label style="font-size:10px; color:#6e7681; font-weight:700;">WIDTH (M)</label>
-                    <input type="number" step="0.01" x-model.number="cfgData.robot.WIDTH"
-                        style="width:100%; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:10px 14px; border-radius:8px; font-size:13px; font-family:monospace; outline:none; margin-top:6px;">
+                    <label class="config-label-modern">WIDTH (M)</label>
+                    <input type="number" step="0.01" x-model.number="cfgData.robot.WIDTH" class="config-input-modern" style="font-family:monospace;">
                 </div>
                 <div class="input-group">
-                    <label style="font-size:10px; color:#6e7681; font-weight:700;">LENGTH (M)</label>
-                    <input type="number" step="0.01" x-model.number="cfgData.robot.LENGTH"
-                        style="width:100%; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:10px 14px; border-radius:8px; font-size:13px; font-family:monospace; outline:none; margin-top:6px;">
+                    <label class="config-label-modern">LENGTH (M)</label>
+                    <input type="number" step="0.01" x-model.number="cfgData.robot.LENGTH" class="config-input-modern" style="font-family:monospace;">
                 </div>
                 <!-- Idle Color -->
                 <div class="input-group">
-                    <label style="font-size:10px; color:#6e7681; font-weight:700;">IDLE COLOR</label>
+                    <label class="config-label-modern">IDLE COLOR</label>
                     <div style="display:flex; align-items:center; gap:0.75rem; margin-top:0.6rem;">
                         <input type="color"
                             :value="(cfgData.robot.IDLE_COLOR || '').startsWith('#') ? cfgData.robot.IDLE_COLOR : '#8b949e'"
                             @input="cfgData.robot.IDLE_COLOR = $event.target.value"
                             style="width:36px; height:36px; border:none; background:none; cursor:pointer;">
-                        <input type="text" x-model="cfgData.robot.IDLE_COLOR"
-                            style="flex:1; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:8px 12px; border-radius:6px; font-size:12px; font-family:monospace; outline:none;">
+                        <input type="text" x-model="cfgData.robot.IDLE_COLOR" class="config-input-modern" style="flex:1; font-family:monospace;">
                     </div>
                 </div>
                 <!-- Working Color -->
                 <div class="input-group">
-                    <label style="font-size:10px; color:#6e7681; font-weight:700;">WORKING COLOR</label>
+                    <label class="config-label-modern">WORKING COLOR</label>
                     <div style="display:flex; align-items:center; gap:0.75rem; margin-top:0.6rem;">
                         <input type="color"
                             :value="(cfgData.robot.WORKING_COLOR || '').startsWith('#') ? cfgData.robot.WORKING_COLOR : '#238636'"
                             @input="cfgData.robot.WORKING_COLOR = $event.target.value"
                             style="width:36px; height:36px; border:none; background:none; cursor:pointer;">
-                        <input type="text" x-model="cfgData.robot.WORKING_COLOR"
-                            style="flex:1; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:8px 12px; border-radius:6px; font-size:12px; font-family:monospace; outline:none;">
+                        <input type="text" x-model="cfgData.robot.WORKING_COLOR" class="config-input-modern" style="flex:1; font-family:monospace;">
                     </div>
                 </div>
                 <!-- Error Color -->
                 <div class="input-group">
-                    <label style="font-size:10px; color:#6e7681; font-weight:700;">ERROR COLOR</label>
+                    <label class="config-label-modern">ERROR COLOR</label>
                     <div style="display:flex; align-items:center; gap:0.75rem; margin-top:0.6rem;">
                         <input type="color"
                             :value="(cfgData.robot.ERROR_COLOR || '').startsWith('#') ? cfgData.robot.ERROR_COLOR : '#f85149'"
                             @input="cfgData.robot.ERROR_COLOR = $event.target.value"
                             style="width:36px; height:36px; border:none; background:none; cursor:pointer;">
-                        <input type="text" x-model="cfgData.robot.ERROR_COLOR"
-                            style="flex:1; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:8px 12px; border-radius:6px; font-size:12px; font-family:monospace; outline:none;">
+                        <input type="text" x-model="cfgData.robot.ERROR_COLOR" class="config-input-modern" style="flex:1; font-family:monospace;">
                     </div>
                 </div>
                 <!-- Charging Color -->
                 <div class="input-group">
-                    <label style="font-size:10px; color:#6e7681; font-weight:700;">CHARGING COLOR</label>
+                    <label class="config-label-modern">CHARGING COLOR</label>
                     <div style="display:flex; align-items:center; gap:0.75rem; margin-top:0.6rem;">
                         <input type="color"
                             :value="(cfgData.robot.CHARGING_COLOR || '').startsWith('#') ? cfgData.robot.CHARGING_COLOR : '#f1c40f'"
                             @input="cfgData.robot.CHARGING_COLOR = $event.target.value"
                             style="width:36px; height:36px; border:none; background:none; cursor:pointer;">
-                        <input type="text" x-model="cfgData.robot.CHARGING_COLOR"
-                            style="flex:1; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:8px 12px; border-radius:6px; font-size:12px; font-family:monospace; outline:none;">
+                        <input type="text" x-model="cfgData.robot.CHARGING_COLOR" class="config-input-modern" style="flex:1; font-family:monospace;">
                     </div>
                 </div>
                 <!-- Offline Color -->
                 <div class="input-group">
-                    <label style="font-size:10px; color:#6e7681; font-weight:700;">OFFLINE COLOR</label>
+                    <label class="config-label-modern">OFFLINE COLOR</label>
                     <div style="display:flex; align-items:center; gap:0.75rem; margin-top:0.6rem;">
                         <input type="color"
                             :value="(cfgData.robot.OFFLINE_COLOR || '').startsWith('#') ? cfgData.robot.OFFLINE_COLOR : '#30363d'"
                             @input="cfgData.robot.OFFLINE_COLOR = $event.target.value"
                             style="width:36px; height:36px; border:none; background:none; cursor:pointer;">
-                        <input type="text" x-model="cfgData.robot.OFFLINE_COLOR"
-                            style="flex:1; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:8px 12px; border-radius:6px; font-size:12px; font-family:monospace; outline:none;">
+                        <input type="text" x-model="cfgData.robot.OFFLINE_COLOR" class="config-input-modern" style="flex:1; font-family:monospace;">
                     </div>
                 </div>
                 <!-- Label BG -->
                 <div class="input-group">
-                    <label style="font-size:10px; color:#6e7681; font-weight:700;">LABEL BG</label>
+                    <label class="config-label-modern">LABEL BG</label>
                     <div style="display:flex; align-items:center; gap:0.75rem; margin-top:0.6rem;">
                         <input type="color"
                             :value="(cfgData.robot.ID_LABEL_BG || '').startsWith('#') ? cfgData.robot.ID_LABEL_BG : '#161b22'"
                             @input="cfgData.robot.ID_LABEL_BG = $event.target.value"
                             style="width:36px; height:36px; border:none; background:none; cursor:pointer;">
-                        <input type="text" x-model="cfgData.robot.ID_LABEL_BG"
-                            style="flex:1; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:8px 12px; border-radius:6px; font-size:12px; font-family:monospace; outline:none;">
+                        <input type="text" x-model="cfgData.robot.ID_LABEL_BG" class="config-input-modern" style="flex:1; font-family:monospace;">
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- SYSTEM COLORS -->
-        <div
-            style="background:rgba(22,27,34,.85); border:1px solid rgba(0,229,255,.2); border-radius:16px; padding:1.5rem; margin-bottom:1.5rem; backdrop-filter:blur(20px);">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
-                <h3 style="font-size:12px; font-weight:800; color:#00e5ff; text-transform:uppercase;">🎨
-                    System Colors</h3>
-                <button class="btn btn-primary" style="padding:4px 16px; font-size:10px; background:#238636;"
-                    @click="saveColorsConfig()">
-                    SAVE COLORS
-                </button>
+        <div class="glass-card glass-card-blue">
+            <div class="glass-card-header">
+                <h3 class="glass-card-title blue">🎨 System Colors</h3>
             </div>
-            <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:1.25rem;">
-                <template x-for="[key, val] in Object.entries(cfgData.colors || {})" :key="key">
+            <div class="config-grid-3">
+                <template x-for="key in Object.keys(cfgData.colors||{})" :key="key">
                     <div class="input-group">
-                        <label style="font-size:9px; color:#6e7681; font-weight:700; display:block; margin-bottom:4px;"
-                            x-text="key"></label>
+                        <label class="config-label-modern" x-text="key"></label>
                         <div style="display:flex; align-items:center; gap:0.5rem;">
-                            <div
-                                style="position:relative; width:28px; height:28px; border-radius:6px; overflow:hidden; border:1px solid #30363d;">
+                            <div style="position:relative; width:28px; height:28px; border-radius:6px; overflow:hidden; border:1px solid #30363d;">
                                 <input type="color"
                                     :value="(cfgData.colors[key] || '').startsWith('#') ? cfgData.colors[key] : '#58a6ff'"
                                     @input="cfgData.colors[key] = $event.target.value"
                                     style="position:absolute; top:-4px; left:-4px; width:150%; height:150%; cursor:pointer; border:none; background:none; padding:0;">
                             </div>
-                            <input type="text" x-model="cfgData.colors[key]"
-                                style="flex:1; background:rgba(0,0,0,.3); border:1px solid #30363d; color:#c9d1d9; padding:6px 10px; border-radius:6px; font-size:11px; font-family:monospace; outline:none;">
+                            <input type="text" x-model="cfgData.colors[key]" class="config-input-modern" style="flex:1; font-family:monospace; padding:6px 10px; font-size:11px;">
                         </div>
                     </div>
                 </template>
@@ -285,41 +241,34 @@
         </div>
 
         <!-- STATIONS -->
-        <div
-            style="background:rgba(22,27,34,.7); border:1px solid rgba(255,255,255,.07); border-radius:16px; padding:1.5rem; margin-bottom:1.5rem;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-                <h3 style="font-size:12px; font-weight:800; color:#c9d1d9; text-transform:uppercase;">🚩
-                    Stations (<span x-text="Object.keys(cfgData.stations||{}).length">0</span>)</h3>
-                <button class="btn btn-primary" style="padding:4px 12px;font-size:10px;"
-                    @click="editStationCode='';newStation={code:'',alias:'',angle:90,containerType:''};showAddStation=true">+
-                    ADD</button>
+        <div class="glass-card">
+            <div class="glass-card-header">
+                <h3 class="glass-card-title">🚩 Stations (<span x-text="Object.keys(cfgData.stations||{}).length">0</span>)</h3>
+                <button class="config-btn-action btn-primary"
+                    @click="editStationCode='';newStation={code:'',alias:'',angle:90,containerType:''};showAddStation=true">+ ADD</button>
             </div>
             <div style="max-height:280px; overflow-y:auto;">
-                <table style="width:100%;border-collapse:collapse;font-size:11px;color:#8b949e;">
+                <table class="config-table">
                     <thead>
-                        <tr style="border-bottom:1px solid rgba(255,255,255,.05);color:#6e7681;font-size:10px;">
-                            <th style="padding:.5rem 1rem;text-align:left;">CODE</th>
-                            <th style="padding:.5rem;text-align:left;">ALIAS</th>
-                            <th style="padding:.5rem;text-align:center;">ANGLE</th>
-                            <th style="padding:.5rem;text-align:left;">CONTAINER TYPE</th>
-                            <th style="padding:.5rem;text-align:center;">ACTIONS</th>
+                        <tr>
+                            <th>CODE</th>
+                            <th>ALIAS</th>
+                            <th style="text-align:center;">ANGLE</th>
+                            <th>CONTAINER TYPE</th>
+                            <th style="text-align:center;">ACTIONS</th>
                         </tr>
                     </thead>
                     <tbody>
                         <template x-for="[code, st] in Object.entries(cfgData.stations||{})" :key="code">
-                            <tr style="border-bottom:1px solid rgba(255,255,255,.03);">
-                                <td style="padding:.45rem 1rem;color:#c9d1d9;font-weight:700;font-family:monospace;"
-                                    x-text="code"></td>
-                                <td style="padding:.45rem .5rem;" x-text="st.alias"></td>
-                                <td style="padding:.45rem;text-align:center;" x-text="st.angle+'°'"></td>
-                                <td style="padding:.45rem .5rem;font-size:10px;color:#58a6ff;"
-                                    x-text="(st.containerType||[]).join(', ')||'-'"></td>
-                                <td style="padding:.45rem;text-align:center;">
-                                    <button
-                                        style="font-size:9px;padding:2px 8px;background:rgba(88,166,255,.15);color:#58a6ff;border:1px solid rgba(88,166,255,.3);border-radius:4px;cursor:pointer;margin-right:4px;"
+                            <tr>
+                                <td style="color:#c9d1d9;font-weight:700;font-family:monospace;" x-text="code"></td>
+                                <td x-text="st.alias"></td>
+                                <td style="text-align:center;" x-text="st.angle+'°'"></td>
+                                <td style="font-size:10px;color:#58a6ff;" x-text="(st.containerType||[]).join(', ')||'-'"></td>
+                                <td style="text-align:center;">
+                                    <button class="badge-blue" style="cursor:pointer;margin-right:4px;"
                                         @click="editStationCode=code;newStation={code:code,oldCode:code,alias:st.alias,angle:st.angle,containerType:(st.containerType||[]).join(',')};showAddStation=true">EDIT</button>
-                                    <button
-                                        style="font-size:9px;padding:2px 8px;background:rgba(248,81,73,.1);color:#f85149;border:1px solid rgba(248,81,73,.3);border-radius:4px;cursor:pointer;"
+                                    <button class="badge-red" style="cursor:pointer;"
                                         @click="deleteStation(code)">DEL</button>
                                 </td>
                             </tr>
@@ -328,62 +277,46 @@
                 </table>
             </div>
             <!-- Add/Edit Station Modal -->
-            <div x-show="showAddStation" x-cloak @keydown.escape.window="showAddStation=false"
-                style="position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:1000;">
-                <div class="modal-content"
-                    style="background:#161b22;border:1px solid #30363d;border-radius:16px;padding:2rem;width:420px;max-width:95vw;max-height:95vh;overflow-y:auto;">
-                    <h3 style="font-size:13px;font-weight:800;color:#c9d1d9;margin-bottom:1.5rem;"
-                        x-text="editStationCode ? 'EDIT: '+editStationCode : 'ADD STATION'"></h3>
-                    <div style="display:grid;gap:.75rem;">
+            <div x-show="showAddStation" x-cloak @keydown.escape.window="showAddStation=false" class="modal-backdrop">
+                <div class="modal-glass">
+                    <h3 class="glass-card-title" x-text="editStationCode ? 'EDIT: '+editStationCode : 'ADD STATION'"></h3>
+                    <div style="display:grid;gap:.75rem;margin-top:1.5rem;">
                         <div>
-                            <label style="font-size:10px;color:#6e7681;font-weight:700;">STATION CODE
-                                *</label>
-                            <input x-model="newStation.code" placeholder="e.g. B3F1_3_IN"
-                                style="width:100%;background:rgba(0,0,0,.3);border:1px solid #30363d;color:#c9d1d9;padding:8px 12px;border-radius:6px;font-size:12px;font-family:monospace;outline:none;margin-top:4px;">
+                            <label class="config-label-modern">STATION CODE *</label>
+                            <input x-model="newStation.code" placeholder="e.g. B3F1_3_IN" class="config-input-modern" style="font-family:monospace;">
                         </div>
                         <div>
-                            <label style="font-size:10px;color:#6e7681;font-weight:700;">ALIAS *</label>
-                            <input x-model="newStation.alias" placeholder="e.g. B3F1"
-                                style="width:100%;background:rgba(0,0,0,.3);border:1px solid #30363d;color:#c9d1d9;padding:8px 12px;border-radius:6px;font-size:12px;outline:none;margin-top:4px;">
+                            <label class="config-label-modern">ALIAS *</label>
+                            <input x-model="newStation.alias" placeholder="e.g. B3F1" class="config-input-modern">
                         </div>
                         <div>
-                            <label style="font-size:10px;color:#6e7681;font-weight:700;">ANGLE (degrees)
-                                *</label>
-                            <input type="number" x-model.number="newStation.angle" placeholder="0 or 90"
-                                style="width:100%;background:rgba(0,0,0,.3);border:1px solid #30363d;color:#c9d1d9;padding:8px 12px;border-radius:6px;font-size:12px;outline:none;margin-top:4px;">
+                            <label class="config-label-modern">ANGLE (degrees) *</label>
+                            <input type="number" x-model.number="newStation.angle" placeholder="0 or 90" class="config-input-modern">
                         </div>
                         <div>
-                            <label style="font-size:10px;color:#6e7681;font-weight:700;">CONTAINER TYPES
-                                (comma-separated)</label>
-                            <input x-model="newStation.containerType" placeholder="T2000001,T0000006"
-                                style="width:100%;background:rgba(0,0,0,.3);border:1px solid #30363d;color:#c9d1d9;padding:8px 12px;border-radius:6px;font-size:12px;font-family:monospace;outline:none;margin-top:4px;">
+                            <label class="config-label-modern">CONTAINER TYPES (comma-separated)</label>
+                            <input x-model="newStation.containerType" placeholder="T2000001,T0000006" class="config-input-modern" style="font-family:monospace;">
                         </div>
                     </div>
                     <div style="display:flex;justify-content:flex-end;gap:.75rem;margin-top:1.5rem;">
-                        <button class="btn btn-outline" style="padding:6px 20px;font-size:11px;"
-                            @click="showAddStation=false">CANCEL</button>
-                        <button class="btn btn-primary" style="padding:6px 20px;font-size:11px;"
-                            @click="saveStation()">SAVE</button>
+                        <button class="config-btn-action btn-outline" @click="showAddStation=false">CANCEL</button>
+                        <button class="config-btn-action btn-primary" @click="saveStation()">SAVE</button>
                     </div>
                 </div>
             </div>
         </div>
-
         <!-- FLOORS -->
-        <div
-            style="background:rgba(22,27,34,.7); border:1px solid rgba(255,255,255,.07); border-radius:16px; padding:1.5rem; margin-bottom:1.5rem;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
-                <h3 style="font-size:12px;font-weight:800;color:#c9d1d9;text-transform:uppercase;">🏗️
-                    Floors (<span x-text="(cfgData.floors||[]).length"></span>)</h3>
-                <button class="btn btn-primary" style="padding:4px 12px;font-size:10px;"
-                    @click="editFloorId=null;newFloor={id:'',label:'',image:'',_file:null};showAddFloor=true">+
-                    ADD</button>
+        <div class="glass-card">
+            <div class="glass-card-header">
+                <h3 class="glass-card-title">🏗️ Floors (<span x-text="(cfgData.floors||[]).length"></span>)</h3>
+                <button class="config-btn-action btn-primary"
+                    @click="editFloorId=null;newFloor={id:'',label:'',image:'',_file:null};showAddFloor=true">+ ADD</button>
             </div>
-            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:1rem;">
+            <div class="config-grid-2">
                 <template x-for="f in (cfgData.floors||[])" :key="f.id">
                     <div @mouseenter="activePreviewImg = f.image; activePreviewName = 'Map: ' + f.label"
-                        style="background:rgba(0,0,0,.3);border:1px solid #30363d;border-radius:10px;padding:1rem; transition: border-color 0.2s; cursor: pointer;"
-                        :style="activePreviewImg === f.image ? 'border-color: #3fb950' : ''">
+                        class="mini-stat" style="cursor: pointer;"
+                        :style="activePreviewImg === f.image ? 'border-color: var(--accent-green)' : ''">
                         <div style="font-size:12px;font-weight:700;color:#c9d1d9;" x-text="f.label"></div>
                         <div style="font-size:10px;color:#6e7681;font-family:monospace;" x-text="'ID: '+f.id"></div>
                         <img :src="f.image+'?t='+Date.now()"
@@ -391,43 +324,36 @@
                             @click="activePreviewImg=f.image; activePreviewName='Map: '+f.label; showPreviewModal=true; resetZoom();"
                             onerror="this.style.display='none'">
                         <div style="display:flex; gap:4px; margin-top:.5rem;">
-                            <button
-                                style="flex:1; font-size:9px;padding:2px 8px;background:rgba(88,166,255,.15);color:#58a6ff;border:1px solid rgba(88,166,255,.3);border-radius:4px;cursor:pointer;"
+                            <button class="badge-blue" style="flex:1; cursor:pointer;"
                                 @click="editFloorId=f.id; newFloor={id:f.id, label:f.label, image:f.image, _file:null}; showAddFloor=true">EDIT</button>
-                            <button
-                                style="flex:1; font-size:9px;padding:2px 8px;background:rgba(248,81,73,.1);color:#f85149;border:1px solid rgba(248,81,73,.3);border-radius:4px;cursor:pointer;"
+                            <button class="badge-red" style="flex:1; cursor:pointer;"
                                 @click="deleteFloor(f.id)">DEL</button>
                         </div>
                     </div>
                 </template>
             </div>
+
             <!-- Add Floor Modal -->
-            <div x-show="showAddFloor" x-cloak @keydown.escape.window="showAddFloor=false"
-                style="position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:1000;">
-                <div class="modal-content"
-                    style="background:#161b22;border:1px solid #30363d;border-radius:16px;padding:2rem;width:420px;max-width:95vw;max-height:95vh;overflow-y:auto;">
-                    <h3 style="font-size:13px;font-weight:800;color:#c9d1d9;margin-bottom:1.5rem;"
-                        x-text="editFloorId !== null ? 'EDIT FLOOR: ' + editFloorId : 'ADD NEW FLOOR'"></h3>
-                    <div style="display:grid;gap:.75rem;">
-                        <div><label style="font-size:10px;color:#6e7681;font-weight:700;">FLOOR ID (Positive
-                                Integer)
-                                *</label>
-                            <input type="number" min="0" step="1" x-model.number="newFloor.id" placeholder="4"
-                                style="width:100%;background:rgba(0,0,0,.3);border:1px solid #30363d;color:#c9d1d9;padding:8px 12px;border-radius:6px;font-size:12px;outline:none;margin-top:4px;">
+            <div x-show="showAddFloor" x-cloak @keydown.escape.window="showAddFloor=false" class="modal-backdrop">
+                <div class="modal-glass">
+                    <h3 class="glass-card-title" x-text="editFloorId !== null ? 'EDIT FLOOR: ' + editFloorId : 'ADD NEW FLOOR'"></h3>
+                    <div style="display:grid;gap:.75rem;margin-top:1.5rem;">
+                        <div>
+                            <label class="config-label-modern">FLOOR ID (Positive Integer) *</label>
+                            <input type="number" min="0" step="1" x-model.number="newFloor.id" placeholder="4" class="config-input-modern">
                         </div>
-                        <div><label style="font-size:10px;color:#6e7681;font-weight:700;">LABEL *</label>
-                            <input x-model="newFloor.label" placeholder="FLOOR 4"
-                                style="width:100%;background:rgba(0,0,0,.3);border:1px solid #30363d;color:#c9d1d9;padding:8px 12px;border-radius:6px;font-size:12px;outline:none;margin-top:4px;">
+                        <div>
+                            <label class="config-label-modern">LABEL *</label>
+                            <input x-model="newFloor.label" placeholder="FLOOR 4" class="config-input-modern">
                         </div>
-                        <div><label style="font-size:10px;color:#6e7681;font-weight:700;">FLOOR IMAGE
-                                (.webp/.png) *</label>
+                        <div>
+                            <label class="config-label-modern">FLOOR IMAGE (.webp/.png) *</label>
                             <input type="file" accept=".webp,.png,.jpg,.jpeg"
                                 @change="newFloor._file=$event.target.files[0];newFloor._filename=$event.target.files[0]?.name"
                                 style="width:100%;color:#c9d1d9;font-size:11px;margin-top:4px;">
 
                             <!-- Image Preview -->
-                            <div
-                                style="margin-top:10px; border:1px solid #30363d; border-radius:8px; overflow:hidden; background:rgba(0,0,0,0.2); height:100px; display:flex; align-items:center; justify-content:center;">
+                            <div style="margin-top:10px; border:1px solid #30363d; border-radius:8px; overflow:hidden; background:rgba(0,0,0,0.2); height:100px; display:flex; align-items:center; justify-content:center;">
                                 <template x-if="newFloor.image || newFloor._file">
                                     <img :src="newFloor._file ? URL.createObjectURL(newFloor._file) : (newFloor.image + '?t=' + Date.now())"
                                         style="max-width:100%; max-height:100%; object-fit:contain;">
@@ -442,160 +368,127 @@
                         </div>
                     </div>
                     <div style="display:flex;justify-content:flex-end;gap:.75rem;margin-top:1.5rem;">
-                        <button class="btn btn-outline" style="padding:6px 20px;font-size:11px;"
-                            @click="showAddFloor=false">CANCEL</button>
-                        <button class="btn btn-primary" style="padding:6px 20px;font-size:11px;"
-                            @click="saveFloor()">SAVE</button>
+                        <button class="config-btn-action btn-outline" @click="showAddFloor=false">CANCEL</button>
+                        <button class="config-btn-action btn-primary" @click="saveFloor()">SAVE</button>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- CONTAINER TYPES -->
-        <div
-            style="background:rgba(22,27,34,.7); border:1px solid rgba(255,255,255,.07); border-radius:16px; padding:1.5rem;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
-                <h3 style="font-size:12px;font-weight:800;color:#c9d1d9;text-transform:uppercase;">📦
-                    Container Types (<span x-text="(cfgData.containerTypes||[]).length"></span>)</h3>
-                <button class="btn btn-primary" style="padding:4px 12px;font-size:10px;"
-                    @click="editContainerId=null;newContainer={id:'',name:'',width:'',length:'',color:'#2ecc71',_file:null};showAddContainer=true">+
-                    ADD</button>
+        <div class="glass-card">
+            <div class="glass-card-header">
+                <h3 class="glass-card-title">📦 Container Types (<span x-text="(cfgData.containerTypes||[]).length">0</span>)</h3>
+                <button class="config-btn-action btn-primary"
+                    @click="editContainerId=null;newContainer={id:'',name:'',width:0.8,length:1.2,color:'#238636',image:'',_file:null};showAddContainer=true">+ ADD</button>
             </div>
-            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;">
+            <div class="config-grid-2">
                 <template x-for="ct in (cfgData.containerTypes||[])" :key="ct.id">
                     <div @mouseenter="activePreviewImg = ct.image; activePreviewName = 'Icon: ' + ct.name"
-                        style="background:rgba(0,0,0,.3);border:1px solid #30363d;border-radius:10px;padding:1rem; transition: border-color 0.2s; cursor: pointer;"
-                        :style="activePreviewImg === ct.image ? 'border-color: #58a6ff' : ''">
+                        class="mini-stat" style="cursor: pointer;"
+                        :style="activePreviewImg === ct.image ? 'border-color: var(--accent-blue)' : ''">
                         <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem;">
-                            <div :style="'width:10px;height:10px;border-radius:50%;background:'+ct.color">
-                            </div>
+                            <div :style="'width:10px;height:10px;border-radius:50%;background:'+ct.color"></div>
                             <span style="font-size:11px;font-weight:700;color:#c9d1d9;" x-text="ct.name"></span>
                         </div>
-                        <div style="font-size:10px;color:#6e7681;font-family:monospace;" x-text="ct.id">
-                        </div>
-                        <div style="font-size:10px;color:#6e7681;" x-text="ct.width+'m × '+ct.length+'m'">
-                        </div>
+                        <div style="font-size:10px;color:var(--text-muted);font-family:monospace;" x-text="ct.id"></div>
+                        <div style="font-size:10px;color:var(--text-muted);" x-text="ct.width+'m × '+ct.length+'m'"></div>
                         <img :src="ct.image+'?t='+Date.now()"
                             style="width:100%;height:60px;object-fit:contain;margin-top:.5rem;cursor:zoom-in;"
                             @click="activePreviewImg=ct.image; activePreviewName='Icon: '+ct.name; showPreviewModal=true; resetZoom();"
                             onerror="this.style.display='none'">
                         <div style="display:flex; gap:4px; margin-top:.5rem;">
-                            <button
-                                style="flex:1; font-size:9px;padding:2px 8px;background:rgba(88,166,255,.15);color:#58a6ff;border:1px solid rgba(88,166,255,.3);border-radius:4px;cursor:pointer;"
+                            <button class="badge-blue" style="flex:1; cursor:pointer;"
                                 @click="editContainerId=ct.id; newContainer={id:ct.id, name:ct.name, width:ct.width, length:ct.length, color:ct.color, image:ct.image, _file:null}; showAddContainer=true">EDIT</button>
-                            <button
-                                style="flex:1; font-size:9px;padding:2px 8px;background:rgba(248,81,73,.1);color:#f85149;border:1px solid rgba(248,81,73,.3);border-radius:4px;cursor:pointer;"
+                            <button class="badge-red" style="flex:1; cursor:pointer;"
                                 @click="deleteContainerType(ct.id)">DEL</button>
                         </div>
                     </div>
                 </template>
             </div>
-            <!-- Add Container Type Modal -->
-            <div x-show="showAddContainer" x-cloak @keydown.escape.window="showAddContainer=false"
-                style="position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:1000;">
-                <div class="modal-content"
-                    style="background:#161b22;border:1px solid #30363d;border-radius:16px;padding:2rem;width:420px;max-width:95vw;max-height:95vh;overflow-y:auto;">
-                    <h3 style="font-size:13px;font-weight:800;color:#c9d1d9;margin-bottom:1.5rem;"
-                        x-text="editContainerId !== null ? 'EDIT TYPE: ' + editContainerId : 'ADD CONTAINER TYPE'">
-                    </h3>
-                    <div style="display:grid;gap:.75rem;">
-                        <div><label style="font-size:10px;color:#6e7681;font-weight:700;">TYPE ID *</label>
-                            <input x-model="newContainer.id" placeholder="T9999999"
-                                style="width:100%;background:rgba(0,0,0,.3);border:1px solid #30363d;color:#c9d1d9;padding:8px 12px;border-radius:6px;font-size:12px;font-family:monospace;outline:none;margin-top:4px;">
+
+            <!-- Add/Edit Container Modal -->
+            <div x-show="showAddContainer" x-cloak @keydown.escape.window="showAddContainer=false" class="modal-backdrop">
+                <div class="modal-glass">
+                    <h3 class="glass-card-title" x-text="editContainerId !== null ? 'EDIT CONTAINER: ' + editContainerId : 'ADD NEW CONTAINER'"></h3>
+                    <div style="display:grid;gap:.75rem;margin-top:1.5rem;">
+                        <div>
+                            <label class="config-label-modern">CONTAINER ID *</label>
+                            <input x-model="newContainer.id" placeholder="e.g. T2000001" class="config-input-modern" style="font-family:monospace;">
                         </div>
-                        <div><label style="font-size:10px;color:#6e7681;font-weight:700;">DISPLAY NAME
-                                *</label>
-                            <input x-model="newContainer.name" placeholder="My Trolley (800x1000)"
-                                style="width:100%;background:rgba(0,0,0,.3);border:1px solid #30363d;color:#c9d1d9;padding:8px 12px;border-radius:6px;font-size:12px;outline:none;margin-top:4px;">
+                        <div>
+                            <label class="config-label-modern">NAME *</label>
+                            <input x-model="newContainer.name" placeholder="e.g. Tray 2000" class="config-input-modern">
                         </div>
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
-                            <div><label style="font-size:10px;color:#6e7681;font-weight:700;">WIDTH (m)
-                                    *</label>
-                                <input type="number" x-model.number="newContainer.width" placeholder="0.8"
-                                    style="width:100%;background:rgba(0,0,0,.3);border:1px solid #30363d;color:#c9d1d9;padding:8px 12px;border-radius:6px;font-size:12px;outline:none;margin-top:4px;">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+                            <div>
+                                <label class="config-label-modern">WIDTH (M) *</label>
+                                <input type="number" step="0.001" x-model.number="newContainer.width" placeholder="0.4" class="config-input-modern">
                             </div>
-                            <div><label style="font-size:10px;color:#6e7681;font-weight:700;">LENGTH (m)
-                                    *</label>
-                                <input type="number" x-model.number="newContainer.length" placeholder="1.12"
-                                    style="width:100%;background:rgba(0,0,0,.3);border:1px solid #30363d;color:#c9d1d9;padding:8px 12px;border-radius:6px;font-size:12px;outline:none;margin-top:4px;">
+                            <div>
+                                <label class="config-label-modern">LENGTH (M) *</label>
+                                <input type="number" step="0.001" x-model.number="newContainer.length" placeholder="0.6" class="config-input-modern">
                             </div>
                         </div>
-                        <div><label style="font-size:10px;color:#6e7681;font-weight:700;">COLOR</label>
-                            <div style="display:flex;align-items:center;gap:.5rem;margin-top:4px;">
-                                <input type="color" x-model="newContainer.color"
-                                    style="width:36px;height:36px;border:none;background:none;cursor:pointer;">
-                                <span x-text="newContainer.color"
-                                    style="font-family:monospace;font-size:11px;color:#c9d1d9;"></span>
+                        <div>
+                            <label class="config-label-modern">THEME COLOR</label>
+                            <div style="display:flex; align-items:center; gap:0.75rem; margin-top:0.6rem;">
+                                <input type="color" x-model="newContainer.color" style="width:36px;height:36px;border:none;background:none;cursor:pointer;">
+                                <input type="text" x-model="newContainer.color" class="config-input-modern" style="flex:1; font-family:monospace; font-size:11px;">
                             </div>
                         </div>
-                        <div><label style="font-size:10px;color:#6e7681;font-weight:700;">ICON IMAGE
-                                (.webp/.png) *</label>
-                            <input type="file" accept=".webp,.png,.jpg,.jpeg"
+                        <div>
+                            <label class="config-label-modern">ICON IMAGE (.webp/.png/svg) *</label>
+                            <input type="file" accept=".webp,.png,.jpg,.jpeg,.svg"
                                 @change="newContainer._file=$event.target.files[0];newContainer._filename=$event.target.files[0]?.name"
                                 style="width:100%;color:#c9d1d9;font-size:11px;margin-top:4px;">
-
-                            <!-- Icon Preview -->
-                            <div
-                                style="margin-top:10px; border:1px solid #30363d; border-radius:8px; overflow:hidden; background:rgba(0,0,0,0.2); height:80px; display:flex; align-items:center; justify-content:center;">
+                            <div style="margin-top:10px; border:1px solid #30363d; border-radius:8px; overflow:hidden; background:rgba(0,0,0,0.2); height:80px; display:flex; align-items:center; justify-content:center;">
                                 <template x-if="newContainer.image || newContainer._file">
                                     <img :src="newContainer._file ? URL.createObjectURL(newContainer._file) : (newContainer.image + '?t=' + Date.now())"
                                         style="max-width:80%; max-height:80%; object-fit:contain;">
                                 </template>
-                                <template x-if="!newContainer.image && !newContainer._file">
-                                    <div style="color:#484f58; font-size:10px;">NO ICON SELECTED</div>
-                                </template>
                             </div>
-
-                            <div x-show="newContainer._filename" x-text="'✅ New file: '+newContainer._filename"
-                                style="font-size:10px;color:#3fb950;margin-top:4px;"></div>
                         </div>
                     </div>
                     <div style="display:flex;justify-content:flex-end;gap:.75rem;margin-top:1.5rem;">
-                        <button class="btn btn-outline" style="padding:6px 20px;font-size:11px;"
-                            @click="showAddContainer=false">CANCEL</button>
-                        <button class="btn btn-primary" style="padding:6px 20px;font-size:11px;"
-                            @click="saveContainerType()">SAVE</button>
+                        <button class="config-btn-action btn-outline" @click="showAddContainer=false">CANCEL</button>
+                        <button class="config-btn-action btn-primary" @click="saveContainerType()">SAVE</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div> <!-- 🚨 Close LEFT SIDE: SCROLLABLE EDITOR -->
+</div>
+    </div>
+</div>
 
 <!-- FULLSCREEN PREVIEW MODAL -->
 <div x-show="showPreviewModal" x-cloak @keydown.escape.window="showPreviewModal=false; resetZoom()"
-    style="position:fixed; inset:0; background:rgba(0,0,0,0.9); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:9999; backdrop-filter:blur(10px);">
+    class="modal-backdrop" style="background:rgba(0,0,0,0.92); backdrop-filter:blur(15px);">
 
-    <div class="preview-header" style="position:absolute; top:20px; right:30px; display:flex; gap:1rem; align-items:center; z-index:10001;">
-        <span class="preview-name"
-            style="color:#c9d1d9; font-weight:800; font-size:14px; background:rgba(0,0,0,0.5); padding:4px 12px; border-radius:12px; backdrop-filter:blur(4px); border:1px solid rgba(255,255,255,0.1);"
-            x-text="activePreviewName"></span>
+    <div style="position:absolute; top:20px; right:30px; display:flex; gap:1rem; align-items:center; z-index:10001;">
+        <span class="badge-blue" style="font-size:12px; padding:6px 16px; border-radius:20px;" x-text="activePreviewName"></span>
         <button @click="showPreviewModal=false; resetZoom()"
-            style="background:#f85149; color:white; border:none; width:40px; height:40px; border-radius:50%; font-size:24px; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 0 15px rgba(248,81,73,0.4); z-index:10002;">&times;</button>
+            style="background:var(--accent-red); color:white; border:none; width:40px; height:40px; border-radius:50%; font-size:24px; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 0 20px rgba(248,81,73,0.4);">&times;</button>
     </div>
 
     <!-- ZOOM CONTROLS -->
-    <div class="zoom-controls"
-        style="position:absolute; bottom:40px; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:1rem; background:rgba(22,27,34,0.8); padding:8px 20px; border-radius:40px; border:1px solid rgba(255,255,255,0.1); z-index:10001; backdrop-filter:blur(8px); box-shadow:0 8px 32px rgba(0,0,0,0.5);">
-        <button @click="zoomOut()"
-            style="background:none; border:none; color:white; font-size:20px; cursor:pointer; width:30px;">−</button>
-        <div style="color:white; font-family:monospace; font-size:14px; min-width:60px; text-align:center; font-weight:bold;"
-            x-text="Math.round(zoomLevel * 100) + '%'"></div>
-        <button @click="zoomIn()"
-            style="background:none; border:none; color:white; font-size:20px; cursor:pointer; width:30px;">+</button>
-        <div style="width:1px; height:20px; background:rgba(255,255,255,0.1); margin:0 5px;"></div>
-        <button @click="resetZoom()"
-            style="background:none; border:none; color:#58a6ff; font-size:12px; font-weight:bold; cursor:pointer; text-transform:uppercase;">Reset</button>
+    <div style="position:absolute; bottom:40px; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:1rem; background:rgba(22,27,34,0.8); padding:10px 24px; border-radius:40px; border:1px solid rgba(255,255,255,0.1); z-index:10001; backdrop-filter:blur(10px); box-shadow:0 10px 40px rgba(0,0,0,0.6);">
+        <button @click="zoomOut()" style="background:none; border:none; color:white; font-size:20px; cursor:pointer; width:30px;">−</button>
+        <div style="color:white; font-family:monospace; font-size:14px; min-width:60px; text-align:center; font-weight:700;" x-text="Math.round(zoomLevel * 100) + '%'"></div>
+        <button @click="zoomIn()" style="background:none; border:none; color:white; font-size:20px; cursor:pointer; width:30px;">+</button>
+        <div style="width:1px; height:20px; background:rgba(255,255,255,0.1); margin:0 8px;"></div>
+        <button @click="resetZoom()" style="background:none; border:none; color:var(--accent-blue); font-size:12px; font-weight:800; cursor:pointer; text-transform:uppercase;">RESET</button>
     </div>
 
     <!-- PANNING CONTAINER -->
-    <div style="width:100vw; height:100vh; display:flex; align-items:center; justify-content:center; overflow:hidden; z-index:10000; cursor: default; background:transparent;"
+    <div style="width:100vw; height:100vh; display:flex; align-items:center; justify-content:center; overflow:hidden; z-index:10000; cursor: default;"
         @mousedown.self="showPreviewModal=false; resetZoom()" @mousemove.window="doPan($event)"
         @mouseup.window="endPan()" @mouseleave.window="endPan()" @touchstart.self="showPreviewModal=false; resetZoom()"
         @touchmove.window="doPan($event)" @touchend.window="endPan()"
         @wheel.prevent="if($event.deltaY < 0) zoomIn(); else zoomOut();">
         <img :src="activePreviewImg + '?t=' + Date.now()"
-            :style="'transform: translate(' + pan.offX + 'px, ' + pan.offY + 'px) scale(' + zoomLevel + '); transition: ' + (pan.active ? 'none' : 'transform 0.2s cubic-bezier(0.1, 0.7, 0.1, 1)') + '; max-width:90%; max-height:90%; object-fit:contain; border-radius:4px; box-shadow:0 20px 60px rgba(0,0,0,0.8); cursor: ' + (zoomLevel > 1 ? (pan.active ? 'grabbing' : 'grab') : 'default') + '; transform-origin: center;'"
+            :style="'transform: translate(' + pan.offX + 'px, ' + pan.offY + 'px) scale(' + zoomLevel + '); transition: ' + (pan.active ? 'none' : 'transform 0.25s cubic-bezier(0.2, 0, 0.2, 1)') + '; max-width:90%; max-height:90%; object-fit:contain; border-radius:12px; box-shadow:0 30px 90px rgba(0,0,0,0.9); cursor: ' + (zoomLevel > 1 ? (pan.active ? 'grabbing' : 'grab') : 'default') + '; transform-origin: center;'"
             @mousedown.prevent="startPan($event)" @touchstart.prevent="startPan($event)" @click.stop draggable="false">
     </div>
 </div>

@@ -38,7 +38,7 @@ def _now_ms() -> str:
 # ------------------------------------------------------------------
 
 
-def write_debug_log(direction: str, msg_type: str, body, elapsed_ms):
+def write_debug_log(direction: str, msg_type: str, body, elapsed_ms, size_bytes: int = None):
     """
     เขียน 1 บรรทัดต่อ message ลง logs/debug_YYYY-MM-DD.log
 
@@ -59,10 +59,16 @@ def write_debug_log(direction: str, msg_type: str, body, elapsed_ms):
                 body_info = {k: v for k, v in body.items() if k != "msgType"}
             else:
                 body_info = body
-            line = f"[{now_str}] ➡️  TX  {msg_type:<35} | BODY: {body_info}"
+            size_str = f" [{size_bytes:,}B]" if size_bytes else ""
+            line = f"[{now_str}] ➡️  TX  {msg_type:<35}{size_str} | BODY: {body_info}"
 
         else:  # RX
             rtt = f"{elapsed_ms}ms" if elapsed_ms is not None else "??ms"
+            if size_bytes is not None:
+                sz = size_bytes / (1024*1024)
+                size_str = f" [{sz:.2f}MB]" if sz >= 0.1 else f" [{size_bytes/1024:.1f}KB]"
+            else:
+                size_str = ""
             if isinstance(body, list):
                 count = len(body)
                 preview = body[:5]
@@ -71,7 +77,7 @@ def write_debug_log(direction: str, msg_type: str, body, elapsed_ms):
                 body_str = str(body)[:300]
             else:
                 body_str = str(body)[:200]
-            line = f"[{now_str}] ⬅️  RX  {msg_type:<35} | RTT: {rtt:>8} | {body_str}"
+            line = f"[{now_str}] ⬅️  RX  {msg_type:<35}{size_str} | RTT: {rtt:>8} | {body_str}"
 
         with open(log_path, "a", encoding="utf-8") as f:
             f.write(line + "\n")
