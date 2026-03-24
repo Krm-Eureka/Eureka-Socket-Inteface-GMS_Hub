@@ -66,361 +66,343 @@
     "stations": {
         "B3F1": {
             "alias": "B3F1",
-            "angle": 90,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 90
+            }
         },
         "B3F1_1_IN": {
             "alias": "B3F1",
-            "angle": 90,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 90
+            }
         },
         "B3F1_2_IN": {
             "alias": "B3F1",
-            "angle": 90,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 90
+            }
         },
         "B3F1_1_OUT": {
             "alias": "B3F1",
-            "angle": 90,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 90
+            }
         },
         "B3F1_2_OUT": {
             "alias": "B3F1",
-            "angle": 90,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 90
+            }
         },
         "WAIT_B3F1_CLS": {
             "alias": "WAIT_B3F1",
-            "angle": 90,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 90
+            }
         },
         "WAIT_B3F1_OPN": {
             "alias": "WAIT_B3F1",
-            "angle": 90,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 90
+            }
         },
         "B4F1": {
             "alias": "B4F1",
-            "angle": 90
+            "containerCfg": {
+                "DEFAULT": 90
+            }
         },
         "WAIT_B4F1_CLS": {
             "alias": "WAIT_B4F1",
-            "angle": 90,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 90
+            }
         },
         "WAIT_B4F1_OPN": {
             "alias": "WAIT_B4F1",
-            "angle": 90,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 90
+            }
         },
         "PACK": {
             "alias": "PACK",
-            "angle": 0,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 0
+            }
         },
         "PACKING_1": {
             "alias": "PACK",
-            "angle": 0,
-            "containerType": [
-                "T2000001",
-                "T0000006"
-            ]
+            "containerCfg": {
+                "T2000001": 0,
+                "T0000005": 0
+            }
         },
         "PACKING_2": {
             "alias": "PACK",
-            "angle": 0,
-            "containerType": [
-                "T2000001",
-                "T0000006"
-            ]
+            "containerCfg": {
+                "T2000001": 0,
+                "T0000005": 0
+            }
         },
         "PACKING_STATION": {
             "alias": "PACK",
-            "angle": 0,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 0
+            }
         },
         "ST-001": {
             "alias": "PACK",
-            "angle": 0,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 0
+            }
         },
         "LIFT": {
             "alias": "LIFT",
-            "angle": 90,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 90
+            }
         },
         "ELEVATOR": {
             "alias": "LIFT",
-            "angle": 90,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 90
+            }
         },
         "PP_HDD": {
             "alias": "PP_HDD",
-            "angle": 90,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 90
+            }
         },
         "HDD_CLS": {
             "alias": "WAIT_PP_HDD",
-            "angle": 90,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 90
+            }
         },
         "HDD_OPN": {
             "alias": "WAIT_PP_HDD",
-            "angle": 90,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 90
+            }
         },
         "ROT": {
             "alias": "WAIT_ROT",
-            "angle": 0,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 0
+            }
         },
         "AUTO_PACK": {
             "alias": "AUTO_PACK",
-            "angle": 0,
-            "containerType": [
-                "T0000006"
-            ]
+            "containerCfg": {
+                "T0000005": 0
+            }
         },
         "AUTO_PACK_1": {
             "alias": "AUTO_PACK",
-            "angle": 0,
-            "containerType": [
-                "T0000006"
-            ]
+            "containerCfg": {
+                "T0000005": 0
+            }
         },
         "AUTO_PACK_2": {
             "alias": "AUTO_PACK",
-            "angle": 90,
-            "containerType": [
-                "T0000006"
-            ]
+            "containerCfg": {
+                "T0000005": 90
+            }
         },
         "B3F3_1": {
             "alias": "B3F3_1",
-            "angle": 0,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 0
+            }
         },
         "B3F3_2": {
             "alias": "B3F3_2",
-            "angle": 0,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 0
+            }
         },
         "B3F3_3": {
             "alias": "B3F3_3",
-            "angle": 0,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 0
+            }
         },
         "B3F3_4": {
             "alias": "B3F3_4",
-            "angle": 0,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 0
+            }
         },
         "B3F3_5": {
             "alias": "B3F3_5",
-            "angle": 0,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 0
+            }
         },
         "B3F3_6": {
             "alias": "B3F3_6",
-            "angle": 0,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 0
+            }
         },
         "B3F3_7": {
             "alias": "B3F3_7",
-            "angle": 0,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 0
+            }
         },
         "B3F3_8": {
             "alias": "B3F3_8",
-            "angle": 0,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 0
+            }
         },
         "B3F3_9": {
             "alias": "B3F3_9",
-            "angle": 0,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 0
+            }
         },
         "B3F3_10": {
             "alias": "B3F3_10",
-            "angle": 0,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 0
+            }
         },
         "B3F3_11": {
             "alias": "B3F3_11",
-            "angle": 0,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 0
+            }
         },
         "B3F3_12": {
             "alias": "B3F3_12",
-            "angle": 0,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 0
+            }
         },
         "B3F3_13": {
             "alias": "B3F3_13",
-            "angle": 0,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 0
+            }
         },
         "B3F3_14": {
             "alias": "B3F3_14",
-            "angle": 0,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 0
+            }
         },
         "B3F3_15": {
             "alias": "B3F3_15",
-            "angle": 0,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 0
+            }
         },
         "B3F3_16": {
             "alias": "B3F3_16",
-            "angle": 0,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 0
+            }
         },
         "PD_B3F3": {
             "alias": "PD_B3F3",
-            "angle": 0,
-            "containerType": [
-                "T2000001",
-                "T0000006"
-            ]
+            "containerCfg": {
+                "T0000005": 90,
+                "T2000001": 0
+            }
         },
         "B3F2_1": {
             "alias": "B3F2_1",
-            "angle": 0,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 0
+            }
         },
         "B3F2_2": {
             "alias": "B3F2_2",
-            "angle": 0,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 0
+            }
         },
         "B3F2_3": {
             "alias": "B3F2_3",
-            "angle": 0,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 0
+            }
         },
         "B3F2_4": {
             "alias": "B3F2_4",
-            "angle": 0,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 0
+            }
         },
         "B3F2_5": {
             "alias": "B3F2_5",
-            "angle": 0,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 0
+            }
         },
         "B3F2_6": {
             "alias": "B3F2_6",
-            "angle": 0,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 0
+            }
         },
         "B3F2_7": {
             "alias": "B3F2_7",
-            "angle": 0,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 0
+            }
         },
         "B3F2_8": {
             "alias": "B3F2_8",
-            "angle": 0,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 0
+            }
         },
         "PD_B3F2": {
             "alias": "PD_B3F2",
-            "angle": 90,
-            "containerType": [
-                "T2000001",
-                "T0000006"
-            ]
+            "containerCfg": {
+                "T0000005": 0,
+                "T2000001": 90
+            }
         },
         "BUFFER_B3F2": {
             "alias": "BUFFER_B3F2",
-            "angle": 0,
-            "containerType": [
-                "T2000001"
-            ]
+            "containerCfg": {
+                "T2000001": 0
+            }
+        },
+        "BUFFER_254_1": {
+            "alias": "254",
+            "containerCfg": {
+                "T0000005": 0
+            }
+        },
+        "BUFFER_254_2": {
+            "alias": "254",
+            "containerCfg": {
+                "T0000005": 0
+            }
+        },
+        "BUFFER_254_3": {
+            "alias": "254",
+            "containerCfg": {
+                "T0000005": 0
+            }
+        },
+        "BUFFER_255_1": {
+            "alias": "255",
+            "containerCfg": {
+                "T0000005": 0
+            }
+        },
+        "BUFFER_255_2": {
+            "alias": "255",
+            "containerCfg": {
+                "T0000005": 0
+            }
         }
     },
     "containerTypes": [

@@ -184,7 +184,7 @@ async def add_station(
     """
     POST /api/v1/ui/config/stations?code=STATION_CODE
     Add a new station entry. Requires X-Admin-Password header.
-    Body: { "alias": "...", "angle": 90, "containerType": ["T2000001"] }
+    Body: { "alias": "...", "containerCfg": { "T2000001": 90, "T0000005": 0 } }
 
     Validation:
     - 'code' must not be empty.
@@ -198,8 +198,10 @@ async def add_station(
         )
     if not body.get("alias", "").strip():
         raise HTTPException(status_code=422, detail="Station alias must not be empty.")
-    if not isinstance(body.get("angle"), (int, float)):
-        raise HTTPException(status_code=422, detail="Station angle must be a number.")
+    if not isinstance(body.get("containerCfg"), dict):
+        raise HTTPException(
+            status_code=422, detail="Station 'containerCfg' must be a dictionary."
+        )
 
     config = _load_config()
     upper_code = code.strip().upper()

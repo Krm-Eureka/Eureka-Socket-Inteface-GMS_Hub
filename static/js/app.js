@@ -383,7 +383,15 @@ function app() {
         // Station modal
         showAddStation: false,
         editStationCode: '',
-        newStation: { code: '', alias: '', angle: 90, containerType: '', oldCode: '' },
+        newStation: { code: '', alias: '', pairs: [], oldCode: '' },
+
+        addPair() {
+            this.newStation.pairs.push({ type: '', angle: 0 });
+        },
+        removePair(idx) {
+            this.newStation.pairs.splice(idx, 1);
+            if (this.newStation.pairs.length === 0) this.addPair();
+        },
 
         // Floor modal
         showAddFloor: false,
@@ -554,16 +562,30 @@ function app() {
             // --- Client-side Validation ---
             if (!code) return this._cfgNotify('❌ Station Code is required', false);
             if (!alias) return this._cfgNotify('❌ Alias is required', false);
-            if (typeof this.newStation.angle !== 'number') return this._cfgNotify('❌ Angle must be a number', false);
             if (!this.cfgPwd) return this._cfgNotify('❌ Password required', false);
-
             const body = {
                 alias,
-                angle: this.newStation.angle,
-                containerType: this.newStation.containerType
-                    ? this.newStation.containerType.split(',').map(s => s.trim()).filter(Boolean)
-                    : []
             };
+
+            // Handle Dynamic Pairs -> containerCfg
+            if (this.newStation.pairs && this.newStation.pairs.length > 0) {
+                const cfg = {};
+                this.newStation.pairs.forEach(p => {
+                    const t = p.type.trim().toUpperCase();
+                    if (!t) return;
+                    const ang = parseInt(p.angle);
+                    cfg[t] = isNaN(ang) ? 0 : ang;
+                });
+                body.containerCfg = Object.keys(cfg).length > 0 ? cfg : {};
+            } else {
+                body.containerCfg = {};
+            }
+
+            // Cleanup old fields just in case
+            delete body.angle;
+            delete body.containerType;
+            delete body.multiAngle;
+            delete body.pairs; // Remove the UI-only pairs field from the fetch body
 
             const isEdit = !!this.editStationCode;
             if (isEdit && code !== this.newStation.oldCode) {
