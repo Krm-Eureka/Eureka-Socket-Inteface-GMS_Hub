@@ -13,9 +13,9 @@ class PollingManager:
     def __init__(self, gms_client: GMSClient):
         self._gms = gms_client
         self._running = False
-        self._stop_event = None
-        self._tier_lock = None
-        self._cache_lock = None
+        self._stop_event: Optional[asyncio.Event] = None
+        self._tier_lock: Optional[asyncio.Lock] = None
+        self._cache_lock: Optional[asyncio.Lock] = None
         
         self.client_code = settings.GMS_CLIENT_CODE
         self.channel_id = settings.GMS_CHANNEL_ID

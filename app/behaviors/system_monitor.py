@@ -19,7 +19,7 @@ class SystemMonitor:
         self._sio = sio
         self._gms_client = gms_client
         self._running: bool = False
-        self._stop_event = None
+        self._stop_event: Optional[asyncio.Event] = None
         self._task: Optional[asyncio.Task] = None
 
         self._last_queries: int = 0
