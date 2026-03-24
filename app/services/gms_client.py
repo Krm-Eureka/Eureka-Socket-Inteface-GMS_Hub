@@ -102,8 +102,8 @@ class GMSClient:
         return self._writer is not None
 
     async def connect(self):
-        if self._lock is None:
-            self._lock = asyncio.Lock()
+        # Always create fresh lock for the current event loop
+        self._lock = asyncio.Lock()
 
         async with self._lock:
             try:

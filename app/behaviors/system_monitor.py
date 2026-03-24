@@ -76,8 +76,8 @@ class SystemMonitor:
         if self._running:
             return
         
-        if self._stop_event is None:
-            self._stop_event = asyncio.Event()
+        # Always create fresh loop-bound objects to avoid 'different event loop' errors on reload
+        self._stop_event = asyncio.Event()
 
         self._running = True
         self._stop_event.clear()
@@ -124,6 +124,10 @@ class SystemMonitor:
             except asyncio.CancelledError:
                 pass
             self._task = None
+        
+        # Reset loop-bound object
+        self._stop_event = None
+        
         logger.info("Health Monitor stopped.")
 
     def _get_mysql_stats_blocking(self):

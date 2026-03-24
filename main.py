@@ -149,7 +149,7 @@ async def lifespan(app: FastAPI):
 
     logger.info("ESIG HUB Initializing: Establishing GMS Polling Behavior...")
     gms_client.set_callbacks(on_message=polling_manager.handle_gms_message)
-    
+
     # Async Start
     await polling_manager.start_service()
     await system_monitor.start()
@@ -393,26 +393,6 @@ async def handle_set_active_page(sid, data):
         await polling_manager.set_client_page(sid, page)
     except Exception as e:
         logger.error(f"Set Active Page Error: {e}")
-
-
-# Unified ASGI App
-socket_app = socketio.ASGIApp(sio, app)
-
-if __name__ == "__main__":
-    logger.info(
-        f"Launching Enterprise Server on {settings.BFF_HOST}:{settings.BFF_PORT}"
-    )
-    # Diagnostic: Print all registered routes
-    logger.info("Registered Routes:")
-    for route in app.routes:
-        logger.info(f" -> {route.path} {getattr(route, 'methods', None)}")
-
-    uvicorn.run(
-        "main:socket_app",
-        host=settings.BFF_HOST,
-        port=settings.BFF_PORT,
-        reload=settings.BFF_RELOAD,
-    )
 
 
 # Unified ASGI App

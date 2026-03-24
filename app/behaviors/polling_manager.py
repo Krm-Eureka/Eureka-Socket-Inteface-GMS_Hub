@@ -54,10 +54,10 @@ class PollingManager:
             logger.warning("Polling Manager already running.")
             return
         
-        # Ensure loop-bound objects are created within the running loop
-        if self._stop_event is None: self._stop_event = asyncio.Event()
-        if self._tier_lock is None: self._tier_lock = asyncio.Lock()
-        if self._cache_lock is None: self._cache_lock = asyncio.Lock()
+        # Always create fresh loop-bound objects to avoid 'different event loop' errors on reload
+        self._stop_event = asyncio.Event()
+        self._tier_lock = asyncio.Lock()
+        self._cache_lock = asyncio.Lock()
         
         self._running = True
         self._stop_event.clear()
@@ -77,6 +77,12 @@ class PollingManager:
             except asyncio.CancelledError:
                 pass
             self._session_task = None
+        
+        # Reset loop-bound objects
+        self._stop_event = None
+        self._tier_lock = None
+        self._cache_lock = None
+        
         await self._gms.disconnect()
 
     def update_behavior(self, config: Dict):
