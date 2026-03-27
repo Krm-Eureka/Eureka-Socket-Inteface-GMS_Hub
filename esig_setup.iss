@@ -17,7 +17,7 @@ DefaultGroupName={#MyAppName}
 
 ; Output Directory (Where the final setup.exe will be saved)
 OutputDir={#MyProjectDir}\setup_output
-OutputBaseFilename=ESIG_HUB_Setup_v2.0.0
+OutputBaseFilename=ESIG_HUB_Setup_v2.0.1
 
 ; Icon setting
 SetupIconFile={#MyProjectDir}\esig_hub.ico
