@@ -45,6 +45,33 @@ system_monitor = SystemMonitor(sio, gms_client)
 
 
 # Configure Loguru to write to file
+def _week_log_dir() -> str:
+    """Return (and create) a weekly subdirectory: logs/YYYY-WXX/"""
+    import datetime as _dt
+    iso = _dt.datetime.now().isocalendar()  # (year, week, weekday)
+    week_folder = os.path.join(_log_dir, f"{iso[0]}-W{iso[1]:02d}")
+    os.makedirs(week_folder, exist_ok=True)
+    return week_folder
+
+
+def _cleanup_old_logs(retention_days: int = 90):
+    """Delete weekly log sub-folders older than retention_days (default 3 months)."""
+    import datetime as _dt
+    cutoff = _dt.datetime.now() - _dt.timedelta(days=retention_days)
+    if not os.path.isdir(_log_dir):
+        return
+    for entry in os.scandir(_log_dir):
+        if entry.is_dir():
+            try:
+                mtime = _dt.datetime.fromtimestamp(entry.stat().st_mtime)
+                if mtime < cutoff:
+                    import shutil
+                    shutil.rmtree(entry.path, ignore_errors=True)
+                    logger.info(f"[LOG CLEANUP] Deleted old log folder: {entry.name}")
+            except Exception as e:
+                logger.warning(f"[LOG CLEANUP] Could not check/delete {entry.path}: {e}")
+
+
 def init_logging():
     # 0. Clear all previous handlers to prevent duplicates on reload
     logger.remove()
@@ -54,11 +81,13 @@ def init_logging():
 
     logger.add(sys.stderr, level=settings.LOG_LEVEL)
 
-    # 1. Main Server Log (Exclude GMS Client & Polling Verbosity)
+    week_dir = _week_log_dir()
+
+    # 1. Main Server Log — daily rotation into weekly subfolder
     logger.add(
-        os.path.join(_log_dir, "server_{time:YYYY-MM-DD}.log"),
-        rotation="30 minutes",
-        retention="1 week",
+        os.path.join(week_dir, "server_{time:YYYY-MM-DD}.log"),
+        rotation="00:00",        # Rotate at midnight
+        retention=None,          # Retention managed by _cleanup_old_logs
         level=settings.LOG_LEVEL,
         format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}",
         filter=lambda record: "app.services.gms_client" not in record["name"]
@@ -66,11 +95,11 @@ def init_logging():
         enqueue=True,  # Thread-safe
     )
 
-    # 4. Service Log (Only GMS Client & Polling)
+    # 2. Service Log (GMS Client & Polling) — daily rotation into weekly subfolder
     logger.add(
-        os.path.join(_log_dir, "service_{time:YYYY-MM-DD}.log"),
-        rotation="30 minutes",
-        retention="1 week",
+        os.path.join(week_dir, "service_{time:YYYY-MM-DD}.log"),
+        rotation="00:00",        # Rotate at midnight
+        retention=None,          # Retention managed by _cleanup_old_logs
         level=settings.LOG_LEVEL,
         format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}",
         filter=lambda record: "app.services" in record["name"]
@@ -78,11 +107,29 @@ def init_logging():
         enqueue=True,  # Thread-safe
     )
 
+    # 3. Auto-cleanup: delete log folders older than 3 months
+    try:
+        _cleanup_old_logs(retention_days=90)
+    except Exception as e:
+        logger.warning(f"[LOG CLEANUP] Startup cleanup warning: {e}")
+
 
 async def startup_diagnostics(app):
     """ตรวจสอบและ log สถานะการเชื่อมต่อทั้งหมดตอน startup"""
     import socket as _socket
     import pymysql
+
+    # ─── Mandatory Config Validation ────────────────────────────────────────
+    missing = []
+    if not settings.GMS_IP:
+        missing.append("GMS_IP")
+    if not settings.GMS_CLIENT_CODE:
+        missing.append("GMS_CLIENT_CODE")
+    if missing:
+        raise RuntimeError(
+            f"❌ ESIG CANNOT START — Required .env values missing: {', '.join(missing)}\n"
+            f"   กรุณาตั้งค่าใน ESIG/.env แล้วรัน ESIG ใหม่"
+        )
 
     # ─── Banner ─────────────────────────────────────────────────────────────
     logger.info("=" * 62)
@@ -165,7 +212,7 @@ async def lifespan(app: FastAPI):
 
 # --- FastAPI Initialization ---
 app = FastAPI(
-    title="ESIG HUB - EA Socket Interface GMS Hub", version="2.0.0", lifespan=lifespan
+    title="ESIG HUB - EA Socket Interface GMS Hub", version="2.0.1", lifespan=lifespan
 )
 app.state.sio = sio
 
@@ -332,18 +379,16 @@ async def handle_get_tasks_page(sid, data):
     Data should include: { "page": 1, "pageSize": 20 }
     """
     try:
-        page = data.get("page", 1)
-        page_size = data.get("pageSize", 80)
+
         start_time = data.get("startTime")
         end_time = data.get("endTime")
 
-        result = await polling_manager.get_paginated_tasks(
-            page, page_size, start_time, end_time
-        )
+        result = await polling_manager.get_task_cache(start_time, end_time)
 
+        result["last_update_ts"] = polling_manager._last_task_update_ts
         await sio.emit("tasks_page_response", result, to=sid)
         logger.debug(
-            f"Sent tasks page {page} ({len(result['tasks'])} items) to client {sid}"
+            f"Sent {len(result['tasks'])} tasks (7-day history) to client {sid}"
         )
 
     except Exception as e:

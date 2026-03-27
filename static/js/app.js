@@ -101,6 +101,10 @@ function app() {
                     if (data.direction === 'RX') label = 'RECV';
                     if (data.direction === 'TX') label = 'SENT';
 
+                    if (data.size) {
+                        label = `${label} (${data.size})`;
+                    }
+
                     this.addLog(label, data.msgType, JSON.stringify(data.payload));
                     this.stats = data.stats;
                 });
@@ -131,7 +135,7 @@ function app() {
                     this.gms = data.gms || this.gms;
 
                     // Log health to console as requested
-                    const statsStr = `CPU: ${s.cpu}%, RAM: ${s.ram_p}%, Latency: ${this.gms.latency_ms || 0}ms`;
+                    const statsStr = `CPU: ${s.cpu}%, RAM: ${s.ram_percent}%, Latency: ${this.gms.latency_ms || 0}ms`;
                     this.addLog('RECV', 'HEALTH_STATS', statsStr);
 
                     this.updateCharts();

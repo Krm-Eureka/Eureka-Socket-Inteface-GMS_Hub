@@ -28,7 +28,7 @@ async def start_gms_service(
     pm=Depends(get_polling_manager), x_admin_password: str | None = Header(default=None)
 ):
     _check_password(x_admin_password)
-    pm.start_service()
+    await pm.start_service()
     return ApiResponse(
         success=True,
         code=status.HTTP_202_ACCEPTED,
@@ -43,7 +43,7 @@ async def stop_gms_service(
     pm=Depends(get_polling_manager), x_admin_password: str | None = Header(default=None)
 ):
     _check_password(x_admin_password)
-    pm.stop_service()
+    await pm.stop_service()
     return ApiResponse(
         success=True,
         code=status.HTTP_200_OK,
@@ -176,3 +176,36 @@ async def send_gms_http_command(params: ManualRequestParams):
                 status="HTTP_FAILED",
                 message=f"Failed to communicate with GMS API: {str(e)}",
             )
+
+
+@router.get("/tasks/cache", response_model=ApiResponse)
+async def get_cached_tasks(
+    page: int = 1,
+    page_size: int = 100,
+    start_time: str | None = None,
+    end_time: str | None = None,
+    pm=Depends(get_polling_manager),
+):
+    """
+    [FEATURE] HTTP-First Fetch: Retrieve the current background cache
+    immediately on page mount to ensure zero-latency initial display.
+    """
+    try:
+        result = await pm.get_task_cache(start_time, end_time)
+        return ApiResponse(
+            success=True,
+            code=status.HTTP_200_OK,
+            status="CACHE_HIT",
+            message="Retrieved current task cache from memory.",
+            data={
+                **result,
+                "last_update_ts": pm._last_task_update_ts,  # 🛡️ Forward TS for UI sync
+            },
+        )
+    except Exception as e:
+        return ApiResponse(
+            success=False,
+            code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status="CACHE_ERROR",
+            message=str(e),
+        )

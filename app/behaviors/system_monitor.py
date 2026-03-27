@@ -24,10 +24,10 @@ class SystemMonitor:
 
         self._last_queries: int = 0
         self._last_check_time: float = time.time()
-        self._is_busy: bool = False  # Guard against overlapping health checks
-        self.clients: Dict[str, Dict[str, str]] = {}  # {sid: {ip, hostname, connected_at}}
+        self._is_busy: bool = False
+        self.clients: Dict[str, Dict[str, str]] = {}
         self._daily: Dict[str, Any] = self._blank_daily()
-        self._last_log_date: Optional[str] = None  # เขียน daily summary 1 ครั้งต่อวัน
+        self._last_log_date: Optional[str] = None
 
     @staticmethod
     def _blank_daily() -> Dict[str, Any]:
@@ -57,8 +57,12 @@ class SystemMonitor:
             "ram_avg": round(d["ram_sum"] / n, 1) if d["samples"] else 0,
             "ram_min": d["ram_min"] if d["ram_min"] is not None else 0,
             "ram_max": d["ram_max"] if d["ram_max"] is not None else 0,
-            "db_latency_min": d["db_latency_min"] if d["db_latency_min"] is not None else 0,
-            "db_latency_max": d["db_latency_max"] if d["db_latency_max"] is not None else 0,
+            "db_latency_min": (
+                d["db_latency_min"] if d["db_latency_min"] is not None else 0
+            ),
+            "db_latency_max": (
+                d["db_latency_max"] if d["db_latency_max"] is not None else 0
+            ),
             "qps_max": d["qps_max"] if d["qps_max"] is not None else 0,
             "db_errors": d["db_errors"],
             "samples": d["samples"],
@@ -75,7 +79,7 @@ class SystemMonitor:
     async def start(self) -> None:
         if self._running:
             return
-        
+
         # Always create fresh loop-bound objects to avoid 'different event loop' errors on reload
         self._stop_event = asyncio.Event()
 
@@ -98,7 +102,7 @@ class SystemMonitor:
         try:
             # Use run_in_executor for DNS resolution (blocking OS call)
             loop = asyncio.get_running_loop()
-            
+
             def _lookup(target_ip: str) -> str:
                 return _socket.gethostbyaddr(target_ip)[0]
 
@@ -109,6 +113,39 @@ class SystemMonitor:
             # If resolution fails, fallback to IP
             if sid in self.clients:
                 self.clients[sid]["hostname"] = ip
+
+    def _get_system_stats_blocking(self):
+        """Fetch CPU, RAM, Disk (blocking OS calls)"""
+        cpu_usage = psutil.cpu_percent(interval=None)
+        ram = psutil.virtual_memory()
+
+        # Windows uses C:\ not /, use abspath to get correct drive root
+        disk_path = _os.path.abspath("/")
+        disk = psutil.disk_usage(disk_path)
+
+        # cpu_temp: supported on Linux only (returns 0 on Windows)
+        cpu_temp = 0
+        try:
+            temps = psutil.sensors_temperatures()
+            if temps:
+                all_temps = [t.current for group in temps.values() for t in group]
+                if all_temps:
+                    cpu_temp = round(max(all_temps), 1)
+        except (AttributeError, OSError):
+            pass  # Not supported on Windows
+
+        return {
+            "cpu": cpu_usage,
+            "ram_percent": ram.percent,
+            "ram_used_gb": round(ram.used / (1024**3), 2),
+            "ram_total_gb": round(ram.total / (1024**3), 2),
+            "ram_free_gb": round(ram.available / (1024**3), 2),
+            "disk_percent": disk.percent,
+            "disk_used_gb": round(disk.used / (1024**3), 2),
+            "disk_total_gb": round(disk.total / (1024**3), 2),
+            "hostname": _socket.gethostname(),
+            "cpu_temp": cpu_temp,
+        }
 
     def remove_client(self, sid: str) -> None:
         self.clients.pop(sid, None)
@@ -124,10 +161,10 @@ class SystemMonitor:
             except asyncio.CancelledError:
                 pass
             self._task = None
-        
+
         # Reset loop-bound object
         self._stop_event = None
-        
+
         logger.info("Health Monitor stopped.")
 
     def _get_mysql_stats_blocking(self):
@@ -191,18 +228,22 @@ class SystemMonitor:
             now = time.time()
             time_diff = now - self._last_check_time
             if time_diff > 0:
-                stats["qps"] = round(float((current_queries - self._last_queries) / time_diff), 2)
+                stats["qps"] = round(
+                    float((current_queries - self._last_queries) / time_diff), 2
+                )
             self._last_queries = current_queries
             self._last_check_time = now
 
             # 2. Global Variables
             cursor.execute("SHOW GLOBAL VARIABLES LIKE 'max_connections'")
             res = cursor.fetchone()
-            if res: stats["max_connections"] = int(res["Value"])
+            if res:
+                stats["max_connections"] = int(res["Value"])
 
             cursor.execute("SHOW GLOBAL VARIABLES LIKE 'version'")
             res = cursor.fetchone()
-            if res: stats["version"] = res["Value"]
+            if res:
+                stats["version"] = res["Value"]
 
             # 3. DB Size
             cursor.execute(
@@ -213,12 +254,14 @@ class SystemMonitor:
             """
             )
             res = cursor.fetchone()
-            if res and res["size_mb"]: stats["db_size_mb"] = round(float(res["size_mb"]), 2)
+            if res and res["size_mb"]:
+                stats["db_size_mb"] = round(float(res["size_mb"]), 2)
 
             # 4. Buffer Pool Usage
             btn = int(status_map.get("Innodb_buffer_pool_pages_total", 0))
             bfn = int(status_map.get("Innodb_buffer_pool_pages_free", 0))
-            if btn > 0: stats["buffer_pool_usage"] = round(float(((btn - bfn) / btn) * 100), 2)
+            if btn > 0:
+                stats["buffer_pool_usage"] = round(float(((btn - bfn) / btn) * 100), 2)
 
             cursor.close()
         except Exception as e:
@@ -243,61 +286,72 @@ class SystemMonitor:
 
                 self._is_busy = True
                 try:
-                    # 1. System Stats
-                    cpu_usage = psutil.cpu_percent(interval=None)
-                    ram = psutil.virtual_memory()
+                    # 1. System Stats (Run blocking OS calls in executor)
+                    loop = asyncio.get_running_loop()
+                    sys_stats_raw = await loop.run_in_executor(
+                        None, self._get_system_stats_blocking
+                    )
 
-                    # Windows uses C:\ not /, use abspath to get correct drive root
-                    disk_path = _os.path.abspath("/")
-                    disk = psutil.disk_usage(disk_path)
-
-                    # cpu_temp: supported on Linux only (returns 0 on Windows)
-                    cpu_temp = 0
-                    try:
-                        temps = psutil.sensors_temperatures()
-                        if temps:
-                            all_temps = [t.current for group in temps.values() for t in group]
-                            if all_temps: cpu_temp = round(max(all_temps), 1)
-                    except (AttributeError, OSError):
-                        pass  # Not supported on Windows
+                    cpu_usage = sys_stats_raw["cpu"]
+                    ram_percent = sys_stats_raw["ram_percent"]
 
                     sys_stats = {
-                        "cpu": cpu_usage,
-                        "ram_percent": ram.percent,
-                        "ram_used_gb": round(ram.used / (1024**3), 2),
-                        "ram_total_gb": round(ram.total / (1024**3), 2),
-                        "ram_free_gb": round(ram.available / (1024**3), 2),
-                        "disk_percent": disk.percent,
-                        "disk_used_gb": round(disk.used / (1024**3), 2),
-                        "disk_total_gb": round(disk.total / (1024**3), 2),
-                        "hostname": _socket.gethostname(),
-                        "cpu_temp": cpu_temp,
+                        **sys_stats_raw,
                         "client_count": len(self.clients),
-                        "clients": [{"sid": sid, **info} for sid, info in self.clients.items()],
+                        "clients": [
+                            {"sid": sid, **info} for sid, info in self.clients.items()
+                        ],
                     }
 
-                    # 2. MySQL Stats (Run blocking DB call in executor)
-                    loop = asyncio.get_running_loop()
-                    mysql_stats = await loop.run_in_executor(None, self._get_mysql_stats_blocking)
+                    # 2. MySQL Stats (Already in executor)
+                    mysql_stats = await loop.run_in_executor(
+                        None, self._get_mysql_stats_blocking
+                    )
 
                     # --- Track daily min/max ---
                     d = self._daily
                     d["samples"] += 1
                     # CPU
                     d["cpu_sum"] += cpu_usage
-                    d["cpu_min"] = cpu_usage if d["cpu_min"] is None else min(d["cpu_min"], cpu_usage)
-                    d["cpu_max"] = cpu_usage if d["cpu_max"] is None else max(d["cpu_max"], cpu_usage)
+                    d["cpu_min"] = (
+                        cpu_usage
+                        if d["cpu_min"] is None
+                        else min(d["cpu_min"], cpu_usage)
+                    )
+                    d["cpu_max"] = (
+                        cpu_usage
+                        if d["cpu_max"] is None
+                        else max(d["cpu_max"], cpu_usage)
+                    )
                     # RAM
-                    d["ram_sum"] += ram.percent
-                    d["ram_min"] = ram.percent if d["ram_min"] is None else min(d["ram_min"], ram.percent)
-                    d["ram_max"] = ram.percent if d["ram_max"] is None else max(d["ram_max"], ram.percent)
+                    d["ram_sum"] += ram_percent
+                    d["ram_min"] = (
+                        ram_percent
+                        if d["ram_min"] is None
+                        else min(d["ram_min"], ram_percent)
+                    )
+                    d["ram_max"] = (
+                        ram_percent
+                        if d["ram_max"] is None
+                        else max(d["ram_max"], ram_percent)
+                    )
                     # DB
                     if mysql_stats["status"] == "up":
                         lat = mysql_stats["latency_ms"]
                         qps = mysql_stats["qps"]
-                        d["db_latency_min"] = lat if d["db_latency_min"] is None else min(d["db_latency_min"], lat)
-                        d["db_latency_max"] = lat if d["db_latency_max"] is None else max(d["db_latency_max"], lat)
-                        d["qps_max"] = qps if d["qps_max"] is None else max(d["qps_max"], qps)
+                        d["db_latency_min"] = (
+                            lat
+                            if d["db_latency_min"] is None
+                            else min(d["db_latency_min"], lat)
+                        )
+                        d["db_latency_max"] = (
+                            lat
+                            if d["db_latency_max"] is None
+                            else max(d["db_latency_max"], lat)
+                        )
+                        d["qps_max"] = (
+                            qps if d["qps_max"] is None else max(d["qps_max"], qps)
+                        )
                     elif mysql_stats["status"] == "down":
                         d["db_errors"] += 1
                     # ----------------------------
@@ -309,7 +363,9 @@ class SystemMonitor:
                         "gms": self._gms_client.gms_stats if self._gms_client else {},
                     }
 
-                    logger.debug(f"[Health] Emitting health_stats packet: {health_packet}")
+                    logger.debug(
+                        f"[Health] Emitting health_stats packet: {health_packet}"
+                    )
                     await self._sio.emit("health_stats", health_packet)
 
                     # 📋 เขียน Daily Summary 1 ครั้งต่อวัน (เมื่อวันเปลี่ยน = ตีหนึ่ง/เที่ยงคืน)
@@ -326,7 +382,9 @@ class SystemMonitor:
                     self._is_busy = False
 
                 try:
-                    await asyncio.wait_for(self._stop_event.wait(), timeout=10.0)  # Health check interval (10s)
+                    await asyncio.wait_for(
+                        self._stop_event.wait(), timeout=10.0
+                    )  # Health check interval (10s)
                     break
                 except asyncio.TimeoutError:
                     pass

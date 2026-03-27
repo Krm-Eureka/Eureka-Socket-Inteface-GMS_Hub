@@ -12,11 +12,11 @@ class Settings:
     CORS_ORIGINS: list = os.getenv("CORS_ORIGINS", "*").split(",")
 
     # GMS Legacy Socket (SERVICE)
-    GMS_IP: str = os.getenv("GMS_IP", "10.80.227.230")
+    GMS_IP: str = os.getenv("GMS_IP", "")           # ต้องตั้งค่าใน .env ทุก site
     GMS_PORT: int = int(os.getenv("GMS_PORT", "24245"))
-    GMS_CLIENT_CODE: str = os.getenv("GMS_CLIENT_CODE", "EA")
+    GMS_CLIENT_CODE: str = os.getenv("GMS_CLIENT_CODE", "")
     GMS_CHANNEL_ID: str = os.getenv("GMS_CHANNEL_ID", "11111")
-    GMS_HTTP_URL: str = os.getenv("GMS_HTTP_URL", "http://10.80.227.230:24249")
+    GMS_HTTP_URL: str = os.getenv("GMS_HTTP_URL", "")  # ต้องตั้งค่าใน .env ทุก site
 
     # Mock Mode
     MOCK_MODE: bool = os.getenv("MOCK_MODE", "false").lower() == "true"
@@ -41,9 +41,9 @@ class Settings:
     DB_PASS: str = os.getenv("DB_PASS", "")
     DB_NAME: str = os.getenv("DB_NAME", "")
 
-    # Security (NEW)
-    GMS_SERVER_USER: str = os.getenv("GMS_SERVER_USER", "")
-    GMS_SERVER_PASSWORD: str = os.getenv("GMS_SERVER_PASSWORD", "")
+    # Advanced Performance Settings
+    GMS_CHUNK_SIZE: int = int(os.getenv("GMS_CHUNK_SIZE", "50"))
+    GMS_MAX_PAYLOAD_MB: int = int(os.getenv("GMS_MAX_PAYLOAD_MB", "50"))
 
 
 settings = Settings()
