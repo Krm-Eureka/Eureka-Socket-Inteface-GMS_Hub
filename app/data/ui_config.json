@@ -23,7 +23,7 @@
         {
             "id": 1,
             "label": "FLOOR 1",
-            "image": "/api/v1/ui/assets/Floor1.webp"
+            "image": "/api/v1/ui/assets/Floor1.webp?v=1774854844"
         },
         {
             "id": 2,
