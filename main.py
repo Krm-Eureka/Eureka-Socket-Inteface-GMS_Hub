@@ -48,6 +48,7 @@ system_monitor = SystemMonitor(sio, gms_client)
 def _week_log_dir() -> str:
     """Return (and create) a weekly subdirectory: logs/YYYY-WXX/"""
     import datetime as _dt
+
     iso = _dt.datetime.now().isocalendar()  # (year, week, weekday)
     week_folder = os.path.join(_log_dir, f"{iso[0]}-W{iso[1]:02d}")
     os.makedirs(week_folder, exist_ok=True)
@@ -57,6 +58,7 @@ def _week_log_dir() -> str:
 def _cleanup_old_logs(retention_days: int = 90):
     """Delete weekly log sub-folders older than retention_days (default 3 months)."""
     import datetime as _dt
+
     cutoff = _dt.datetime.now() - _dt.timedelta(days=retention_days)
     if not os.path.isdir(_log_dir):
         return
@@ -66,10 +68,13 @@ def _cleanup_old_logs(retention_days: int = 90):
                 mtime = _dt.datetime.fromtimestamp(entry.stat().st_mtime)
                 if mtime < cutoff:
                     import shutil
+
                     shutil.rmtree(entry.path, ignore_errors=True)
                     logger.info(f"[LOG CLEANUP] Deleted old log folder: {entry.name}")
             except Exception as e:
-                logger.warning(f"[LOG CLEANUP] Could not check/delete {entry.path}: {e}")
+                logger.warning(
+                    f"[LOG CLEANUP] Could not check/delete {entry.path}: {e}"
+                )
 
 
 def init_logging():
@@ -86,8 +91,8 @@ def init_logging():
     # 1. Main Server Log — daily rotation into weekly subfolder
     logger.add(
         os.path.join(week_dir, "server_{time:YYYY-MM-DD}.log"),
-        rotation="00:00",        # Rotate at midnight
-        retention=None,          # Retention managed by _cleanup_old_logs
+        rotation="00:00",  # Rotate at midnight
+        retention=None,  # Retention managed by _cleanup_old_logs
         level=settings.LOG_LEVEL,
         format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}",
         filter=lambda record: "app.services.gms_client" not in record["name"]
@@ -98,8 +103,8 @@ def init_logging():
     # 2. Service Log (GMS Client & Polling) — daily rotation into weekly subfolder
     logger.add(
         os.path.join(week_dir, "service_{time:YYYY-MM-DD}.log"),
-        rotation="00:00",        # Rotate at midnight
-        retention=None,          # Retention managed by _cleanup_old_logs
+        rotation="00:00",  # Rotate at midnight
+        retention=None,  # Retention managed by _cleanup_old_logs
         level=settings.LOG_LEVEL,
         format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}",
         filter=lambda record: "app.services" in record["name"]
@@ -212,7 +217,7 @@ async def lifespan(app: FastAPI):
 
 # --- FastAPI Initialization ---
 app = FastAPI(
-    title="ESIG HUB - EA Socket Interface GMS Hub", version="2.0.1", lifespan=lifespan
+    title="ESIG HUB - EA Socket Interface GMS Hub", version="2.0.2", lifespan=lifespan
 )
 app.state.sio = sio
 
@@ -434,6 +439,10 @@ async def handle_set_active_page(sid, data):
             await sio.leave_room(sid, f"page:{room}")
         if page in PAGE_ROOMS:
             await sio.enter_room(sid, f"page:{page}")
+
+        # Diagnostic: verify room membership
+        rooms = sio.rooms(sid)
+        logger.info(f"Client {sid} room state: {rooms}")
 
         await polling_manager.set_client_page(sid, page)
     except Exception as e:

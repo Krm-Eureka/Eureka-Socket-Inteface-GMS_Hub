@@ -33,8 +33,8 @@
                 <div class="flex items-center gap-3">
                     <img src="/static/images/esig_hub.png" alt="ESIG HUB" class="h-12 w-auto">
                     <div>
-                        <h1 class="text-xs text-gray-500 uppercase tracking-widest font-bold">ESIG HUB</h1>
-                        <div class="text-[10px] text-gray-400">v2.0.0</div>
+                        <h1 class="text-2xl font-black mt-2 tracking-tighter text-white">ESIG HUB</h1>
+                        <div class="text-[10px] text-gray-400">v2.0.2</div>
                     </div>
                 </div>
             </div>
@@ -95,7 +95,7 @@
                     <button class="tab-btn" :class="activeTab === 'console' ? 'active' : ''"
                         @click="activeTab = 'console'">CONSOLE</button>
                     <button class="tab-btn" :class="activeTab === 'health' ? 'active' : ''"
-                        @click="activeTab = 'health'; $nextTick(() => initCharts())">HEALTH</button>
+                        @click="activeTab = 'health'; setTimeout(() => initCharts(), 50)">HEALTH</button>
                     <button class="tab-btn" :class="activeTab === 'config' ? 'active' : ''"
                         @click="checkConfigAccess()">CONFIG ⚡</button>
                 </div>
@@ -121,22 +121,21 @@
             <div style="flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden;">
 
                 <!-- Tab Content: CONSOLE -->
-                <div x-show="activeTab === 'console'" x-transition
+                <div x-show="activeTab === 'console'"
                     style="flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden;">
                     {% include 'components/console_tab.html' %}
                 </div>
 
                 <!-- Tab Content: CONFIG -->
-                <div x-show="activeTab === 'config'" x-transition
-                    class="tab-content-config flex flex-col lg:flex-row w-full"
+                <div x-show="activeTab === 'config'" class="tab-content-config flex flex-col lg:flex-row w-full"
                     style="flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; padding-bottom: 5rem;">
 
                     {% include 'components/config_tab.html' %}
                 </div>
 
                 <!-- Tab Content: HEALTH Dashboard -->
-                <div x-show="activeTab === 'health'" x-transition class="tab-content-health"
-                    style="flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 1rem 2rem 5rem; background: radial-gradient(ellipse at top left, rgba(63,185,80,0.04) 0%, transparent 60%), radial-gradient(ellipse at bottom right, rgba(88,166,255,0.04) 0%, transparent 60%);">
+                <div x-show="activeTab === 'health'" class="tab-content-health"
+                    style="display: flex; flex-direction: column; flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 1rem 2rem 5rem; background: radial-gradient(ellipse at top left, rgba(63,185,80,0.04) 0%, transparent 60%), radial-gradient(ellipse at bottom right, rgba(88,166,255,0.04) 0%, transparent 60%);">
 
                     {% include 'components/health_tab.html' %}
                 </div>
@@ -148,7 +147,7 @@
 
 
     <footer class="fixed bottom-0 right-0 p-4 text-xs text-slate-500 opacity-50 pointer-events-none">
-        ESIG HUB v2.0.1
+        ESIG HUB v2.0.2
     </footer>
 </body>
 

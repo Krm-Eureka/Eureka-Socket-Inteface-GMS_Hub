@@ -138,12 +138,10 @@ function app() {
                     const statsStr = `CPU: ${s.cpu}%, RAM: ${s.ram_percent}%, Latency: ${this.gms.latency_ms || 0}ms`;
                     this.addLog('RECV', 'HEALTH_STATS', statsStr);
 
-                    this.updateCharts();
-
-                    // Log after Alpine finishes data binding update
-                    this.$nextTick(() => {
-                        console.log('[HEALTH] UI successfully updated and displayed health data.');
-                    });
+                    // Ensure charts only update when active
+                    if (this.activeTab === 'health') {
+                        this.updateCharts();
+                    }
                 });
 
                 this.socket.on('gms:error', (data) => {
@@ -314,8 +312,12 @@ function app() {
         _drawSparkline(svgId, values, color, predefinedMax = null) {
             const svg = document.getElementById(svgId);
             if (!svg) return;
+            
+            // Check if SVG has size - if hidden (display:none), clientWidth might be 0
             const W = svg.clientWidth || svg.getBoundingClientRect().width || 300;
             const H = svg.clientHeight || svg.getBoundingClientRect().height || 50;
+
+            if (W === 0 || H === 0) return; // Skip drawing if not visible/sized yet
 
             // Auto-scale max
             let max = predefinedMax || 100;
