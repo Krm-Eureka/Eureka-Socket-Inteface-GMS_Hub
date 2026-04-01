@@ -449,6 +449,13 @@ async def handle_set_active_page(sid, data):
         logger.error(f"Set Active Page Error: {e}")
 
 
+@sio.on("join_admin")
+async def handle_join_admin(sid, data=None):
+    """Admin clients (ESIG Dashboard) call this to receive debug logs and pending status."""
+    logger.info(f"Client {sid} joined admin room")
+    await sio.enter_room(sid, "room:admin")
+
+
 # Unified ASGI App
 socket_app = socketio.ASGIApp(sio, app)
 

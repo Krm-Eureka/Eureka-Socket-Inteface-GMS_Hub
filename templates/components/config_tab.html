@@ -74,6 +74,10 @@
                     <label class="config-label-modern">GMS CLIENT CODE</label>
                     <input type="text" x-model="cfgData.site.gmsClientCode" class="config-input-modern" style="font-family:monospace;">
                 </div>
+                <div class="input-group">
+                    <label class="config-label-modern">CHANNEL ID</label>
+                    <input type="text" x-model="cfgData.site.channelId" placeholder="e.g. EA-Interface" class="config-input-modern" style="font-family:monospace;">
+                </div>
                 <div class="input-group" style="grid-column: span 2;">
                     <label class="config-label-modern">LOGO URL (OPTIONAL)</label>
                     <input type="text" x-model="cfgData.site.logoUrl" placeholder="/api/v1/ui/assets/logo.png" class="config-input-modern">
@@ -85,7 +89,7 @@
         <div class="glass-card glass-card-blue">
             <div class="glass-card-header">
                 <h3 class="glass-card-title blue">🗺️ Global Map Settings</h3>
-                <button class="config-btn-action btn-primary" @click="saveSiteConfig()">
+                <button class="config-btn-action btn-primary" @click="saveMapConfig()">
                     SAVE MAP
                 </button>
             </div>

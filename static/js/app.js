@@ -45,8 +45,9 @@ function app() {
         },
         config: {
             gms_ip: '10.80.227.230',
-            client_code: 'MEKTEC',
-            channel_id: '11111',
+            gms_port: '24245',
+            client_code: 'WCS',
+            channel_id: 'WCS',
             auto_query: true,
             interval_ms: 1000,
             auto_msg_types: 'LocationListMsg,StationListMsg,ContainerListMsg,AreaListMsg,WorkflowListMsg,WorkflowInstanceListMsg'
@@ -78,12 +79,16 @@ function app() {
                     this.status = 'connected';
                     this.statusText = 'Connected';
 
+                    // 🛡️ Join Admin Room to receive debug logs and pending status
+                    this.socket.emit('join_admin');
+
                     // Load current config from backend
                     try {
                         const res = await fetch('/api/v1/socket/gms/config');
                         const data = await res.json();
-                        if (data.success) {
-                            this.config = { ...this.config, ...data.config };
+                        if (data.success && data.data && data.data.config) {
+                            this.config = { ...this.config, ...data.data.config };
+                            console.log('Operational Config Synced:', this.config);
                         }
                     } catch (e) { console.error('Failed to fetch config:', e); }
 
@@ -290,10 +295,13 @@ function app() {
         },
 
         initCharts() {
-            // No-op: SVG charts are drawn on each update
-            this._drawSparkline('cpuChartSvg', this.history.cpu, '#3fb950');
-            this._drawSparkline('ramChartSvg', this.history.ram, '#58a6ff');
-            this._drawSparkline('gmsLatencyChartSvg', this.history.latency, '#bc8cff', 200);
+            // First attempt
+            this.updateCharts();
+            
+            // Second attempt after a small delay to handle CSS transitions
+            setTimeout(() => {
+                this.updateCharts();
+            }, 300);
         },
 
         updateCharts() {
@@ -313,11 +321,15 @@ function app() {
             const svg = document.getElementById(svgId);
             if (!svg) return;
             
-            // Check if SVG has size - if hidden (display:none), clientWidth might be 0
-            const W = svg.clientWidth || svg.getBoundingClientRect().width || 300;
-            const H = svg.clientHeight || svg.getBoundingClientRect().height || 50;
+            // Robust size detection with a small buffer for layout transitions
+            const W = svg.clientWidth || svg.getBoundingClientRect().width;
+            const H = svg.clientHeight || svg.getBoundingClientRect().height;
 
-            if (W === 0 || H === 0) return; // Skip drawing if not visible/sized yet
+            if (W <= 0 || H <= 0) {
+                // If the element is hidden (activeTab changed but DOM not ready), 
+                // we'll let the next health_stats packet try again.
+                return;
+            }
 
             // Auto-scale max
             let max = predefinedMax || 100;

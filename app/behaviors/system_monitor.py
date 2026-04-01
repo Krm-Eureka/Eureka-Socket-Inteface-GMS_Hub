@@ -366,7 +366,8 @@ class SystemMonitor:
                     logger.debug(
                         f"[Health] Emitting health_stats packet: {health_packet}"
                     )
-                    await self._sio.emit("health_stats", health_packet)
+                    # 🛡️ USER REQUEST: Only emit health to admin room (ESIG Dashboard)
+                    await self._sio.emit("health_stats", health_packet, to="room:admin")
 
                     # 📋 เขียน Daily Summary 1 ครั้งต่อวัน (เมื่อวันเปลี่ยน = ตีหนึ่ง/เที่ยงคืน)
                     today_str = datetime.datetime.now().strftime("%Y-%m-%d")

@@ -1,0 +1,26 @@
+{
+    "header": {
+        "responseId": "20de8e09-7a9b-4128-aa4a-ec5a8d9cba66",
+        "msgType": "StationListMsg",
+        "code": "0",
+        "requestTime": "2026-03-31 07:58:12",
+        "clientCode": "MEKTEC",
+        "msg": "Successful invocation"
+    },
+    "body": [
+        {
+            "stationName": "B3F1_OUT",
+            "stationCode": "B3F1_OUT",
+            "locations": [
+                {
+                    "locationCode": "B3F1_2_OUT",
+                    "containerCode": null
+                },
+                {
+                    "locationCode": "B3F1_1_OUT",
+                    "containerCode": null
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,21 @@
+{
+    "header": {
+        "responseId": "748f6347-3ac6-4c5a-910c-a895813b6dfa",
+        "msgType": "ContainerListMsg",
+        "code": "0",
+        "requestTime": "2026-03-31 07:59:00",
+        "clientCode": "MEKTEC",
+        "msg": "Successful invocation"
+    },
+    "body": [
+        {
+            "containerCode": "TEST0001",
+            "containerCategory": "T0000005",
+            "locationCode": "BUFFER_254_1",
+            "areaCode": "",
+            "stationCode": "BUFFER_254",
+            "status": 1,
+            "taskCode": ""
+        }
+    ]
+}

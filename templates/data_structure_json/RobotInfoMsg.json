@@ -1,0 +1,87 @@
+{
+    "header": {
+        "responseId": "e316f3c2-8878-4839-af49-6f99c0e9385a",
+        "msgType": "RobotInfoMsg",
+        "code": "0",
+        "requestTime": "2026-03-31 08:02:22",
+        "clientCode": "MEKTEC",
+        "msg": "Successful invocation"
+    },
+    "body": [
+        {
+            "robot": "3855010",
+            "robotProduct": "M100L",
+            "robotConnectStatus": "NORMAL",
+            "robotStopStatus": "NORMAL",
+            "robotError": "",
+            "powerPercent": "74",
+            "angle": "89.87",
+            "speed": "0.0",
+            "location": {
+                "x": 42.023,
+                "y": 22.809,
+                "z": 1
+            },
+            "locationIndex": {
+                "x": 0,
+                "y": 0,
+                "z": 1
+            },
+            "locationCode": "100000004",
+            "hostLocationCode": null,
+            "robotPathMode": "IDLE",
+            "robotTaskId": 3065505,
+            "path": [],
+            "voltage": 55130,
+            "current": 7340,
+            "temperature": 34,
+            "ip": "10.80.235.254",
+            "instanceId": null,
+            "taskCode": null,
+            "containerCode": null
+        },
+        {
+            "robot": "3855009",
+            "robotProduct": "M100L",
+            "robotConnectStatus": "NORMAL",
+            "robotStopStatus": "NORMAL",
+            "robotError": "",
+            "powerPercent": "65",
+            "angle": "-177.4",
+            "speed": "-0.295",
+            "location": {
+                "x": 18.149,
+                "y": 21.108,
+                "z": 3
+            },
+            "locationIndex": {
+                "x": 0,
+                "y": 0,
+                "z": 1
+            },
+            "locationCode": "200000170",
+            "hostLocationCode": "FRONT_B3F3",
+            "robotPathMode": "GO_RETURN",
+            "robotTaskId": 3065506,
+            "path": [
+                {
+                    "x": 18.4,
+                    "y": 21.12,
+                    "z": 3
+                },
+                {
+                    "x": 19,
+                    "y": 21.12,
+                    "z": 3
+                }
+            ],
+            "voltage": 52950,
+            "current": 0,
+            "temperature": 34,
+            "ip": "10.80.235.253",
+            "instanceId": "7382",
+            "taskCode": "",
+            "containerCode": "QN7M3C"
+        }
+    ]
+}

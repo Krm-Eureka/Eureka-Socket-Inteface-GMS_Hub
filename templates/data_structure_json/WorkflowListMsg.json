@@ -1,0 +1,32 @@
+{
+    "header": {
+        "responseId": "25ba98b9-d62a-4466-823f-0b146e877fab",
+        "msgType": "WorkflowListMsg",
+        "code": "0",
+        "requestTime": "2026-03-31 07:59:21",
+        "clientCode": "MEKTEC",
+        "msg": "Successful invocation"
+    },
+    "body": [
+        {
+            "workflowName": "PACK-PACK",
+            "workflowCode": "F202512120000006",
+            "priority": 1,
+            "purpose": 1,
+            "status": 1,
+            "robots": [],
+            "nodes": [
+                {
+                    "nodeParentCode": "0",
+                    "nodeParentName": "Start",
+                    "nodeParentType": 1,
+                    "nodeCode": "90001",
+                    "nodeName": "PACK",
+                    "nodeType": 2,
+                    "priority": 1,
+                    "flowRule": "lang.ark.task.rule.default"
+                }
+            ]
+        }
+    ]
+}

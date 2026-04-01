@@ -1,0 +1,36 @@
+{
+    "header": {
+        "responseId": "09e3e782-c1d0-4f0f-8755-5e0166b5955b",
+        "msgType": "LocationListMsg",
+        "code": "0",
+        "requestTime": "2026-03-31 07:57:11",
+        "clientCode": "MEKTEC",
+        "msg": "Successful invocation"
+    },
+    "body": [
+        {
+            "locationCode": "000000007",
+            "location": {
+                "x": 36.08,
+                "y": 23.9,
+                "z": 1
+            },
+            "index": null,
+            "hostCellCode": null,
+            "locationType": "OMNI_DIR_CELL",
+            "locationTaskStatus": 0,
+            "locationRobotStatus": "0",
+            "locationContainerStatus": 0,
+            "length": 1,
+            "width": 1,
+            "allocatedRobot": null,
+            "occupyRobot": null,
+            "allocatedContainerCode": null,
+            "occupyContainerCode": null,
+            "chargerId": null,
+            "locationFunctions": [
+                "LIMITTED_TURN_CELL"
+            ]
+        }
+    ]
+}

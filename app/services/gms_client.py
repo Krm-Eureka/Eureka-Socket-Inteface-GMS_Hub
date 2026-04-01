@@ -202,6 +202,7 @@ class GMSClient:
                     None, lambda: json.loads(raw_bytes.decode("utf-8"))
                 )
             else:
+                # --- Data Listeners (Piped to Event Bus for Reassembly & Store Update) ---
                 msg_str = raw_bytes.decode("utf-8")
                 data = json.loads(msg_str)
 
@@ -234,9 +235,9 @@ class GMSClient:
                 id_val = header.get("responseId") or header.get("requestId")
                 if id_val and "_" in str(id_val):
                     parts = str(id_val).split("_")
-                    if len(parts) >= 4: # req, ts, tag, type
+                    if len(parts) >= 4:  # req, ts, tag, type
                         lock_key = f"{parts[2]}_{parts[3]}"
-            
+
             if lock_key in self.pending_requests:
                 self.pending_requests.remove(lock_key)
                 await self._emit_pending()
@@ -260,7 +261,7 @@ class GMSClient:
             # --- 🛡️ DEBUG: Sample RobotInfoMsg Structure ---
             if msg_type == "RobotInfoMsg":
                 logger.debug(f"🔍 [DEBUG] RobotInfoMsg Sample: {str(body)[:500]}")
-            
+
             self.gms_stats["last_activity"] = datetime.datetime.now().strftime(
                 "%H:%M:%S"
             )
@@ -304,14 +305,16 @@ class GMSClient:
         # 🆕 Optimized: Differentiate WorkflowInstanceListMsg by filter tag
         # This allows "Map Updates" to proceed even if "7-day History Fetch" is still in flight.
         lock_key = msg_type
-        filter_tag = "GEN" # General
+        filter_tag = "GEN"  # General
         if msg_type == "WorkflowInstanceListMsg":
             is_map_fetch = body.get("instanceStatus") == "20"
             filter_tag = "MAP" if is_map_fetch else "FULL"
             lock_key = f"{filter_tag}_{msg_type}"
 
         if lock_key in self.pending_requests:
-            logger.info(f"🚦 [GMS] Rule 8: Skip {msg_type} (Previous {filter_tag} request STILL pending)")
+            logger.info(
+                f"🚦 [GMS] Rule 8: Skip {msg_type} (Previous {filter_tag} request STILL pending)"
+            )
             return False
 
         unique_id = int(time.time() * 1000) % 1000000
@@ -412,6 +415,7 @@ class GMSClient:
         else:
             display_payload = payload
 
+        # 🛡️ USER REQUEST: Restrict logs to ESIG admin dashboard only
         await self.emit_socket(
             "log",
             {
@@ -422,6 +426,7 @@ class GMSClient:
                 "time": datetime.datetime.now().strftime("%H:%M:%S"),
                 "size": size_str,
             },
+            room="room:admin"
         )
 
     async def emit_error(self, code: str, message: str):
@@ -437,11 +442,10 @@ class GMSClient:
     async def emit_socket(self, event: str, data: Any, room: Optional[str] = None):
         """Helper to emit socket events with room routing"""
         try:
-            target_room = room or (
-                "page:map" if event in self._map_only_events else None
-            )
-            if target_room:
-                await self._sio.emit(event, data, room=target_room)
+            # 🛡️ USER REQUEST: Broad-cast data events to all clients for reliability
+            # Logs and Pending status are still restricted to 'room:admin' via the room argument
+            if room:
+                await self._sio.emit(event, data, room=room)
             else:
                 await self._sio.emit(event, data)
         except Exception as e:
@@ -509,4 +513,22 @@ class GMSClient:
             return 0.0
 
         formatted.sort(key=get_seconds, reverse=True)
-        await self.emit_socket("gms:pending", formatted)
+        # 🟢 Restored: ESIG dashboard needs this. MekTec UI will just ignore it.
+        await self.emit_socket("gms:pending", formatted, room="room:admin")
+
+    async def clear_stale_requests(self, timeout_secs: float = 30.0):
+        """Watchdog to clear requests that haven't received a response after timeout."""
+        now = time.time()
+        to_clear = []
+        for msg_type, sent_at in self._pending_times.items():
+            if (now - sent_at) > timeout_secs:
+                to_clear.append(msg_type)
+
+        if to_clear:
+            logger.warning(
+                f"🕒 [Watchdog] Clearing {len(to_clear)} STALE requests (>{timeout_secs}s): {to_clear}"
+            )
+            for m in to_clear:
+                self.pending_requests.discard(m)
+                self._pending_times.pop(m, None)
+            await self._emit_pending()

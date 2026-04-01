@@ -13,7 +13,7 @@
 
 # ─── Config ───────────────────────────────────────────────────────────────────
 $LOG_DIR        = Join-Path $PSScriptRoot "..\logs"
-$RETENTION_DAYS = 120
+$RETENTION_DAYS = 90
 $LOG_SELF       = Join-Path $PSScriptRoot "log_rotation_history.log"
 
 # ─── Run ──────────────────────────────────────────────────────────────────────

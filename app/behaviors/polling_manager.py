@@ -148,7 +148,8 @@ class PollingManager:
                 elapsed_str = f"{(now - sent_at):.1f}"
                 p_list.append(f"{msg_type} _ {elapsed_str}s")
 
-            await self._gms.emit_socket("gms:status:pending", {"pending": p_list})
+            # 🟢 Restored: ESIG dashboard needs this.
+            await self._gms.emit_socket("gms:status:pending", {"pending": p_list}, room="room:admin")
         except Exception as e:
             logger.error(f"Error emitting pending requests: {e}")
 
@@ -335,6 +336,10 @@ class PollingManager:
                     await self._gms.send_request(
                         "HeartbeatMsg", self.client_code, self.channel_id, {}
                     )
+
+                # 🕒 [WATCHDOG] Force-clear requests that GMS never answered (Rule 8 recovery)
+                await self._gms.clear_stale_requests(timeout_secs=30.0)
+
 
             try:
                 if self._stop_event:

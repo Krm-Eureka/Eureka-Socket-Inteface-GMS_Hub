@@ -1,0 +1,33 @@
+{
+    "header": {
+        "responseId": "01e8204b-2106-4970-ae60-aba5dd5f4aee",
+        "msgType": "WorkflowInstanceListMsg",
+        "code": "0",
+        "requestTime": "2026-03-31 08:00:02",
+        "clientCode": "MEKTEC",
+        "msg": "Successful invocation"
+    },
+    "body": [
+        {
+            "workflowName": "PP_HDD >>> PACK",
+            "workflowCode": "F2026HDDTOPACK",
+            "instanceId": 3293,
+            "taskId": 7595,
+            "taskCode": "",
+            "instancePriority": 1,
+            "instanceStatus": 32,
+            "nodeCode": null,
+            "nodeName": null,
+            "locationFrom": "-1",
+            "locationTo": "100000042",
+            "containerCode": "CR27020017",
+            "robot": "3855010",
+            "startTime": "2026-03-01 02:20:17",
+            "taskStatus": 30,
+            "robotStatus": "ARRIVED",
+            "robotError": null,
+            "exceptionState": "CANCEL_FORCE_COMPLETED",
+            "exceptionFailReason": null
+        }
+    ]
+}
