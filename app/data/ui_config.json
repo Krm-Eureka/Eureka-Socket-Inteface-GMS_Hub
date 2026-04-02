@@ -7,7 +7,7 @@
         "shortName": "MEK01",
         "primaryColor": "#00b300",
         "gmsClientCode": "MEKTEC",
-        "channelId": "EA-Interface",
+        "channelId": "EAInterface",
         "logoUrl": null
     },
     "map": {
