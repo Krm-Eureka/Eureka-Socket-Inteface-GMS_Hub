@@ -426,7 +426,7 @@ class GMSClient:
                 "time": datetime.datetime.now().strftime("%H:%M:%S"),
                 "size": size_str,
             },
-            room="room:admin"
+            room="room:admin",
         )
 
     async def emit_error(self, code: str, message: str):

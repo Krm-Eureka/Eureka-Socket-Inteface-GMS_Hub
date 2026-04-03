@@ -10,6 +10,10 @@
         "channelId": "EAInterface",
         "logoUrl": null
     },
+    "security": {
+        "lockout_duration": 180,
+        "max_failures": 5
+    },
     "map": {
         "MULTIPLIER": 50,
         "SNAP_DISTANCE": 30,
@@ -416,7 +420,8 @@
             "baseHeight": 0.37,
             "image": "/api/v1/ui/assets/ContainerImg/T2000001.webp",
             "color": "#2ecc71",
-            "containerCategory": "T2000001"
+            "containerCategory": "T2000001",
+            "codePrefix": "CR"
         },
         {
             "id": "T0000005",
@@ -427,7 +432,22 @@
             "baseHeight": 0.39,
             "image": "/api/v1/ui/assets/ContainerImg/T0000006.webp",
             "color": "#f1c40f",
-            "containerCategory": "T0000005"
+            "containerCategory": "T0000005",
+            "codePrefix": "PD"
         }
-    ]
+    ],
+    "alerts": {
+        "_comment": "ระบบแจ้งเตือน เปลี่ยนค่าได้ที่ ESIG Admin",
+        "batteryLowThreshold": 20,
+        "batteryWarnThreshold": 60,
+        "offlineRobotAlertDelay": 30,
+        "enableSoundAlert": false
+    },
+    "gms": {
+        "_comment": "GMS Server connection เปลี่ยนได้ที่ ESIG Admin",
+        "ip": "",
+        "port": 9000,
+        "clientCode": "MEKTEC",
+        "channelId": "EAInterface"
+    }
 }

@@ -2,13 +2,55 @@ import json
 import os
 import shutil
 import time
+import bcrypt
 from pathlib import Path
-from fastapi import APIRouter, HTTPException, UploadFile, File, Header, Request
+from fastapi import APIRouter, HTTPException, UploadFile, File, Header, Request, Body
+from pydantic import BaseModel, ConfigDict
+from typing import Optional, Dict, Any
 from fastapi.responses import FileResponse
 from loguru import logger
 from app.services.config_log_service import log_config_change
 
 router = APIRouter(prefix="/api/v1/ui", tags=["UI Config"])
+
+# ─── Pydantic Models (Validation) ────────────────────────────────────────────────
+class SiteConfigPatch(BaseModel):
+    model_config = ConfigDict(extra='ignore')
+    name: Optional[str] = None
+    shortName: Optional[str] = None
+    primaryColor: Optional[str] = None
+    gmsClientCode: Optional[str] = None
+    channelId: Optional[str] = None
+    logoUrl: Optional[str] = None
+
+class RobotConfigPatch(BaseModel):
+    model_config = ConfigDict(extra='ignore')
+    WIDTH: Optional[float] = None
+    LENGTH: Optional[float] = None
+    IDLE_COLOR: Optional[str] = None
+    WORKING_COLOR: Optional[str] = None
+    CHARGING_COLOR: Optional[str] = None
+    ERROR_COLOR: Optional[str] = None
+    OFFLINE_COLOR: Optional[str] = None
+
+class MapConfigPatch(BaseModel):
+    model_config = ConfigDict(extra='ignore')
+    MULTIPLIER: Optional[float] = None
+    SNAP_DISTANCE: Optional[float] = None
+    ORIGIN_OFFSET_X: Optional[float] = None
+    ORIGIN_OFFSET_Y: Optional[float] = None
+    DEFAULT_LOC_SIZE: Optional[float] = None
+    OPACITY: Optional[float] = None
+    ANGLE_OFFSET: Optional[float] = None
+    ENABLE_SOCKET_LOG: Optional[bool] = None
+
+class StationConfigUpdate(BaseModel):
+    alias: str
+    containerCfg: Optional[Dict[str, float]] = None
+
+class ContainerConfigUpdate(BaseModel):
+    codePrefix: Optional[str] = None
+    categories: Optional[Dict[str, Dict[str, Any]]] = None
 
 # ─── Paths ───────────────────────────────────────────────────────────────────
 BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent  # ESIG root
@@ -35,32 +77,83 @@ ADMIN_PASSWORD = os.environ.get("UI_CONFIG_PASSWORD", "admin1234")
 # ─── Allowed file types for upload ─────────────────────────────────────────────
 ALLOWED_IMAGE_EXTENSIONS = {".webp", ".png", ".jpg", ".jpeg"}
 
+# ─── Password Lockout State ────────────────────────────────────────────────────
+FAILED_ATTEMPTS = {}
+
+# ─── In-Memory Cache ───────────────────────────────────────────────────────────
+_config_cache = None
+
 # ─── Helpers ───────────────────────────────────────────────────────────────────
 
 
 def _load_config() -> dict:
-    """Load the current ui_config.json from disk."""
+    """Load the current ui_config.json from memory or disk."""
+    global _config_cache
+    if _config_cache is not None:
+        return _config_cache
     if not CONFIG_FILE.exists():
         raise HTTPException(
             status_code=404, detail="ui_config.json not found. Please initialize it."
         )
     with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
+        _config_cache = json.load(f)
+        return _config_cache
 
 
 def _save_config(data: dict) -> None:
-    """Save updated configuration back to disk."""
+    """Save updated configuration back to disk atomically."""
+    global _config_cache
     CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
-    with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+    
+    # Atomic write: write to temp file then rename
+    temp_file = CONFIG_FILE.with_suffix('.tmp')
+    with open(temp_file, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
+        f.flush()
+        os.fsync(f.fileno())  # Ensure it is written to physical disk
+    
+    # os.replace is an atomic operation on POSIX, and close to it on Windows
+    os.replace(temp_file, CONFIG_FILE)
+    _config_cache = data  # Update in-memory cache
+
+
+def _is_bcrypt_hash(s: str) -> bool:
+    """Check if a string looks like a bcrypt hash (starts with $2y$, $2b$ or $2a$)."""
+    # Standard bcrypt hashes are 60 characters long.
+    return len(s) == 60 and (s.startswith('$2b$') or s.startswith('$2a$') or s.startswith('$2y$'))
 
 
 def _check_password(x_admin_password: str | None) -> None:
     """Validate admin password provided in the X-Admin-Password header."""
+    if not x_admin_password:
+        raise HTTPException(
+            status_code=403, detail="Admin password required. Access denied."
+        )
+
+    # Case 1: Hashed Comparison (Industry Standard)
+    if _is_bcrypt_hash(ADMIN_PASSWORD):
+        try:
+            pw_bytes = x_admin_password.encode('utf-8')
+            hash_bytes = ADMIN_PASSWORD.encode('utf-8')
+            if bcrypt.checkpw(pw_bytes, hash_bytes):
+                return
+        except Exception as e:
+            logger.error(f"Password hash check failed: {e}")
+            raise HTTPException(
+                status_code=403, detail="Security validation error. Access denied."
+            )
+        raise HTTPException(
+            status_code=403, detail="Invalid admin password. Access denied."
+        )
+
+    # Case 2: Plain-text Fallback (Migration/Legacy Support)
     if x_admin_password != ADMIN_PASSWORD:
         raise HTTPException(
             status_code=403, detail="Invalid admin password. Access denied."
         )
+    
+    # Log warning if still using plain-text to remind about technical debt
+    logger.warning("🔔 Security Alert: Admin access granted via PLAIN-TEXT password. Please upgrade to Bcrypt hash.")
 
 
 async def _notify_ui_update(request: Request) -> None:
@@ -73,12 +166,59 @@ async def _notify_ui_update(request: Request) -> None:
 
 
 @router.post("/verify-password")
-async def verify_password(x_admin_password: str | None = Header(default=None)):
+async def verify_password(request: Request, x_admin_password: str | None = Header(default=None)):
     """
     POST /api/v1/ui/verify-password
-    Simple endpoint to check if the provided password is correct.
+    Endpoint to check if the password is correct, with Brute-Force lockout protection.
     """
-    _check_password(x_admin_password)
+    client_ip = request.client.host if request.client else "unknown"
+    now = time.time()
+    
+    # ดึงค่าจาก config เพื่อความยืดหยุ่น ถ้าไม่มีให้ใช้ค่าเริ่มต้น 180 วิ และ แบน 5 ครั้ง
+    try:
+        cfg = _load_config()
+        sec_cfg = cfg.get("security", {})
+        lockout_duration = int(sec_cfg.get("lockout_duration", 180))
+        max_failures = int(sec_cfg.get("max_failures", 5))
+    except Exception:
+        lockout_duration = 180
+        max_failures = 5
+    
+    record = FAILED_ATTEMPTS.get(client_ip, {"failures": 0, "locked_until": 0})
+    if now < record["locked_until"]:
+        raise HTTPException(
+            status_code=429, 
+            detail=f"Too many failed attempts. Locked out for {int(record['locked_until'] - now)} seconds."
+        )
+
+    # Check Password with Hashing / Plain fallback
+    is_valid = False
+    if _is_bcrypt_hash(ADMIN_PASSWORD):
+        try:
+            pw_bytes = x_admin_password.encode('utf-8')
+            hash_bytes = ADMIN_PASSWORD.encode('utf-8')
+            if bcrypt.checkpw(pw_bytes, hash_bytes):
+                is_valid = True
+        except Exception as e:
+            logger.error(f"Password verification error: {e}")
+            is_valid = False
+    else:
+        is_valid = (x_admin_password == ADMIN_PASSWORD)
+
+    if not is_valid:
+        record["failures"] += 1
+        if record["failures"] >= max_failures:
+            record["locked_until"] = now + lockout_duration
+            record["failures"] = 0
+        FAILED_ATTEMPTS[client_ip] = record
+        raise HTTPException(
+            status_code=403, detail="Invalid admin password. Access denied."
+        )
+        
+    # Reset on success
+    if client_ip in FAILED_ATTEMPTS:
+        del FAILED_ATTEMPTS[client_ip]
+        
     return {"success": True, "message": "Password verified."}
 
 
@@ -95,7 +235,7 @@ async def get_ui_config():
 
 @router.patch("/config/map")
 async def update_map_config(
-    request: Request, body: dict, x_admin_password: str | None = Header(default=None)
+    request: Request, body: MapConfigPatch, x_admin_password: str | None = Header(default=None)
 ):
     """
     PATCH /api/v1/ui/config/map
@@ -104,59 +244,62 @@ async def update_map_config(
     """
     _check_password(x_admin_password)
     config = _load_config()
-    config["map"].update(body)
+    update_data = body.model_dump(exclude_unset=True)
+    config["map"].update(update_data)
     _save_config(config)
     await _notify_ui_update(request)
     log_config_change(
-        request.client.host if request.client else "unknown", "map", "update", str(body)
+        request.client.host if request.client else "unknown", "map", "update", str(update_data)
     )
-    logger.info(f"UI Config [map] updated: {body}")
+    logger.info(f"UI Config [map] updated: {update_data}")
     return {"success": True, "message": "Map config updated."}
 
 
 @router.patch("/config/site")
 async def update_site_config(
-    request: Request, body: dict, x_admin_password: str | None = Header(default=None)
+    request: Request, body: SiteConfigPatch, x_admin_password: str | None = Header(default=None)
 ):
     """PATCH /api/v1/ui/config/site - Update branding and site info."""
     _check_password(x_admin_password)
     config = _load_config()
-    config["site"].update(body)
+    update_data = body.model_dump(exclude_unset=True)
+    config["site"].update(update_data)
     _save_config(config)
     await _notify_ui_update(request)
     log_config_change(
         request.client.host if request.client else "unknown",
         "site",
         "update",
-        str(body),
+        str(update_data),
     )
-    logger.info(f"UI Config [site] updated: {body}")
+    logger.info(f"UI Config [site] updated: {update_data}")
     return {"success": True, "message": "Site configuration updated."}
 
 
 @router.patch("/config/robot")
 async def update_robot_config(
-    request: Request, body: dict, x_admin_password: str | None = Header(default=None)
+    request: Request, body: RobotConfigPatch, x_admin_password: str | None = Header(default=None)
 ):
     """PATCH /api/v1/ui/config/robot - Update robot dimensions and colors."""
     _check_password(x_admin_password)
     config = _load_config()
-    config["robot"].update(body)
+    update_data = body.model_dump(exclude_unset=True)
+    config["robot"].update(update_data)
     _save_config(config)
     await _notify_ui_update(request)
     log_config_change(
         request.client.host if request.client else "unknown",
         "robot",
         "update",
-        str(body),
+        str(update_data),
     )
-    logger.info(f"UI Config [robot] updated: {body}")
+    logger.info(f"UI Config [robot] updated: {update_data}")
     return {"success": True, "message": "Robot configuration updated."}
 
 
 @router.patch("/config/colors")
 async def update_colors_config(
-    request: Request, body: dict, x_admin_password: str | None = Header(default=None)
+    request: Request, body: Dict[str, str], x_admin_password: str | None = Header(default=None)
 ):
     """PATCH /api/v1/ui/config/colors - Update system status colors."""
     _check_password(x_admin_password)
@@ -627,7 +770,14 @@ async def serve_asset(file_path: str):
     GET /api/v1/ui/assets/{file_path}
     Serve a static UI asset (floor map image, container icon, etc.).
     """
-    asset_path = ASSETS_DIR / file_path
+    try:
+        asset_path = (ASSETS_DIR / file_path).resolve()
+        # Security Check: Prevent Path Traversal
+        if not asset_path.is_relative_to(ASSETS_DIR.resolve()):
+            raise HTTPException(status_code=403, detail="Path traversal not allowed.")
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid path.")
+        
     if not asset_path.exists():
         raise HTTPException(status_code=404, detail=f"Asset '{file_path}' not found.")
     return FileResponse(str(asset_path))
