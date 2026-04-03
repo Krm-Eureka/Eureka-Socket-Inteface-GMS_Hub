@@ -1,7 +1,7 @@
 ; esig_setup.iss - Inno Setup Script สำหรับ ESIG HUB
 
 #define MyAppName "ESIG HUB"
-#define MyAppVersion "2.0.2"
+#define MyAppVersion "3.0.0"
 #define MyAppPublisher "Mektec"
 #define MyAppExeName "ESIG_HUB_Launcher.exe"
 #define MyProjectDir "d:\KRM\25\25LA001 - Mektec\MEKTEC_APP\ESIG"

@@ -1,6 +1,6 @@
 # ESIG HUB Packager
 $ProjectName = "ESIG_HUB"
-$Version = "2.0.2"
+$Version = "3.0.0"
 $OutputFile = "$ProjectName`_$Version.tar.gz"
 
 Write-Host "Starting package process for $ProjectName..." -ForegroundColor Cyan
