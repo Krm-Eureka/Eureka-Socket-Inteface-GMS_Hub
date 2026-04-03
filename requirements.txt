@@ -12,3 +12,6 @@ pymysql
 pystray
 Pillow
 python-multipart
+bcrypt
+httpx
+pyinstaller
